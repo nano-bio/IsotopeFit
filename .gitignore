@@ -1,0 +1,12 @@
+#################
+## Eclipse
+#################
+
+PET/
+test/
+testdata/
+DERIVESTsuite/
+FMINSEARCHBND/
+*Thumbs.db
+IsotopeDistribution/molecules/
+/out*.txt
