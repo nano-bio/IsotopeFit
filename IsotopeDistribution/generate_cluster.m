@@ -1,6 +1,16 @@
 function out = generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alternativenames)
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+%generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alternativenames)
+%   folder...output folder
+%   clusterlist... list of molecules i.e. {'C60' 'H2O' 'CO2'}
+%   nlist... start- and endnumber of molecules in cluster i.e. {[1,10]
+%       [0,2] [0,1]} : generates [C60]1, [C60]1[H2O][CO2], [C60]1[H2O]2[CO2]
+%       etc.
+%   minmassdistance... mass approximation. masses within this range are addet
+%       up to one peak. good values are below 1e-2
+%   th... peaks below this threashold are neglected. values around 1e-6
+%   alternativenames... voluntary list of alternative names for long
+%       molecule formulas
+
 
 if nargin==5
     alternativenames=clusterlist;

@@ -1,12 +1,12 @@
-function out = findinvolvedmolecules(molecules,searchlist,index)
+function out = findinvolvedmolecules(molecules,searchlist,index,searchrange)
 %out = findinvolvedmolecules(molecules,index)
 %   searches for molecules, that are within the massrange of molecule with
 %   number [index]
 %   only indices in searchlist are relevant. searchlist needs to be sorted!
 %   output: list of indices
 
-minmass=molecules{index}.minmass;
-maxmass=molecules{index}.maxmass;
+minmass=molecules{index}.minmass-searchrange;
+maxmass=molecules{index}.maxmass+searchrange;
 
 % i=find(searchlist==index);
 % 

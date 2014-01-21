@@ -1,4 +1,4 @@
-function [massout signalout] = bg_correction(file)
+function [bgcorrectionout, startind, endind] = bg_correction(peakdata,calibrationdata)
 
 % ############################## LAYOUT
 %read out screen size
@@ -61,7 +61,7 @@ uicontrol(Parent,'Style','Text',...
     'Units','normalized',...
     'Position',gridpos(layoutlines,layoutrows,2,2,1,1,0.01,0.03));
 
-e_npoints=uicontrol(Parent,'Style','edit',...
+e_percent=uicontrol(Parent,'Style','edit',...
     'Tag','edit_npoints',...
     'String','10',...
     'Units','normalized',...
@@ -101,58 +101,81 @@ uicontrol(Parent,'style','pushbutton',...
           'Units','normalized',...
           'Position',gridpos(layoutlines,layoutrows,1,2,5,5,0.05,0.05)); 
 
- 
-
 %Update(Parent);
 
 
 % ############################## END OF LAYOUT
 
 
-A=load(file);
-handles.massaxis = A(:,1)';
-handles.signal = A(:,2)'; 
-handles.bgdata = zeros(1,size(A,1));
+%A=load(file);
+handles=guidata(Parent);
+
+handles.massaxis = peakdata(:,1)';
+handles.signal = peakdata(:,2)'; 
+handles.bgdata = zeros(1,size(peakdata,1));
+
+handles.calibrationdata=calibrationdata;
+
+set(e_startmass,'String',num2str(calibrationdata.startmass));
+set(e_endmass,'String',num2str(calibrationdata.endmass));
+set(e_ndiv,'String',num2str(calibrationdata.ndiv));
+set(e_polydegree,'String',num2str(calibrationdata.polydegree));
+set(e_percent,'String',num2str(calibrationdata.percent));
+
 
 % Abspeichern der Struktur 
 guidata(Parent,handles); 
 
+show(Parent,0);
 
     function show(hObject,eventdata)
         handles=guidata(hObject);
-        ndivisions=str2num(get(e_ndiv,'String'));
-        npoints=str2num(get(e_npoints,'String'));
-        polydeg=str2num(get(e_polydegree,'String'));
+        handles.calibrationdata.ndiv=str2num(get(e_ndiv,'String'));
+        handles.calibrationdata.percent=str2num(get(e_percent,'String'));
+        handles.calibrationdata.polydegree=str2num(get(e_polydegree,'String'));
         
         temp=get(e_startmass,'String');
         if strcmp(temp,'start')
-            startmass=-inf;
+            handles.calibrationdata.startmass=-inf;
         else
-            startmass=str2num(temp);
+            handles.calibrationdata.startmass=str2num(temp);
         end
         
         temp=get(e_endmass,'String');
         if strcmp(temp,'end')
-            endmass=+inf;
+            handles.calibrationdata.endmass=+inf;
         else
-            endmass=str2num(temp);
+            handles.calibrationdata.endmass=str2num(temp);
         end
                
+        [handles.calibrationdata.bgpolynom, handles.startind, handles.endind]=...
+            find_bg(handles.massaxis,handles.signal,...
+                handles.calibrationdata.ndiv,...
+                handles.calibrationdata.percent,...
+                handles.calibrationdata.polydegree,...
+                handles.calibrationdata.startmass,...
+                handles.calibrationdata.endmass);
         
-        [handles.massaxiscrop, handles.signalcrop, handles.bgdata]=find_bg(handles.massaxis,handles.signal,ndivisions,npoints,polydeg,startmass,endmass);
-        plot(axis1,handles.massaxiscrop,handles.signalcrop,handles.massaxiscrop,handles.bgdata);
+        handles.massaxiscrop=handles.massaxis(handles.startind:handles.endind);
+        handles.signalcrop=handles.signal(handles.startind:handles.endind);
         
         guidata(hObject,handles);
+        
+        plot(axis1,handles.massaxiscrop,handles.signalcrop,handles.massaxiscrop,polynomial(handles.calibrationdata.bgpolynom,handles.massaxiscrop));
+        
+        
     end
 
-
-
 uiwait(Parent)
-%out = get(e,'String');
+
+%update:
+show(Parent,0);
 
 handles=guidata(Parent);
-massout=handles.massaxiscrop;
-signalout= handles.signalcrop-handles.bgdata;
+
+bgcorrectionout=handles.calibrationdata;
+startind=handles.startind;
+endind=handles.endind;
 
 close(Parent);
 drawnow;

@@ -1,0 +1,4 @@
+function out=massoffsetbycalibration(calibration,massaxis)
+
+out=getcalibrationdata(calibration.comlist,calibration.massoffsetlist,calibration.massoffsetparam,calibration.massoffsetmethode,massaxis);
+end

@@ -11,11 +11,35 @@ function out = loadmolecules(folder,moleculelist,peakdata)
 %                            calibration
 
 fprintf('Loading molecule peakdata...\n');
-for i=1:length(moleculelist)
-    fprintf('%s ',moleculelist{i});if mod(i,8)==0, fprintf('\n'); end;
-    out{i}.peakdata=load([folder '\' moleculelist{i}]);
-    out{i}.name=moleculelist{i}(1:end-4);
+
+minmasses=zeros(1,length(moleculelist));
+maxmasses=zeros(1,length(moleculelist));
+hwb=waitbar(0,'Loading molecule peakdata...');
+drawnow;
+l=length(moleculelist);
+for i=1:l
+    %fprintf('%s ',moleculelist{i});if mod(i,6)==0, fprintf('\n'); end;
+    data{i}.peakdata=load([folder '\' moleculelist{i}]);
+    data{i}.name=moleculelist{i}(1:end-4);
+    minmasses(i)=data{i}.peakdata(1,1);
+    maxmasses(i)=data{i}.peakdata(end,1);
+    waitbar(i/l);
 end
+
+close(hwb);
+
+%look for start and endindex
+ix1=find(maxmasses>peakdata(1,1),1);
+ix2=find(minmasses>peakdata(end,1),1);
+if isempty(ix2)
+    ix2=length(moleculelist);
+else
+    ix2=ix2-1;
+end
+    
+
+out=data(ix1:ix2);
+
 fprintf('\nDone.\n')
 
 masses=[];
@@ -24,7 +48,6 @@ massaxis=peakdata(:,1)';
 minmasses=zeros(1,length(out));
 
 for i = 1:length(out)
-
     masses=out{i}.peakdata(:,1)';
     peaks=out{i}.peakdata(:,2)';
     
@@ -33,14 +56,15 @@ for i = 1:length(out)
    
     masses=masses(find(peaks>=0));
     
-    out{i}.minmass=min(masses)-0.3;
-    out{i}.maxmass=max(masses)+0.3;
+    out{i}.minmass=min(masses);
+    out{i}.maxmass=max(masses);
         
     out{i}.minind=mass2ind(massaxis,out{i}.minmass);
     out{i}.maxind=mass2ind(massaxis,out{i}.maxmass);
 
     %Area guessing:
     out{i}.area=sum(peakdata(out{i}.minind:out{i}.maxind,2).*diff(peakdata(out{i}.minind:out{i}.maxind+1,1)));
+    out{i}.areaerror=+inf;
     
     minmasses(i)=out{i}.minmass;
     %filter(minind:maxind)=1;

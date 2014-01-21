@@ -1,8 +1,6 @@
-function [massout signalout bgdataout] = find_bg(m,y,nsteps,ndatapoints,polydegree,startmass,endmass)
+function [bgpolynomout,startind,endind] = find_bg(m,y,nsteps,ndatapoints,polydegree,startmass,endmass)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
-
-
 
 if startmass>m(1)
     ix1=find(m>=startmass,1);
@@ -18,7 +16,6 @@ end
 
 m=m(ix1:ix2);
 y=y(ix1:ix2);
-
 
 ys=smooth(y,2);
 
@@ -51,9 +48,11 @@ for i=0:polydegree
     bgydata=bgydata+p(i+1)*m.^(polydegree-i);
 end
 
-massout=m;
-signalout=y;
-bgdataout=bgydata;
+% massout=m;
+% signalout=y;
+startind=ix1;
+endind=ix2;
+bgpolynomout=p;
 
 end
 
