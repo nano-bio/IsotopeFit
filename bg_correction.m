@@ -138,14 +138,14 @@ show(Parent,0);
         if strcmp(temp,'start')
             handles.calibrationdata.startmass=-inf;
         else
-            handles.calibrationdata.startmass=str2num(temp);
+            handles.calibrationdata.startmass=str2double(temp);
         end
         
         temp=get(e_endmass,'String');
         if strcmp(temp,'end')
             handles.calibrationdata.endmass=+inf;
         else
-            handles.calibrationdata.endmass=str2num(temp);
+            handles.calibrationdata.endmass=str2double(temp);
         end
                
         [handles.calibrationdata.bgpolynom, handles.startind, handles.endind]=...

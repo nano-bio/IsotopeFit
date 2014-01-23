@@ -12,33 +12,33 @@ function out = loadmolecules(folder,moleculelist,peakdata)
 
 fprintf('Loading molecule peakdata...\n');
 
-minmasses=zeros(1,length(moleculelist));
-maxmasses=zeros(1,length(moleculelist));
+% minmasses=zeros(1,length(moleculelist));
+% maxmasses=zeros(1,length(moleculelist));
 hwb=waitbar(0,'Loading molecule peakdata...');
 drawnow;
 l=length(moleculelist);
 for i=1:l
     %fprintf('%s ',moleculelist{i});if mod(i,6)==0, fprintf('\n'); end;
-    data{i}.peakdata=load([folder '\' moleculelist{i}]);
-    data{i}.name=moleculelist{i}(1:end-4);
-    minmasses(i)=data{i}.peakdata(1,1);
-    maxmasses(i)=data{i}.peakdata(end,1);
+    out{i}.peakdata=load([folder '\' moleculelist{i}]);
+    out{i}.name=moleculelist{i}(1:end-4);
+%     minmasses(i)=data{i}.peakdata(1,1);
+%     maxmasses(i)=data{i}.peakdata(end,1);
     waitbar(i/l);
 end
 
 close(hwb);
 
 %look for start and endindex
-ix1=find(maxmasses>peakdata(1,1),1);
-ix2=find(minmasses>peakdata(end,1),1);
-if isempty(ix2)
-    ix2=length(moleculelist);
-else
-    ix2=ix2-1;
-end
+% ix1=find(maxmasses>peakdata(1,1),1);
+% ix2=find(minmasses>peakdata(end,1),1);
+% if isempty(ix2)
+%     ix2=length(moleculelist);
+% else
+%     ix2=ix2-1;
+% end
     
 
-out=data(ix1:ix2);
+%out=data(ix1:ix2);
 
 fprintf('\nDone.\n')
 

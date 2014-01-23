@@ -264,13 +264,21 @@ guidata(Parent,handles);
             end
         end
         
-        p=stem(areaaxes,n,data,'filled','+k'); hold on;
+        
+        %area(areaaxes,n,data+dataerror,data-dataerror,'Facecolor',[0.7,0.7,0.7],'Linestyle','none');
+        
+        plot(areaaxes,n,data,'k--');
+        hold on;
+        
+        p=stem(areaaxes,n,data,'filled','+k'); 
         
         p=stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none');
         p=stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none');
         
         hold off;
         
+       % imagesc(log(handles.seriesarea)');
+
         guidata(hObject,handles);
         
 %        set(ListSeries,'String',serieslist);
