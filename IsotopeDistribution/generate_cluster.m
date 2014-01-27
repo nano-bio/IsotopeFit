@@ -64,6 +64,9 @@ for i=1:nfiles
              end
          end
      end
+     if ~(exist(folder) == 7)
+         mkdir(folder);
+     end
      if ~strcmp(filename,'')
          dlmwrite([folder '\' filename '.txt'],d,'delimiter','\t','precision','%e');
      end
