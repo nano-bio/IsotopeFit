@@ -32,7 +32,11 @@ for i=1:l
     
     k=1;
     for j=involved
-        parameters(k)=molecules{j}.area;
+        if molecules{j}.area==0 %dirty workaround: when area=0, no fitting. dont know why!
+            parameters(k)=0.1;
+        else
+            parameters(k)=molecules{j}.area;
+        end
         k=k+1;
     end
     

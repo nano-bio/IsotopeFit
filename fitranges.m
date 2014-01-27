@@ -19,11 +19,14 @@ for i=1:l
     parameters=zeros(1,nmolecules+2);
     fprintf('Fitting massrange %i (%5.1f - %5.1f): %i molecules\n',i, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
     for j=1:nmolecules
-        parameters(j)=ranges{i}.molecules{j}.area;
+        if ranges{i}.molecules{j}.area==0 %dirty workaround: when area=0, no fitting. dont know why!
+            parameters(j)=0.1;
+        else
+            parameters(j)=ranges{i}.molecules{j}.area;
+        end
     end
     parameters(nmolecules+1)=ranges{i}.resolution; %resolution
     parameters(nmolecules+2)=ranges{i}.massoffset; %x-offset
-     
     
     %[minind,maxind]=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
     ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
