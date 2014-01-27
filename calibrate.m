@@ -415,11 +415,11 @@ drawnow;
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         switch get(hObject,'String')
             case 'Fit this'
-                handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),100,0.5,0.5);
+                handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0.5,0.5);
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges(rangeindex));
             case 'Fit all'
-                handles.ranges=fitranges(handles.peakdata,handles.ranges,100,0.5,0.5);
+                handles.ranges=fitranges(handles.peakdata,handles.ranges,inf,0.5,0.5);
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges);
         end
