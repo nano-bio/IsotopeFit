@@ -46,16 +46,11 @@ for i=1:l
     
     stderr = sqrt(diag(sigma))';
     
-    areasum=0;
-    comtemp=0;
     for j=1:nmolecules
-        areasum=areasum+ranges{i}.molecules{j}.area;
-        comtemp=comtemp+ranges{i}.molecules{j}.com*ranges{i}.molecules{j}.area;
         ranges{i}.molecules{j}.area=fitparam(j); %read out fitted areas for every molecule
         ranges{i}.molecules{j}.areaerror=stderr(j); %read out fitted areas for every molecule
     end
     
-    ranges{i}.com=comtemp/areasum;
     ranges{i}.massoffset=fitparam(end);
     ranges{i}.resolution=fitparam(end-1);
     ranges{i}.massoffseterror=stderr(end);
@@ -65,7 +60,7 @@ end
 fprintf('Done.\n')
 close(h);
 
-out=ranges;
+out=calccomofranges(ranges);
 
 end
 

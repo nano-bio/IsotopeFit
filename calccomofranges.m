@@ -9,7 +9,14 @@ for i=1:length(ranges)
         areasum=areasum+ranges{i}.molecules{j}.area;
         comtemp=comtemp+ranges{i}.molecules{j}.com*ranges{i}.molecules{j}.area;
     end
-    ranges{i}.com=comtemp/areasum;
+    if areasum==0
+        for j=1:length(ranges{i}.molecules)
+            comtemp=comtemp+ranges{i}.molecules{j}.com;
+        end
+        ranges{i}.com=comtemp/length(ranges{i}.molecules);
+    else
+        ranges{i}.com=comtemp/areasum;
+    end
 end
 
 out=ranges;

@@ -38,7 +38,7 @@ for i=1:l
     
     parameters(nmolecules+1)=resolutionbycalibration(calibration,molecules{i}.com); %resolution
     parameters(nmolecules+2)=massoffsetbycalibration(calibration,molecules{i}.com); %x-offset
-        
+    
     ind=findmassrange2(massaxis,molecules(involved),parameters(nmolecules+1),parameters(nmolecules+2),10);
     %ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
     
