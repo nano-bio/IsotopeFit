@@ -11,6 +11,10 @@ function out = generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alte
 %   alternativenames... voluntary list of alternative names for long
 %       molecule formulas
 
+if exist(folder)==0
+    mkdir(folder);
+    fprintf('Folder %s generated\n',folder);
+end
 
 if nargin==5
     alternativenames=clusterlist;

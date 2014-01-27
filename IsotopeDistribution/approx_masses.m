@@ -26,10 +26,6 @@ while a<=minmassdistance
     [a,ix]=min(massdiff);
 end
 
-
-
-
-
 out=[mass_dist,p_dist];
 
 end

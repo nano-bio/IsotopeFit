@@ -7,7 +7,7 @@ if isempty(comlist)
     massoffset=0;
     resolution=3000;
 else
-    if (com>=comlist(1))&&(com<=comlist(end))
+    if (com>=comlist(1)-0.1)&&(com<=comlist(end)+0.1)
         massoffset=pchipmod(comlist,massoffsetlist,com);
         resolution=pchipmod(comlist,resolutionlist,com);
     else

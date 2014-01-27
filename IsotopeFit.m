@@ -174,7 +174,7 @@ uicontrol(Parent,'style','pushbutton',...
           'Units','normalized',...
           'Position',gridpos(18,16,1,2,14,14,0.01,0.04));
       
-uicontrol(Parent,'style','popupmenu',...
+ListMethode = uicontrol(Parent,'style','popupmenu',...
           'string',{'Ranges', 'Molecules'},...
           'Units','normalized',...
           'Position',gridpos(18,16,1,2,15,16,0.01,0.04));
@@ -183,7 +183,8 @@ uicontrol(Parent,'style','popupmenu',...
 
 mfile = uimenu('Label','File');
     uimenu(mfile,'Label','Testdata','Callback',@test);
-    uimenu(mfile,'Label','Save','Callback',@save_file);
+    uimenu(mfile,'Label','Save','Callback',@(a,b) save_file(a,b,'save'));
+    uimenu(mfile,'Label','Save as...','Callback',@(a,b) save_file(a,b,'saveas'));
     uimenu(mfile,'Label','Open','Callback',@open_file);
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
@@ -204,19 +205,35 @@ mfile = uimenu('Label','File');
       
 addpath('DERIVESTsuite');
 addpath('FMINSEARCHBND');
+addpath('IsotopeDistribution');
 
-handles=guidata(Parent);
-%bg correction standard values
-handles.bgcorrectiondata.startmass=-inf;
-handles.bgcorrectiondata.endmass=+inf;
-handles.bgcorrectiondata.ndiv=10;
-handles.bgcorrectiondata.polydegree=3;
-handles.bgcorrectiondata.percent=50;
-handles.bgcorrectiondata.bgpolynom=0;
+init();
 
-%initial calibration data
-handles.calibration=standardcalibration();
-guidata(Parent,handles);
+    function init()
+        handles=guidata(Parent);
+        %bg correction standard values
+        handles.bgcorrectiondata.startmass=-inf;
+        handles.bgcorrectiondata.endmass=+inf;
+        handles.bgcorrectiondata.ndiv=10;
+        handles.bgcorrectiondata.polydegree=3;
+        handles.bgcorrectiondata.percent=50;
+        handles.bgcorrectiondata.bgpolynom=0;
+        
+        %fileinfo standard values
+        handles.fileinfo.originalfilename='';
+        handles.fileinfo.filename='';
+        handles.fileinfo.pathname=[pwd,'\'];
+        
+        %no molecules at start
+        handles.molecules={};
+                
+        set(ListMolecules,'Value',1);
+        set(ListMolecules,'String','');
+        
+        %initial calibration data
+        handles.calibration=standardcalibration();
+        guidata(Parent,handles);
+    end
     
     function menuexportdataclick(hObject,eventdata)
         handles=guidata(hObject);
@@ -407,6 +424,8 @@ guidata(Parent,handles);
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata.bgpolynom);
         
         handles.calibration= calibrate(peakdata,handles.molecules,handles.calibration);
+            
+        
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
         guidata(Parent,handles);
     end
@@ -442,6 +461,8 @@ guidata(Parent,handles);
                     handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata.bgpolynom);
                     handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
                     
+                    handles.fileinfo.filename=filename;
+                    handles.fileinfo.pathname=pathname;
                     
                     guidata(Parent,handles);
                     
@@ -449,6 +470,7 @@ guidata(Parent,handles);
                     
                     calibrationmenu('on','on');
                 case 2 %h5
+                    init();
                     handles.raw_peakdata(:,1) = hdf5read(fullfile(pathname,filename),'/FullSpectra/MassAxis')';
                     handles.raw_peakdata(:,2) = hdf5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum')';
                     handles.startind=1;
@@ -457,9 +479,13 @@ guidata(Parent,handles);
                     
                     handles.calibration=standardcalibration;
                     
+                    handles.fileinfo.originalfilename=filename(1:end-3);
+                    handles.fileinfo.pathname=pathname;
+                    
                     guidata(Parent,handles);
                     calibrationmenu('on','off');
                 case 3 %ASCII
+                    init();
                     handles.raw_peakdata = load(fullfile(pathname,filename));
                     
                     handles.startind=1;
@@ -467,6 +493,9 @@ guidata(Parent,handles);
                     handles.peakdata=handles.raw_peakdata;
                     
                     handles.calibration=standardcalibration;
+                    
+                    handles.fileinfo.originalfilename=filename(1:end-4);
+                    handles.fileinfo.pathname=pathname;
                     
                     guidata(Parent,handles);
                     calibrationmenu('on','off');
@@ -486,16 +515,23 @@ guidata(Parent,handles);
         out.namelist={};
     end
 
-    function save_file(hObject,eventdata)
-        [filename, pathname, filterindex] = uiputfile( ...
-            {'*.ifd','IsotopeFit data file (*.ifd)'
-            '*.*', 'All Files (*.*)'},...
-            'Save as');
+    function save_file(hObject,eventdata,methode)
+        handles=guidata(Parent);
+        
+        if strcmp(methode,'saveas')||strcmp(handles.fileinfo.filename,'')
+            [filename, pathname, filterindex] = uiputfile( ...
+                {'*.ifd','IsotopeFit data file (*.ifd)'
+                '*.*', 'All Files (*.*)'},...
+                'Save as',[handles.fileinfo.pathname,handles.fileinfo.originalfilename,'.ifd']);
+        else
+            filename=handles.fileinfo.originalfilename;
+            pathname=handles.fileinfo.pathname;  
+        end
         
         
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-            handles=guidata(Parent);
+            
             
             data.raw_peakdata=handles.raw_peakdata;
             %data.bgpolynom=handles.bgpolynom;
@@ -506,7 +542,9 @@ guidata(Parent,handles);
             data.bgcorrectiondata=handles.bgcorrectiondata;
             
             save(fullfile(pathname,filename),'data');
-
+            handles.fileinfo.filename=filename;
+            handles.fileinfo.pathname=pathname;
+            guidata(Parent,handles);
          end
     end
 
@@ -519,7 +557,8 @@ guidata(Parent,handles);
     function plotmolecule(index)
         handles=guidata(Parent);
 
-        involvedmolecules=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,0.3);
+        %involvedmolecules=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,0.3);
+        involvedmolecules=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,2);
         
         com=calccomofmolecules(handles.molecules(involvedmolecules));
 
@@ -660,10 +699,10 @@ guidata(Parent,handles);
         switch get(hObject,'String')
             case 'Fit this'
                 involved=findinvolvedmolecules(handles.molecules,[1:length(handles.molecules)],index,0.3);
-                handles.molecules(involved)=fitwithcalibration(handles.molecules(involved),handles.peakdata,handles.calibration);
+                handles.molecules(involved)=fitwithcalibration(handles.molecules(involved),handles.peakdata,handles.calibration,get(ListMethode,'Value'));
                 
             case 'Fit all'
-                handles.molecules=fitwithcalibration(handles.molecules,handles.peakdata,handles.calibration);
+                    handles.molecules=fitwithcalibration(handles.molecules,handles.peakdata,handles.calibration,get(ListMethode,'Value'));
         end
              guidata(hObject,handles);
         plotmolecule(index);

@@ -1,144 +1,82 @@
-function out = fitmoleculelist(datafile,folder,rangeth,startvalues,rangetofit)
-%UNTITLED5 Summary of this function goes here
-%   Detailed explanation goes here
+function out = fitmolecules(peakdata,molecules,calibration,areaup,deltares,deltam)
+%out = fitranges(peakdata,ranges)
+%   fits molecules organized in ranges to peakdata
+%   fits area, resolution and massoffset
 
-addpath('DERIVESTsuite');
-addpath('FMINSEARCHBND');
+massaxis=peakdata(:,1)';
+spec_measured=peakdata(:,2)';
 
+l=length(molecules);
 
-choice = questdlg('Do you want to perform a background correction?', ...
-	'Background correction', ...
-	'Yes','No','Yes');
-% Handle response
-drawnow;
-switch choice
-    case 'Yes'
-        [massaxis spec_measured]=bg_correction(datafile);
-    case 'No'
-        A=load(datafile);
-        
-        massaxis=A(:,1)';
-        spec_measured=A(:,2)';
+h = waitbar(0,'Please wait...'); 
+
+arealist=[];
+for i=1:l
+    arealist(i)=molecules{i}.area;
 end
 
-moleculelist=foldertolist(folder);
-%startvalues=[repmat(startvalues(1),1,length(moleculelist)) startvalues(2) startvalues(3)]
-if length(startvalues)-2~=length(moleculelist)
-    fprintf('ERROR: Check number of starting values!!\n');
-    return;
-end
+[~,ix]=sort(0-arealist); %start with highest molecule
 
-molecules=loadmolecules(folder,moleculelist,massaxis,rangeth,startvalues);
+molecules=molecules(ix);
 
-
-%find massranges and involved molecules
-rangecount=1;
-ranges{1}.minind=molecules{1}.minind;
-ranges{1}.maxind=molecules{1}.maxind;
-ranges{1}.minmass=molecules{1}.minmass;
-ranges{1}.maxmass=molecules{1}.maxmass;
-ranges{1}.molecules{1}=molecules{1};
-
-for i=2:length(molecules)
-    if molecules{i}.minmass<=ranges{rangecount}.maxmass %molecule massrange ovelaps
-        ranges{rangecount}.maxind=molecules{i}.maxind;
-        ranges{rangecount}.maxmass=molecules{i}.maxmass;
-        ranges{rangecount}.molecules{end+1}=molecules{i};
-    else %new massrange
-        rangecount=rangecount+1;
-        ranges{rangecount}.minind=molecules{i}.minind;
-        ranges{rangecount}.maxind=molecules{i}.maxind;
-        ranges{rangecount}.minmass=molecules{i}.minmass;
-        ranges{rangecount}.maxmass=molecules{i}.maxmass;
-        ranges{rangecount}.molecules{1}=molecules{i};
-    end
-end
-
-fprintf('\nFound %i massranges. start fitting...\n',rangecount);
-
-if nargin==5
-    startrange=rangetofit;
-    endrange=rangetofit;
-else
-    startrange=1;
-    endrange=rangecount;
-end
-
-for i=startrange:endrange
+spec_calc=zeros(1,size(peakdata,1));
+indtest=findmassrange(massaxis,molecules,1000,0,10);
+for i=1:l
     drawnow;
-    nmolecules=length(ranges{i}.molecules);
-    parameters=zeros(1,nmolecules+2);
-    fprintf('Fitting massrange %i (%5.1f - %5.1f): %i molecules\n',i, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
-    for j=1:nmolecules
-        parameters(j)=ranges{i}.molecules{j}.area;
-    end
-    parameters(nmolecules+1)=startvalues(end-1); %resolution
-    parameters(nmolecules+2)=startvalues(end); %x-offset
-
-    %fitparam=fminsearch(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),parameters,optimset('MaxFunEvals',10000,'MaxIter',10000));
-    fitparam=fminsearchbnd(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),parameters,[repmat(0,1,length(parameters)-2),parameters(end-1)-parameters(end-1)*0.5, -0.5],[parameters(1:end-2)*10000,parameters(end-1)+parameters(end-1)*0.5, 0.5],optimset('MaxFunEvals',5000,'MaxIter',5000));
     
-    fprintf('Error estimation...\n');
+    involved=findinvolvedmolecules(molecules,i:l,i,0.3);
+    
+    nmolecules=length(involved);
+    parameters=zeros(1,nmolecules+2);
+    fprintf('Fitting molecule %i of %i (%i molecules involved)\n',i,l,nmolecules);
+    
+    k=1;
+    for j=involved
+        parameters(k)=molecules{j}.area;
+        k=k+1;
+    end
+    
+    parameters(nmolecules+1)=resolutionbycalibration(calibration,molecules{i}.com); %resolution
+    parameters(nmolecules+2)=massoffsetbycalibration(calibration,molecules{i}.com); %x-offset
+        
+    ind=findmassrange2(massaxis,molecules(involved),parameters(nmolecules+1),parameters(nmolecules+2),10);
+    %ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
+    
+    fitparam=fminsearchbnd(@(x) msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x),parameters,...
+        [zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam],...
+        [ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam],...
+        optimset('MaxFunEvals',5000,'MaxIter',5000));
+    
+    %fprintf('Error estimation...\n');
     %error estimation
-    dof=ranges{i}.maxind-ranges{i}.minind-2;
-    sdrq = (msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,fitparam))/dof;
-    J = jacobianest(@(x) multispec(massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),fitparam);
-    sigma = sdrq*inv(J'*J);
+     
+    dof=sum(ind)-2;
+    sdrq = (msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),fitparam))/dof;
+    J = jacobianest(@(x) multispecparameters(massaxis(ind)-spec_calc(ind),molecules(involved),x),fitparam);
+    sigma = sdrq*pinv(J'*J);
     %sigma = b/(J'*J);
     
     stderr = sqrt(diag(sigma))';
     
-%     %std error estimation
-%     [h, err]=hessian(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),fitparam);
-%     stderr=diag(err)';
-%     err(1:end-1)
-% 
-% %     [fitparam,fval,exitflag,output,grad,hessian]=fminunc(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),parameters,optimset('MaxFunEvals',10000,'MaxIter',10000));
-% %     
-% %     %std error estimation
-% %     cov=inv(hessian);
-% %     stderr=sqrt(diag(cov)');
-% %     stderr
+        
+    %update calculated spec
+    spec_calc=spec_calc+multispecparameters(massaxis,molecules(i),fitparam([1,end-1,end]));
     
-    for j=1:nmolecules
-        ranges{i}.molecules{j}.area=fitparam(j); %read out fitted areas for every molecule
-        ranges{i}.molecules{j}.areaerror=stderr(j); %read out fitted areas for every molecule
+    %plot(axes,massaxis(indtest),spec_measured(indtest)-spec_calc(indtest));
+    
+    k=1;
+    for j=involved
+        molecules{j}.area=fitparam(k); %read out fitted areas for every molecule
+        molecules{j}.areaerror=stderr(k); %read out fitted areas for every molecule
+        k=k+1;
     end
-    ranges{i}.massoffset=fitparam(end);
-    ranges{i}.resolution=fitparam(end-1);
-    ranges{i}.massoffseterror=stderr(end);
-    ranges{i}.resolutionerror=stderr(end-1);
+
+    waitbar(i/l);
 end
 fprintf('Done.\n')
-%plot(massaxis,spec_measured,massaxis,multispec(massaxis,molecules,out));
+close(h);
 
+out(ix)=molecules;
 
-subplot(2,2,1);
-plot(massaxis,spec_measured,'Color',[0.7 0.7 0.7]);
-hold on;
-plot(massaxis,multispecranges(massaxis,ranges(startrange:endrange)),'Color',[0 0 0],'LineWidth',1);
-hold off;
-
-subplot(2,2,2);
-plotmolecules(ranges(startrange:endrange));
-
-subplot(2,2,3);
-plotmassoffset(ranges(startrange:endrange));
-
-subplot(2,2,4);
-plotresolution(ranges(startrange:endrange));
-
-
-fprintf('\n--------------------------------------------------------\n');
-fprintf('Found mass-offsets and resolutions for different ranges:\n');
-fprintf('Range\t Mass-offset\t Resolution (FWHM) \n');
-for i=startrange:endrange;
-    fprintf('%i \t %e+-%e \t %e+-%e \n',i,ranges{i}.massoffset,ranges{i}.massoffseterror,ranges{i}.resolution,ranges{i}.resolutionerror);
-end
-
-write_ranges(ranges,'out.txt');
-write_startvalues(ranges,'startvalues.txt');
-
-out=ranges;
 end
 

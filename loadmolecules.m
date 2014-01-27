@@ -19,7 +19,7 @@ drawnow;
 l=length(moleculelist);
 for i=1:l
     %fprintf('%s ',moleculelist{i});if mod(i,6)==0, fprintf('\n'); end;
-    out{i}.peakdata=load([folder '\' moleculelist{i}]);
+    out{i}.peakdata=renorm(load([folder '\' moleculelist{i}]));
     out{i}.name=moleculelist{i}(1:end-4);
 %     minmasses(i)=data{i}.peakdata(1,1);
 %     maxmasses(i)=data{i}.peakdata(end,1);
@@ -62,8 +62,14 @@ for i = 1:length(out)
     out{i}.minind=mass2ind(massaxis,out{i}.minmass);
     out{i}.maxind=mass2ind(massaxis,out{i}.maxmass);
 
+    out{i}.name
     %Area guessing:
-    out{i}.area=sum(peakdata(out{i}.minind:out{i}.maxind,2).*diff(peakdata(out{i}.minind:out{i}.maxind+1,1)));
+    if out{i}.maxind==out{i}.minind %molecule out of massrange
+        out{i}.area=0;
+    else
+        out{i}.area=max(0,sum(peakdata(out{i}.minind:out{i}.maxind-1,2).*diff(peakdata(out{i}.minind:out{i}.maxind,1))));
+    end
+    
     out{i}.areaerror=+inf;
     
     minmasses(i)=out{i}.minmass;

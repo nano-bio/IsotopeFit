@@ -354,18 +354,18 @@ drawnow;
         handles=guidata(hObject);
         
         for i=1:length(handles.ranges{rangeindex}.molecules)
-            [percent,ix]=max(handles.ranges{rangeindex}.molecules{i}.peakdata(:,2))
+            [percent,ix]=max(handles.ranges{rangeindex}.molecules{i}.peakdata(:,2));
             mass=handles.ranges{rangeindex}.molecules{i}.peakdata(ix,1);
                        
             sigma=mass/handles.ranges{rangeindex}.resolution; %guess sigma by center of mass of first molecule
             
-            minmass=mass+handles.ranges{rangeindex}.massoffset-sigma
-            maxmass=mass+handles.ranges{rangeindex}.massoffset+sigma
+            minmass=mass+handles.ranges{rangeindex}.massoffset-sigma;
+            maxmass=mass+handles.ranges{rangeindex}.massoffset+sigma;
             
             minind=mass2ind(handles.peakdata(:,1)',minmass);
             maxind=mass2ind(handles.peakdata(:,1)',maxmass);
             
-            handles.ranges{rangeindex}.molecules{i}.area=sum(peakdata(minind:maxind,2).*diff(peakdata(minind:maxind+1,1)))/(percent*0.862); %68.2% in [-sigma +sigma]
+            handles.ranges{rangeindex}.molecules{i}.area=max(0,sum(peakdata(minind:maxind,2).*diff(peakdata(minind:maxind+1,1)))/(percent*0.862)); %68.2% in [-sigma +sigma]
             handles.molecules{handles.ranges{rangeindex}.molecules{i}.rootindex}.area=handles.ranges{rangeindex}.molecules{i}.area;
         end
         
@@ -644,7 +644,7 @@ drawnow;
         %calculate and plot sum spectrum of involved molecules if current
         %molecule is in calibrationlist
         if inrange
-            sumspectrum=multispec(handles.molecules(involvedmolecules),...
+            sumspectrum=multispec(handles.ranges{rangeindex}.molecules,...
                 currentresolution,...
                 currentmassoffset,...
                 calcmassaxis);

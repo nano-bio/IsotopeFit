@@ -5,7 +5,7 @@ function out = splinemod(x,y,xx)
 if length(x)==1
     out=ones(size(xx,1),size(xx,2))*y(1);
 else
-    out=spline(x,y,xx);
+    out=double(spline(x,y,xx));
 end
 
 end
