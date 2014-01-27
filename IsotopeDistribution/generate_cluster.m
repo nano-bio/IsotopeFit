@@ -11,7 +11,7 @@ function out = generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alte
 %   alternativenames... voluntary list of alternative names for long
 %       molecule formulas
 
-if exist(folder)==0
+if ~(exist(folder)==7)
     mkdir(folder);
     fprintf('Folder %s generated\n',folder);
 end
@@ -63,9 +63,6 @@ for i=1:nfiles
                  filename=[filename num2str(clusternumbers(j))];
              end
          end
-     end
-     if ~(exist(folder) == 7)
-         mkdir(folder);
      end
      if ~strcmp(filename,'')
          dlmwrite([folder '\' filename '.txt'],d,'delimiter','\t','precision','%e');
