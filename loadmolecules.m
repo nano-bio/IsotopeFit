@@ -62,7 +62,7 @@ for i = 1:length(out)
     out{i}.minind=mass2ind(massaxis,out{i}.minmass);
     out{i}.maxind=mass2ind(massaxis,out{i}.maxmass);
 
-    out{i}.name
+    
     %Area guessing:
     if out{i}.maxind==out{i}.minind %molecule out of massrange
         out{i}.area=0;

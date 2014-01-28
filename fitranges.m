@@ -18,25 +18,37 @@ for i=1:l
     nmolecules=length(ranges{i}.molecules);
     parameters=zeros(1,nmolecules+2);
     fprintf('Fitting massrange %i (%5.1f - %5.1f): %i molecules\n',i, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
+    
+    ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
+        
     for j=1:nmolecules
         if ranges{i}.molecules{j}.area==0 %dirty workaround: when area=0, no fitting. dont know why!
             parameters(j)=0.1;
         else
             parameters(j)=ranges{i}.molecules{j}.area;
         end
+        parameters(j)=max(0,sum(peakdata(ind,2).*[0;diff(peakdata(ind,1))]));
     end
+    
+
     parameters(nmolecules+1)=ranges{i}.resolution; %resolution
     parameters(nmolecules+2)=ranges{i}.massoffset; %x-offset
     
     %[minind,maxind]=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
-    ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
+    
+    
+    
     %ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
     
     %fitparam=fminsearch(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),parameters,optimset('MaxFunEvals',10000,'MaxIter',10000));
+    
     fitparam=fminsearchbnd(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
         [zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam],...
         [ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam],...
         optimset('MaxFunEvals',5000,'MaxIter',5000));
+    
+    %fitparam=fminsearch(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
+    %    optimset('MaxFunEvals',5000,'MaxIter',5000));
     
     %fprintf('Error estimation...\n');
     %error estimation

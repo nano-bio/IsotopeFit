@@ -1,16 +1,16 @@
-A=double(load('C702_H2O.txt'));
+A=double(load('test\C70_H2O.txt'));
 
 m=A(:,1)';
 y=A(:,2)';
 
-ys=smooth(y,2);
+%ys=smooth(y,2);
 
 startvalue=1500;
 l=length(ys);
 
-nsteps=10;
+nsteps=100;
 step=(l-startvalue)/nsteps;
-nminima=round(step/10);
+nminima=round(step*0.2); %50 percent
 
 
 for i=1:nsteps;
@@ -23,9 +23,12 @@ end
 
 p=polyfit(bgm,bgy,2)
 
-bgydata=p(1)*m.^2+p(2)*m+p(3);
+%bgydata=p(1)*m.^2+p(2)*m+p(3);
 
-dy=diff(y)./diff(m);
+[bgm,ix]=sort(bgm);
+bgy=bgy(ix);
+
+bgydata=interp1(bgm,bgy,m,'pchip','extrap');
 
 % [miny,ix]=sort(y);
 % 
@@ -35,8 +38,6 @@ dy=diff(y)./diff(m);
 % minmasses=minmasses(1:nminima)
 % miny=miny(1:nminima)
 
-ix=find(y<0.5);
-%plot(m(ix),y(ix));
 plot(m,y,m,bgydata);
 %plot(m,y-bgydata);
 

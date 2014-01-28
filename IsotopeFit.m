@@ -217,7 +217,10 @@ init();
         handles.bgcorrectiondata.ndiv=10;
         handles.bgcorrectiondata.polydegree=3;
         handles.bgcorrectiondata.percent=50;
-        handles.bgcorrectiondata.bgpolynom=0;
+        %handles.bgcorrectiondata.bgpolynom=0;
+        handles.bgcorrectiondata.bgm=[];
+        handles.bgcorrectiondata.bgy=[];
+        
         
         %fileinfo standard values
         handles.fileinfo.originalfilename='';
@@ -309,6 +312,7 @@ init();
         [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring);
         guidata(hObject,handles);
         
+        set(ListSeries,'Value',1);
         set(ListSeries,'String',serieslist);
         
     end
@@ -413,7 +417,7 @@ init();
         handles=guidata(Parent);
         [handles.bgcorrectiondata, handles.startind, handles.endind]=bg_correction(handles.raw_peakdata,handles.bgcorrectiondata);    
         handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
-        handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata.bgpolynom);
+        handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
         guidata(Parent,handles);
     end
 
@@ -421,7 +425,7 @@ init();
         handles=guidata(Parent);
         
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
-        peakdata=subtractbg(peakdata,handles.bgcorrectiondata.bgpolynom);
+        peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
         handles.calibration= calibrate(peakdata,handles.molecules,handles.calibration);
             
@@ -452,16 +456,22 @@ init();
                     % Background correction data
                     handles.bgcorrectiondata=data.bgcorrectiondata;
                     
+                    if ~exist('handles.bgcorrectiondata.bgm') %compatibility: old bg correction methode
+                        handles.bgcorrectiondata.bgm=[];
+                        handles.bgcorrectiondata.bgy=[];
+                    end
+                    
                     handles.molecules=data.molecules;
                     
                     %Calibration data
                     handles.calibration=data.calibration;
                     
                     handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
-                    handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata.bgpolynom);
+                    handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
                     handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
                     
                     handles.fileinfo.filename=filename;
+                    handles.fileinfo.originalfilename=filename;
                     handles.fileinfo.pathname=pathname;
                     
                     guidata(Parent,handles);
@@ -524,7 +534,7 @@ init();
                 '*.*', 'All Files (*.*)'},...
                 'Save as',[handles.fileinfo.pathname,handles.fileinfo.originalfilename,'.ifd']);
         else
-            filename=handles.fileinfo.originalfilename;
+            filename=handles.fileinfo.filename;
             pathname=handles.fileinfo.pathname;  
         end
         
@@ -613,7 +623,7 @@ init();
         [handles.bgcorrectiondata, handles.startind, handles.endind]=bg_correction(handles.raw_peakdata,handles.bgcorrectiondata);
         
         handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
-        handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata.bgpolynom);
+        handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
         
         %Load molecules in Structure
         moleculelist=foldertolist(folder);
@@ -636,9 +646,12 @@ init();
         out=peakdata(ix1:ix2,:);
     end
 
-    function out=subtractbg(peakdata,bgpolynom)
+    function out=subtractbg(peakdata,bgcorrectiondata)
         out=peakdata;
-        out(:,2)=out(:,2)-polynomial(bgpolynom,peakdata(:,1));
+        %out(:,2)=out(:,2)-polynomial(bgpolynom,peakdata(:,1));
+        if length(bgcorrectiondata.bgm)>1
+            out(:,2)=out(:,2)-interp1(bgcorrectiondata.bgm',bgcorrectiondata.bgy',peakdata(:,1),'pchip','extrap');
+        end
     end
 
     function out=subtractmassoffset(peakdata,calibration)
