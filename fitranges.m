@@ -10,9 +10,15 @@ l=length(ranges);
 
 h = waitbar(0,'Please wait...'); 
 
+if matlabpool('size') == 0 % checking to see if my pool is already open
+    matlabpool open 2
+end
 
+% we use a copy of the original ranges variable,
+% because parfor cannot access the original one! 
+rangestemp=ranges;
 
-for i=1:l
+parfor i=1:l
     
     drawnow;
     nmolecules=length(ranges{i}.molecules);
@@ -61,21 +67,22 @@ for i=1:l
     
     stderr = sqrt(diag(sigma))';
     
+    moleculestemp = {};
     for j=1:nmolecules
-        ranges{i}.molecules{j}.area=fitparam(j); %read out fitted areas for every molecule
-        ranges{i}.molecules{j}.areaerror=stderr(j); %read out fitted areas for every molecule
+        moleculestemp{j}.area=fitparam(j); %read out fitted areas for every molecule
+        moleculestemp{j}.areaerror=stderr(j); %read out fitted areas for every molecule
     end
     
-    ranges{i}.massoffset=fitparam(end);
-    ranges{i}.resolution=fitparam(end-1);
-    ranges{i}.massoffseterror=stderr(end);
-    ranges{i}.resolutionerror=stderr(end-1);
-    waitbar(i/l);
+    rangestemp{i}.massoffset=fitparam(end);
+    rangestemp{i}.resolution=fitparam(end-1);
+    rangestemp{i}.massoffseterror=stderr(end);
+    rangestemp{i}.resolutionerror=stderr(end-1);
+    rangestemp{i}.molecules = moleculestemp;
 end
 fprintf('Done.\n')
 close(h);
 
-out=calccomofranges(ranges);
+out=calccomofranges(rangestemp);
 
 end
 
