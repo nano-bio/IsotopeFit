@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="Icon.svg"
+   inkscape:export-filename="Z:\Experiments\STM\matlab\IsotopeFit\Icon\Icon.png"
+   inkscape:export-xdpi="78.545456"
+   inkscape:export-ydpi="78.545456">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="89.132178"
+     inkscape:cy="759.94759"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:snap-global="true"
+     inkscape:snap-grids="false"
+     inkscape:snap-bbox="true"
+     inkscape:bbox-paths="true"
+     inkscape:bbox-nodes="true"
+     inkscape:snap-bbox-edge-midpoints="true"
+     inkscape:snap-bbox-midpoints="true"
+     inkscape:object-paths="true"
+     inkscape:snap-intersection-paths="true"
+     inkscape:object-nodes="true"
+     inkscape:snap-smooth-nodes="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1028"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2987"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#ffffff;stroke:none"
+       id="rect2989"
+       width="55"
+       height="55"
+       x="59.910713"
+       y="222.36218"
+       inkscape:export-filename="Z:\Experiments\STM\matlab\IsotopeFit\Icon\IFgray.png"
+       inkscape:export-xdpi="417.27274"
+       inkscape:export-ydpi="417.27274" />
+    <path
+       style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#808080;fill-opacity:1;stroke:none;stroke-width:5.23199987000000010;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+       d="m 73.59375,227.5 c -1.611335,0 -2.872533,1.12057 -3.5,2.09375 -0.627467,0.97318 -0.955824,1.97885 -1.25,3.09375 -0.588351,2.22979 -0.919484,4.8972 -1.25,7.5 -0.330516,2.6028 -0.675901,5.15912 -1.09375,6.84375 -0.160902,0.64871 -0.312817,0.96983 -0.4375,1.25 l -6.28125,0 0,5.21875 7.15625,0 c 1.649709,0 2.883097,-1.18673 3.46875,-2.15625 0.585653,-0.96952 0.913174,-1.9565 1.1875,-3.0625 0.548653,-2.21199 0.858267,-4.8448 1.1875,-7.4375 0.24613,-1.93826 0.515224,-3.55538 0.8125,-5.09375 0.302055,1.54087 0.616737,3.15074 0.875,5.09375 0.345289,2.59775 0.6579,5.24145 1.25,7.46875 0.29605,1.11365 0.653585,2.15279 1.28125,3.125 0.627665,0.97221 1.888665,2.0625 3.5,2.0625 2.129269,0 3.78405,-1.45486 4.65625,-2.8125 0.8722,-1.35764 1.364431,-2.80785 1.8125,-4.15625 0.1729,-0.52032 0.281649,-0.81536 0.4375,-1.28125 0.156499,0.46769 0.295035,0.75848 0.46875,1.28125 0.448069,1.3484 0.9403,2.79861 1.8125,4.15625 0.8722,1.35764 2.495731,2.8125 4.625,2.8125 1.246869,0 2.402056,-0.5704 3.15625,-1.28125 0.754194,-0.71085 1.258266,-1.51776 1.65625,-2.34375 0.795968,-1.65197 1.24599,-3.50971 1.6875,-5.28125 0.14622,-0.58672 0.26948,-0.94881 0.40625,-1.5 0.13677,0.55119 0.26003,0.91328 0.40625,1.5 0.44151,1.77154 0.92278,3.62928 1.71875,5.28125 0.39798,0.82599 0.87081,1.6329 1.625,2.34375 0.75419,0.71085 1.90938,1.28125 3.15625,1.28125 l 6.90625,0 0,-5.21875 -6.5625,0 c -0.0854,-0.10167 -0.24625,-0.29057 -0.4375,-0.6875 -0.45571,-0.94578 -0.92204,-2.55787 -1.34375,-4.25 -0.42171,-1.69213 -0.80546,-3.45723 -1.34375,-5 -0.26914,-0.77139 -0.53062,-1.51044 -1.0625,-2.25 -0.53188,-0.73956 -1.6238,-1.65625 -3.0625,-1.65625 -1.438689,0 -2.499367,0.91669 -3.03125,1.65625 -0.531883,0.73956 -0.824604,1.47861 -1.09375,2.25 -0.538292,1.54277 -0.922034,3.30787 -1.34375,5 -0.421716,1.69213 -0.888044,3.30422 -1.34375,4.25 -0.113927,0.23645 -0.158912,0.27089 -0.25,0.40625 -0.04085,-0.0613 0.06761,0.0463 -0.0625,-0.15625 -0.379475,-0.59068 -0.834846,-1.7194 -1.25,-2.96875 -0.415154,-1.24935 -0.819088,-2.58162 -1.40625,-3.84375 -0.293581,-0.63107 -0.622193,-1.25288 -1.21875,-1.875 -0.596557,-0.62212 -1.64716,-1.28125 -2.8125,-1.28125 -1.16534,0 -2.215943,0.65913 -2.8125,1.28125 -0.596557,0.62212 -0.925169,1.24394 -1.21875,1.875 -0.587162,1.26213 -0.959846,2.5944 -1.375,3.84375 -0.353809,1.06474 -0.722007,1.89708 -1.0625,2.53125 -0.06237,-0.18728 -0.09667,-0.21338 -0.15625,-0.4375 -0.443768,-1.66932 -0.779711,-4.21475 -1.125,-6.8125 -0.345289,-2.59775 -0.68915,-5.24145 -1.28125,-7.46875 -0.29605,-1.11365 -0.622335,-2.12154 -1.25,-3.09375 C 76.497335,228.62154 75.205085,227.5 73.59375,227.5 z"
+       id="path2991"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="Z:\Experiments\STM\matlab\IsotopeFit\Icon\IFgray.png"
+       inkscape:export-xdpi="417.27274"
+       inkscape:export-ydpi="417.27274" />
+    <g
+       id="g3789"
+       transform="translate(-1.0334818,0)"
+       inkscape:export-filename="Z:\Experiments\STM\matlab\IsotopeFit\Icon\IFgray.png"
+       inkscape:export-xdpi="417.27274"
+       inkscape:export-ydpi="417.27274"
+       style="fill:#808080">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3765"
+         d="m 72,257.25503 0,2.43923 0,2.43922 7.208415,0 0,-2.43922 0,-2.43923 -7.208415,0 z m 0,6.88723 0,7.0307 0,2.43922 7.208415,0 0,-2.43922 0,-7.0307 -7.208415,0 z"
+         style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#808080;fill-opacity:1;stroke:none;stroke-width:8.50000000000000000;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path3767"
+         d="m 85.568781,257.25503 0,2.43923 0,4.448 0,4.87844 0,2.15226 0,2.43922 7.208415,0 0,-2.43922 0,-2.15226 4.87628,0 3.604204,0 0,-4.87844 -3.604204,0 -4.87628,0 0,-2.00878 8.506984,0 3.60421,0 0,-4.87845 -3.60421,0 -12.111192,0 -3.604207,0 z"
+         style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#808080;fill-opacity:1;stroke:none;stroke-width:8.50000000000000000;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans" />
+    </g>
+  </g>
+</svg>

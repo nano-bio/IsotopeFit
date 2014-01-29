@@ -67,7 +67,7 @@ for i = 1:length(out)
     if out{i}.maxind==out{i}.minind %molecule out of massrange
         out{i}.area=0;
     else
-        out{i}.area=max(0,sum(peakdata(out{i}.minind:out{i}.maxind-1,2).*diff(peakdata(out{i}.minind:out{i}.maxind,1))));
+        out{i}.area=guessarea(peakdata(out{i}.minind:out{i}.maxind-1,:));
     end
     
     out{i}.areaerror=+inf;

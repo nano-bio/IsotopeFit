@@ -30,6 +30,7 @@ for i=1:l
         parameters(j)=max(0,sum(peakdata(ind,2).*[0;diff(peakdata(ind,1))]));
     end
     
+    maxarea=guessarea(peakdata(ind,:));
 
     parameters(nmolecules+1)=ranges{i}.resolution; %resolution
     parameters(nmolecules+2)=ranges{i}.massoffset; %x-offset
@@ -46,6 +47,8 @@ for i=1:l
         [zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam],...
         [ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam],...
         optimset('MaxFunEvals',5000,'MaxIter',5000));
+
+       
     
     %fitparam=fminsearch(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
     %    optimset('MaxFunEvals',5000,'MaxIter',5000));

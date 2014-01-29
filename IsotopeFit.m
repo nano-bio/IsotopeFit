@@ -221,6 +221,8 @@ init();
         handles.bgcorrectiondata.bgm=[];
         handles.bgcorrectiondata.bgy=[];
         
+        handles.peakdata=[];
+        handles.raw_peakdata=[];
         
         %fileinfo standard values
         handles.fileinfo.originalfilename='';
@@ -456,7 +458,7 @@ init();
                     % Background correction data
                     handles.bgcorrectiondata=data.bgcorrectiondata;
                     
-                    if ~exist('handles.bgcorrectiondata.bgm') %compatibility: old bg correction methode
+                    if ~isfield(handles.bgcorrectiondata,'bgm') %compatibility: old bg correction methode
                         handles.bgcorrectiondata.bgm=[];
                         handles.bgcorrectiondata.bgy=[];
                     end
@@ -471,7 +473,7 @@ init();
                     handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
                     
                     handles.fileinfo.filename=filename;
-                    handles.fileinfo.originalfilename=filename;
+                    handles.fileinfo.originalfilename=filename(1:end-4);
                     handles.fileinfo.pathname=pathname;
                     
                     guidata(Parent,handles);
