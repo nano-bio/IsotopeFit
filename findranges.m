@@ -4,7 +4,7 @@ function ranges = findranges(molecules,searchrange)
 %   output: out{rangenumber}.moleculese{moleculenumber}.[molecule structure]
 
 if isempty(molecules)
-    ranges={}
+    ranges={};
 else
     rangecount=1;
     ranges{1}.minind=molecules{1}.minind;

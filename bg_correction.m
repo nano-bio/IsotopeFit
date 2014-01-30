@@ -156,7 +156,6 @@ show(Parent,0);
         handles.signalcrop=handles.signal(handles.startind:handles.endind);
         
         guidata(hObject,handles);
-        handles.bgcorrectiondata.bgm
         plot(axis1,handles.massaxiscrop,handles.signalcrop,handles.massaxiscrop,interp1(handles.bgcorrectiondata.bgm,handles.bgcorrectiondata.bgy,handles.massaxiscrop,'pchip','extrap'));
         
         

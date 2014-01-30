@@ -1,4 +1,4 @@
-function out = fitwithcalibration(molecules,peakdata,calibration,methode)
+function out = fitwithcalibration(molecules,peakdata,calibration,methode,deltam,deltar)
 
 switch methode
     case 1
@@ -9,7 +9,7 @@ switch methode
             ranges{i}.massoffset=0;
         end
         
-        ranges=fitranges(peakdata,ranges,Inf,0,0.01);
+        ranges=fitranges(peakdata,ranges,Inf,deltar,deltam);
         
         k=1;
         for i=1:length(ranges)
@@ -19,7 +19,7 @@ switch methode
             end
         end
     case 2
-        out=fitmolecules(peakdata,molecules,calibration,Inf,0,0.001);
+        out=fitmolecules(peakdata,molecules,calibration,Inf,deltar,deltam);
 end
 
 end

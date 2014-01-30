@@ -11,12 +11,13 @@ l=length(ranges);
 h = waitbar(0,'Please wait...'); 
 
 if matlabpool('size') == 0 % checking to see if my pool is already open
-    matlabpool open 2
+    matlabpool open 4
 end
 
 % we use a copy of the original ranges variable,
 % because parfor cannot access the original one! 
 rangestemp=ranges;
+prog=0;
 
 parfor i=1:l
     
@@ -54,7 +55,7 @@ parfor i=1:l
         [ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam],...
         optimset('MaxFunEvals',5000,'MaxIter',5000));
 
-       
+    prog=prog+1;   
     
     %fitparam=fminsearch(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
     %    optimset('MaxFunEvals',5000,'MaxIter',5000));
@@ -70,17 +71,18 @@ parfor i=1:l
     
     stderr = sqrt(diag(sigma))';
     
-    moleculestemp = {};
     for j=1:nmolecules
-        moleculestemp{j}.area=fitparam(j); %read out fitted areas for every molecule
-        moleculestemp{j}.areaerror=stderr(j); %read out fitted areas for every molecule
+        rangestemp{i}.molecules{j}.area=fitparam(j); %read out fitted areas for every molecule
+        rangestemp{i}.molecules{j}.areaerror=stderr(j); %read out fitted areas for every molecule
     end
     
     rangestemp{i}.massoffset=fitparam(end);
     rangestemp{i}.resolution=fitparam(end-1);
     rangestemp{i}.massoffseterror=stderr(end);
     rangestemp{i}.resolutionerror=stderr(end-1);
-    rangestemp{i}.molecules = moleculestemp;
+   
+    %fprintf('%i\n',prog);
+    %waitbar(wbupdate/l);
 end
 fprintf('Done.\n')
 close(h);
