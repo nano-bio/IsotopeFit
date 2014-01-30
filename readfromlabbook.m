@@ -33,7 +33,19 @@ uicontrol(Parent,'style','pushbutton',...
           'string','Show',...
           'Callback',@show,...
           'Units','normalized',...
-          'Position',gridpos(layoutlines,layoutrows,10,10,3,3,0.02,0.02)); 
+          'Position',gridpos(layoutlines,layoutrows,10,10,3,3,0.02,0.02));
+
+uicontrol(Parent,'style','pushbutton',...
+          'string','Next',...
+          'Callback',@next,...
+          'Units','normalized',...
+          'Position',gridpos(layoutlines,layoutrows,1,1,2,2,0.02,0.02));
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','Previous',...
+          'Callback',@previous,...
+          'Units','normalized',...
+          'Position',gridpos(layoutlines,layoutrows,1,1,1,1,0.02,0.02)); 
       
 ListEntries=uicontrol(Parent,'Style','Listbox',...
     'Units','normalized',...
@@ -43,7 +55,7 @@ uicontrol(Parent,'style','pushbutton',...
           'string','OK',...
           'Callback',@okclick,...
           'Units','normalized',...
-          'Position',gridpos(layoutlines,layoutrows,1,1,2,2,0.02,0.02)); 
+          'Position',gridpos(layoutlines,layoutrows,1,1,3,3,0.02,0.02)); 
 
 %Update(Parent);
 
@@ -54,6 +66,8 @@ uicontrol(Parent,'style','pushbutton',...
 %A=load(file);
 handles=guidata(Parent);
 
+% default: no offset
+handles.offset = 0;
 
 % Abspeichern der Struktur 
 guidata(Parent,handles); 
@@ -82,8 +96,7 @@ drawnow;
     function show(hObject,eventdata)
         handles=guidata(hObject);
         count = str2num(get(e_entries,'String'));
-        
-        a = urlread(['http://138.232.72.25/clustof/csv/',num2str(count)]);
+        a = urlread(['http://138.232.72.25/clustof/csv/',num2str(count+handles.offset),'/',num2str(handles.offset)]);
         a = sprintf(a);
         
         f = textscan(a, '%u%s%s%s', 'Delimiter', '\t');
@@ -98,5 +111,18 @@ drawnow;
         guidata(hObject,handles);
     end
 
+    function next(hObject,eventdata)
+        handles=guidata(hObject);
+        handles.offset = handles.offset + str2num(get(e_entries,'String'));
+        guidata(hObject,handles);
+        show(Parent,0);
+    end
+
+    function previous(hObject,eventdata)
+        handles=guidata(hObject);
+        handles.offset = handles.offset - str2num(get(e_entries,'String'));
+        guidata(hObject,handles);
+        show(Parent,0);
+    end
 end
 
