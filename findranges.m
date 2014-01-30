@@ -15,8 +15,14 @@ else
     
     for i=2:length(molecules)
         if molecules{i}.minmass-searchrange<=ranges{rangecount}.maxmass %molecule massrange ovelaps
-            ranges{rangecount}.maxind=molecules{i}.maxind;
-            ranges{rangecount}.maxmass=molecules{i}.maxmass;
+            if ranges{rangecount}.maxind<molecules{i}.maxind
+                ranges{rangecount}.maxind=molecules{i}.maxind;
+                ranges{rangecount}.maxmass=molecules{i}.maxmass;
+            end
+            if ranges{rangecount}.minind>molecules{i}.minind
+                ranges{rangecount}.minind=molecules{i}.minind;
+                ranges{rangecount}.minmass=molecules{i}.minmass;
+            end
             ranges{rangecount}.molecules{end+1}=molecules{i};
         else %new massrange
             rangecount=rangecount+1;
