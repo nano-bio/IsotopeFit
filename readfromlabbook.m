@@ -1,5 +1,5 @@
 function out = readfromlabbook()
-%UNTITLED9 Summary of this function goes here
+%readfromlabbook Connects to the labbook and displays a list of measurements
 %   Detailed explanation goes here
 
 % ############################## LAYOUT
@@ -96,14 +96,27 @@ drawnow;
     function show(hObject,eventdata)
         handles=guidata(hObject);
         count = str2num(get(e_entries,'String'));
-        a = urlread(['http://138.232.72.25/clustof/csv/',num2str(count+handles.offset),'/',num2str(handles.offset)]);
+        try
+            a = urlread(['http://138.232.72.25/clustof/csv/',num2str(count+handles.offset),'/',num2str(handles.offset)]);
+        catch err
+            if (err.identifier == 'MATLAB:urlread:FileNotFound')
+                msgbox('Could not go any further back.')
+                handles.offset = handles.offset + str2num(get(e_entries,'String'));
+                guidata(hObject,handles);
+                return;
+            end
+        end
         a = sprintf(a);
         
         f = textscan(a, '%u%s%s%s', 'Delimiter', '\t');
         handles.f = f;
         
         for i = 1:count
-            mstring = [num2str(f{1, 1}(i)),', ',f{1, 3}{i},':        ',f{1, 2}{i}];
+            try
+                mstring = [num2str(f{1, 1}(i)),', ',f{1, 3}{i},':        ',f{1, 2}{i}];
+            catch err
+                mstring = 'Could not parse that measurement. Something is weird here';
+            end
             measurementlist{i}  = mstring;
         end
         
