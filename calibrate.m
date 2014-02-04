@@ -777,7 +777,17 @@ drawnow;
         end
         guidata(hObject,handles);
         
-        ranges2listbox(1,1);
+        % try to go to same range and previous molecule. or go to the first in 
+        % that special case...
+        prevrangeindex = get(ListRanges,'Value');
+        
+        if (get(ListRelevantMolecules,'Value') > 1)
+            prevmoleculeindex = get(ListRelevantMolecules,'Value') - 1;
+        else
+            prevmoleculeindex = 1;
+        end
+        
+        ranges2listbox(prevrangeindex,prevmoleculeindex);
 
         plotdatapoints();
         previewpaneledit('off');
