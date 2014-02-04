@@ -11,8 +11,9 @@ l=length(ranges);
 h = waitbar(0,'Please wait...'); 
 
 % this should give us a computational pool with a worker for each cpu
-
-parpool(feature('numcores'))
+if matlabpool('size')==0 %check if pool is already open
+    parpool(feature('numcores'))
+end
 
 % we use a copy of the original ranges variable,
 % because parfor cannot access the original one! 
