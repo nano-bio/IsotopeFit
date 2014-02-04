@@ -113,6 +113,8 @@ handles.bgdata = zeros(1,size(peakdata,1));
 
 handles.bgcorrectiondata=bgcorrectiondata;
 
+handles.startup = 1;
+
 set(e_startmass,'String',num2str(bgcorrectiondata.startmass));
 set(e_endmass,'String',num2str(bgcorrectiondata.endmass));
 set(e_ndiv,'String',num2str(bgcorrectiondata.ndiv));
@@ -130,6 +132,12 @@ show(Parent,0);
         handles.bgcorrectiondata.ndiv=str2num(get(e_ndiv,'String'));
         handles.bgcorrectiondata.percent=str2num(get(e_percent,'String'));
         %handles.bgcorrectiondata.polydegree=str2num(get(e_polydegree,'String'));
+        
+        % retrieve current view settings from axes:
+        if (handles.startup == 0) % only if we're not starting up any more...
+            xlim = get(axis1, 'XLim')
+            ylim = get(axis1, 'YLim')
+        end
         
         temp=get(e_startmass,'String');
         if strcmp(temp,'start')
@@ -155,9 +163,21 @@ show(Parent,0);
         handles.massaxiscrop=handles.massaxis(handles.startind:handles.endind);
         handles.signalcrop=handles.signal(handles.startind:handles.endind);
         
-        guidata(hObject,handles);
+        
         plot(axis1,handles.massaxiscrop,handles.signalcrop,handles.massaxiscrop,interp1(handles.bgcorrectiondata.bgm,handles.bgcorrectiondata.bgy,handles.massaxiscrop,'pchip','extrap'));
         
+        % reset zoom state to what it was before:
+        if (handles.startup == 0)
+            xlim
+            set(axis1, 'XLim', xlim)
+            set(axis1, 'YLim', ylim)
+        end
+        
+        % now we plotted something and it's definitely not startup conditions
+        % any more
+        handles.startup = 0;
+        
+        guidata(hObject,handles);
         
     end
 
