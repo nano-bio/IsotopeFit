@@ -135,8 +135,8 @@ show(Parent,0);
         
         % retrieve current view settings from axes:
         if (handles.startup == 0) % only if we're not starting up any more...
-            xlim = get(axis1, 'XLim')
-            ylim = get(axis1, 'YLim')
+            xlim = get(axis1, 'XLim');
+            ylim = get(axis1, 'YLim');
         end
         
         temp=get(e_startmass,'String');
@@ -168,7 +168,6 @@ show(Parent,0);
         
         % reset zoom state to what it was before:
         if (handles.startup == 0)
-            xlim
             set(axis1, 'XLim', xlim)
             set(axis1, 'YLim', ylim)
         end

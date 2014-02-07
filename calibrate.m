@@ -806,7 +806,7 @@ drawnow;
             set(ListRanges,'String',temp);
             set(ListRanges,'Value',rangeindex);
             
-            molecules2listbox(ListRelevantMolecules,handles.ranges{rangeindex}.molecules)
+            molecules2listbox(ListRelevantMolecules,handles.ranges{rangeindex}.molecules);
             
             set(ListRelevantMolecules,'Value',moleculeindex);
         else
