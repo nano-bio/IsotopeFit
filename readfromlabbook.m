@@ -13,7 +13,7 @@ Parent = figure( ...
     'MenuBar', 'none', ...
     'ToolBar','figure',...
     'NumberTitle', 'off', ...
-    'Name', 'Background correction',...
+    'Name', 'Import from Labbook',...
     'Position',[0.4*scrsz(3),0.4*scrsz(4),0.4*scrsz(3),0.4*scrsz(4)]); 
 
 uicontrol(Parent,'Style','Text',...
@@ -83,10 +83,22 @@ drawnow;
     function okclick(hObject,eventdata)
         %download file
         handles=guidata(hObject);
+        
+        dl_dest = 'temp.h5';
+        
         mid = handles.f{1, 1}(get(ListEntries,'Value'));
+        % this gives us the size in bytes the file should eventually have
+        size_expected = urlread(['http://138.232.72.25/clustof/export/', num2str(mid), '/size']);
         dlurl = ['http://138.232.72.25/clustof/export/', num2str(mid)];
-        dl = urlwrite(dlurl, 'temp.hd5');
-                       
+        
+        % the is actually no point in assigning those two variables,
+        % because the cannot be used for anything while downloading. it is
+        % not possible to display a status bar or any other information on
+        % how things are going. matlab sucks big time.
+        [fn, dlstatus] = urlwrite(dlurl, dl_dest);
+
+        % go back to main window if it worked. oh wait we don't even know
+        % whether it worked or not. doesn't matter. matlab style.
         uiresume(Parent);
         guidata(hObject,handles);
         
