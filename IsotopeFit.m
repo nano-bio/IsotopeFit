@@ -50,7 +50,7 @@ dataaxes = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'Position',gridpos(18,32,10,17,1,27,0.04,0.02)); 
+             'Position',gridpos(18,32,10,17,2,27,0.04,0.02)); 
 
 areaaxes = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
@@ -200,6 +200,16 @@ uicontrol(Parent,'style','pushbutton',...
           'TooltipString','Click to copy the filename to the clipboard',...
           'Position',gridpos(18,32,18,18,25,26,0.01,0.01));
       
+% Toggle log scale for the data axes
+      
+uicontrol(Parent,'style','checkbox',...
+          'string','Log',...
+          'Callback',@togglelogscale,...
+          'Value', 1,...
+          'Units','normalized',...
+          'TooltipString','Toggle log scale',...
+          'Position',gridpos(18,32,17,17,1,2,0.01,0.01));
+      
 uicontrol(Parent,'style','pushbutton',...
           'string','Autodetect peaks',...
           'Callback',@showlargedeviations,...
@@ -262,6 +272,7 @@ init();
         % some basic settings for the software
         handles.settings = {};
         handles.settings.minpeakwidth = 0.1;
+        handles.settings.logscale = 0;
                 
         set(ListMolecules,'Value',1);
         set(ListMolecules,'String','');
@@ -638,7 +649,12 @@ init();
         %calculate and plot sum spectrum of involved molecules if current
         %molecule is in calibrationlist
         
-
+        % set semilog plot if necessary
+        if (handles.settings.logscale == 1)
+            set(dataaxes, 'YScale', 'log');
+        elseif (handles.settings.logscale == 0)
+            set(dataaxes, 'YScale', 'linear');
+        end
 
         hold(dataaxes,'off');
         
@@ -834,6 +850,26 @@ init();
         % labbook etc.
         fn = get(filenamedisplay, 'String');
         clipboard('copy', fn);
+    end
+
+    function togglelogscale(hObject, eventdata)
+        % This button toggles the logarithmic display of the data axes in
+        % y-direction.
+        
+        % get settings
+        handles = guidata(Parent);
+        
+        % toggle function
+        if (get(hObject,'Value') == get(hObject,'Max'))
+            set(dataaxes, 'YScale', 'log');
+            handles.settings.logscale = 1;
+        elseif (get(hObject,'Value') == get(hObject,'Min'))
+            set(dataaxes, 'YScale', 'linear');
+            handles.settings.logscale = 0;
+        end
+        
+        % save back
+        guidata(Parent,handles);
     end
 end
 
