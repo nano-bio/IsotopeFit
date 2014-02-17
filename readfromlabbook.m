@@ -1,4 +1,4 @@
-function out = readfromlabbook()
+function [pathout,filenameout] = readfromlabbook()
 %readfromlabbook Connects to the labbook and displays a list of measurements
 %   Detailed explanation goes here
 
@@ -74,35 +74,50 @@ guidata(Parent,handles);
 
 show(Parent,0);
 
-uiwait(Parent)
+filenameout='';
+pathout='';
 
-handles=guidata(Parent);
+uiwait(Parent)
 
 drawnow;
 
     function okclick(hObject,eventdata)
         %download file
         handles=guidata(hObject);
-        
-        dl_dest = 'temp.h5';
-        
+            
         mid = handles.f{1, 1}(get(ListEntries,'Value'));
         % this gives us the size in bytes the file should eventually have
-        size_expected = urlread(['http://138.232.72.25/clustof/export/', num2str(mid), '/size']);
+        size_expected = str2double(urlread(['http://138.232.72.25/clustof/export/', num2str(mid), '/size']));
+        orig_filename = urlread(['http://138.232.72.25/clustof/export/', num2str(mid), '/filename']);
         dlurl = ['http://138.232.72.25/clustof/export/', num2str(mid)];
         
-        % the is actually no point in assigning those two variables,
-        % because the cannot be used for anything while downloading. it is
-        % not possible to display a status bar or any other information on
-        % how things are going. matlab sucks big time.
-        [fn, dlstatus] = urlwrite(dlurl, dl_dest);
-
-        % go back to main window if it worked. oh wait we don't even know
-        % whether it worked or not. doesn't matter. matlab style.
-        uiresume(Parent);
-        guidata(hObject,handles);
+        %save dialog
+        [filename, pathname, filterindex] = uiputfile( ...
+            {'*.h5','HDF5 data file (*.h5)'},...
+            'Save File from Labbook',orig_filename);
         
-        close(Parent);
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            
+            dl_dest=fullfile(pathname,filename);
+            
+            % the is actually no point in assigning those two variables,
+            % because the cannot be used for anything while downloading. it is
+            % not possible to display a status bar or any other information on
+            % how things are going. matlab sucks big time.
+            h=waitbar(0,['Plaese wait while downloading File... (',num2str(round(size_expected/1024)),'kB)']);
+            [fn, dlstatus] = urlwrite(dlurl, dl_dest);
+            close(h);
+            
+            filenameout=filename;
+            pathout=pathname;
+            
+            % go back to main window if it worked. oh wait we don't even know
+            % whether it worked or not. doesn't matter. matlab style.
+            uiresume(Parent);
+            guidata(hObject,handles);
+            
+            close(Parent);
+        end;
     end
 
     function show(hObject,eventdata)

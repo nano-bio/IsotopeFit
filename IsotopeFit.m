@@ -213,6 +213,8 @@ mfile = uimenu('Label','File');
     uimenu(mfile,'Label','Open','Callback',@open_file,'Accelerator','O');
     uimenu(mfile,'Label','Save','Callback',@(a,b) save_file(a,b,'save'),'Accelerator','S');
     uimenu(mfile,'Label','Save as...','Callback',@(a,b) save_file(a,b,'saveas'));
+    uimenu(mfile,'Label','Import from Labbook...','Callback',@labbookimport,...
+        'Separator','on');
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        
@@ -241,9 +243,9 @@ init();
         %bg correction standard values
         handles.bgcorrectiondata.startmass=-inf;
         handles.bgcorrectiondata.endmass=+inf;
-        handles.bgcorrectiondata.ndiv=10;
-        handles.bgcorrectiondata.polydegree=3;
-        handles.bgcorrectiondata.percent=50;
+        handles.bgcorrectiondata.ndiv=50;
+        %handles.bgcorrectiondata.polydegree=3;
+        handles.bgcorrectiondata.percent=70;
         %handles.bgcorrectiondata.bgpolynom=0;
         handles.bgcorrectiondata.bgm=[];
         handles.bgcorrectiondata.bgy=[];
@@ -269,6 +271,20 @@ init();
         %initial calibration data
         handles.calibration=standardcalibration();
         guidata(Parent,handles);
+    end
+
+    function labbookimport(hObject,eventdata)
+        [pathname,filename]=readfromlabbook();
+        
+        if ~strcmp(filename,'')
+            set(mmolecules,'Enable','on');
+            load_h5(pathname,filename);
+            handles=guidata(Parent);
+            plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2));
+            
+            %write filename to visible display:
+            set(filenamedisplay, 'String', handles.fileinfo.originalfilename);
+        end
     end
     
     function menuexportdataclick(hObject,eventdata)
@@ -467,6 +483,43 @@ init();
         guidata(Parent,handles);
     end
 
+    function load_h5(pathname,filename)
+        init();
+        handles=guidata(Parent);
+        mass = hdf5read(fullfile(pathname,filename),'/FullSpectra/MassAxis');
+        signal = hdf5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum');
+        handles.raw_peakdata=[mass,signal];
+        handles.startind=1;
+        handles.endind=size(handles.raw_peakdata,1);
+        handles.peakdata=handles.raw_peakdata;
+        
+        handles.calibration=standardcalibration;
+        
+        handles.fileinfo.originalfilename=filename(1:end-3);
+        handles.fileinfo.pathname=pathname;
+        
+        guidata(Parent,handles);
+        calibrationmenu('on','off');
+    end
+
+    function load_ascii(pathname,filename)
+        init();
+        handles=guidata(Parent);
+        handles.raw_peakdata = load(fullfile(pathname,filename));
+        
+        handles.startind=1;
+        handles.endind=size(handles.raw_peakdata,1);
+        handles.peakdata=handles.raw_peakdata;
+        
+        handles.calibration=standardcalibration;
+        
+        handles.fileinfo.originalfilename=filename(1:end-4);
+        handles.fileinfo.pathname=pathname;
+        
+        guidata(Parent,handles);
+        calibrationmenu('on','off');
+    end
+
     function open_file(hObject,eventdata)
         [filename, pathname, filterindex] = uigetfile( ...
             {'*.ifd','IsotopeFit data file (*.ifd)';...
@@ -513,37 +566,11 @@ init();
                     
                     calibrationmenu('on','on');
                 case 2 %h5
-                    init();
-                    mass = hdf5read(fullfile(pathname,filename),'/FullSpectra/MassAxis');
-                    signal = hdf5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum');
-                    handles.raw_peakdata=[mass,signal];
-                    handles.startind=1;
-                    handles.endind=size(handles.raw_peakdata,1);
-                    handles.peakdata=handles.raw_peakdata;
-                    
-                    handles.calibration=standardcalibration;
-                    
-                    handles.fileinfo.originalfilename=filename(1:end-3);
-                    handles.fileinfo.pathname=pathname;
-                    
-                    guidata(Parent,handles);
-                    calibrationmenu('on','off');
+                    load_h5(pathname,filename);
                 case 3 %ASCII
-                    init();
-                    handles.raw_peakdata = load(fullfile(pathname,filename));
-                    
-                    handles.startind=1;
-                    handles.endind=size(handles.raw_peakdata,1);
-                    handles.peakdata=handles.raw_peakdata;
-                    
-                    handles.calibration=standardcalibration;
-                    
-                    handles.fileinfo.originalfilename=filename(1:end-4);
-                    handles.fileinfo.pathname=pathname;
-                    
-                    guidata(Parent,handles);
-                    calibrationmenu('on','off');
+                    load_ascii(pathname,filename);
             end
+            handles=guidata(Parent);
             plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2));
             
             %write filename to visible display:
