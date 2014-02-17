@@ -9,6 +9,7 @@ DERIVESTsuite/
 FMINSEARCHBND/
 *Thumbs.db
 IsotopeDistribution/molecules/
+Binary/
 /out*.txt
 *.asv
 *.ifd

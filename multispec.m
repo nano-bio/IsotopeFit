@@ -3,7 +3,6 @@ function out = multispec(molecules,resolutionaxis,massoffsetaxis,massaxis)
 %   calculates isotopic pattern for molecules in list
 %   uses area stored in molecules structure
 %   DONT use this for fitting!
-%parameters: [area1, area2, area3...,resolution, massshift]
 
 spec_calc=zeros(1,length(massaxis));
 
