@@ -50,7 +50,7 @@ dataaxes = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'Position',gridpos(18,32,10,17,1,27,0.04,0.02)); 
+             'Position',gridpos(18,32,10,17,2,27,0.04,0.02)); 
 
 areaaxes = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
@@ -200,6 +200,45 @@ uicontrol(Parent,'style','pushbutton',...
           'TooltipString','Click to copy the filename to the clipboard',...
           'Position',gridpos(18,32,18,18,25,26,0.01,0.01));
       
+% Toggle log scale for the data axes
+      
+uicontrol(Parent,'style','checkbox',...
+          'string','Log',...
+          'Callback',@togglelogscale,...
+          'Value', 0,...
+          'Units','normalized',...
+          'TooltipString','Toggle log scale',...
+          'Position',gridpos(18,32,17,17,1,2,0.01,0.01));
+      
+% Multiply axes by a factor of two
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','*2',...
+          'Callback',@doublescale,...
+          'Units','normalized',...
+          'TooltipString','Multiply axes by a factor of two',...
+          'Position',gridpos(18,32,16,16,1,2,0.01,0.01));
+      
+% Divide axes by a factor of two
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','/2',...
+          'Callback',@halfscale,...
+          'Units','normalized',...
+          'TooltipString','Divide axes by a factor of two',...
+          'Position',gridpos(18,32,10,10,1,2,0.01,0.01));
+      
+% Autoscale axes
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','Y',...
+          'Callback',@autoscale,...
+          'Units','normalized',...
+          'TooltipString','Autoscale axes',...
+          'Position',gridpos(18,32,11,15,1,2,0.01,0.01));
+      
+% Autodetect peaks button
+      
 uicontrol(Parent,'style','pushbutton',...
           'string','Autodetect peaks',...
           'Callback',@showlargedeviations,...
@@ -264,6 +303,7 @@ init();
         % some basic settings for the software
         handles.settings = {};
         handles.settings.minpeakwidth = 0.1;
+        handles.settings.logscale = 0;
                 
         set(ListMolecules,'Value',1);
         set(ListMolecules,'String','');
@@ -665,7 +705,12 @@ init();
         %calculate and plot sum spectrum of involved molecules if current
         %molecule is in calibrationlist
         
-
+        % set semilog plot if necessary
+        if (handles.settings.logscale == 1)
+            set(dataaxes, 'YScale', 'log');
+        elseif (handles.settings.logscale == 0)
+            set(dataaxes, 'YScale', 'linear');
+        end
 
         hold(dataaxes,'off');
         
@@ -861,6 +906,61 @@ init();
         % labbook etc.
         fn = get(filenamedisplay, 'String');
         clipboard('copy', fn);
+    end
+
+    function togglelogscale(hObject, eventdata)
+        % This button toggles the logarithmic display of the data axes in
+        % y-direction.
+        
+        % get settings
+        handles = guidata(Parent);
+        
+        % turn warning about negative values off
+        warning('off', 'MATLAB:Axes:NegativeDataInLogAxis')
+        
+        % toggle function
+        if (get(hObject,'Value') == get(hObject,'Max'))
+            set(dataaxes, 'YScale', 'log');
+            handles.settings.logscale = 1;
+        elseif (get(hObject,'Value') == get(hObject,'Min'))
+            set(dataaxes, 'YScale', 'linear');
+            handles.settings.logscale = 0;
+        end
+        
+        % save back
+        guidata(Parent,handles);
+    end
+
+    function doublescale(hObject, eventdata)
+        % This function multiplies the Y-axis with a factor of two (hence
+        % making the signals smaller)
+        
+        % current limits
+        cl = get(dataaxes, 'YLim');
+        % multiply
+        nl = [cl(1) cl(2)*2];
+        % set back
+        set(dataaxes, 'YLim', nl)
+    end
+
+    function halfscale(hObject, eventdata)
+        % This function divides the Y-axis by a factor of two (hence
+        % making the signals bigger)
+        
+        % current limits
+        cl = get(dataaxes, 'YLim');
+        % divide
+        nl = [cl(1) cl(2)/2];
+        % set back
+        set(dataaxes, 'YLim', nl)
+    end
+
+    function autoscale(hObject, eventdata)
+        % This function divides the Y-axis by a factor of two (hence
+        % making the signals bigger)
+        
+        % set back
+        set(dataaxes, 'YLimMode', 'auto');
     end
 end
 
