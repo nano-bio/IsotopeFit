@@ -12,6 +12,33 @@ Parent = figure( ...
     'Units','normalized',...
     'Position',[0.4,0.1,0.4,0.8]); 
 
+%remove unused tools:
+hTemp = findall(Parent,'tag','Plottools.PlottoolsOn');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Plottools.PlottoolsOff');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Annotation.InsertLegend');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Annotation.InsertColorbar');
+delete(hTemp);
+hTemp = findall(Parent,'tag','DataManager.Linking');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Exploration.Brushing');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.EditPlot');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.PrintFigure');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.NewFigure');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Exploration.Rotate');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.FileOpen');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.SaveFigure');
+delete(hTemp);
+
+
 % Main Layout
 
 SelectionPanel=uipanel(Parent,...

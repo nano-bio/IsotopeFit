@@ -10,6 +10,40 @@ Parent = figure( ...
     'Units','normalized',...
     'Position',[0.2,0.2,0.6,0.6]); 
 
+% Display tags to read out handle:
+%  hToolbar = findall(Parent,'tag','FigureToolBar');
+%  get(findall(hToolbar),'tag')
+
+% modify callbacks:
+hTemp = findall(Parent,'tag','Standard.FileOpen');
+set(hTemp, 'ClickedCallback',@open_file);
+
+hTemp = findall(Parent,'tag','Standard.SaveFigure');
+set(hTemp, 'ClickedCallback',@(a,b) save_file(a,b,'save'));
+
+%remove unused tools:
+hTemp = findall(Parent,'tag','Plottools.PlottoolsOn');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Plottools.PlottoolsOff');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Annotation.InsertLegend');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Annotation.InsertColorbar');
+delete(hTemp);
+hTemp = findall(Parent,'tag','DataManager.Linking');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Exploration.Brushing');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.EditPlot');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.PrintFigure');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.NewFigure');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Exploration.Rotate');
+delete(hTemp);
+
+
 %Preview Panel
 
 dataaxes = axes('Parent',Parent,...
@@ -165,10 +199,10 @@ uicontrol(Parent,'style','pushbutton',...
 %######################### MENU BAR
 
 mfile = uimenu('Label','File');
-    uimenu(mfile,'Label','Testdata','Callback',@test);
-    uimenu(mfile,'Label','Save','Callback',@(a,b) save_file(a,b,'save'));
+    %uimenu(mfile,'Label','Testdata','Callback',@test);
+    uimenu(mfile,'Label','Open','Callback',@open_file,'Accelerator','O');
+    uimenu(mfile,'Label','Save','Callback',@(a,b) save_file(a,b,'save'),'Accelerator','S');
     uimenu(mfile,'Label','Save as...','Callback',@(a,b) save_file(a,b,'saveas'));
-    uimenu(mfile,'Label','Open','Callback',@open_file);
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        

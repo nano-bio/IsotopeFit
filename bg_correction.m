@@ -14,6 +14,32 @@ Parent = figure( ...
     'Name', 'Background correction',...
     'Position',[0.4*scrsz(3),0.4*scrsz(4),0.4*scrsz(3),0.4*scrsz(4)]); 
 
+%remove unused tools:
+hTemp = findall(Parent,'tag','Plottools.PlottoolsOn');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Plottools.PlottoolsOff');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Annotation.InsertLegend');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Annotation.InsertColorbar');
+delete(hTemp);
+hTemp = findall(Parent,'tag','DataManager.Linking');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Exploration.Brushing');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.EditPlot');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.PrintFigure');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.NewFigure');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Exploration.Rotate');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.FileOpen');
+delete(hTemp);
+hTemp = findall(Parent,'tag','Standard.SaveFigure');
+delete(hTemp);
+
 uicontrol(Parent,'Style','Text',...
     'Tag','TextStartMass',...
     'String','Start mass',...
