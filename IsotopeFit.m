@@ -888,6 +888,9 @@ init();
         % get settings
         handles = guidata(Parent);
         
+        % turn warning about negative values off
+        warning('off', 'MATLAB:Axes:NegativeDataInLogAxis')
+        
         % toggle function
         if (get(hObject,'Value') == get(hObject,'Max'))
             set(dataaxes, 'YScale', 'log');
@@ -908,7 +911,7 @@ init();
         % current limits
         cl = get(dataaxes, 'YLim');
         % multiply
-        nl = [cl(1) cl(2)*2]
+        nl = [cl(1) cl(2)*2];
         % set back
         set(dataaxes, 'YLim', nl)
     end
@@ -931,7 +934,6 @@ init();
         
         % set back
         set(dataaxes, 'YLimMode', 'auto');
-        w = warning('query','last')
     end
 end
 
