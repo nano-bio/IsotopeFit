@@ -480,8 +480,9 @@ init();
                     calibrationmenu('on','on');
                 case 2 %h5
                     init();
-                    handles.raw_peakdata(:,1) = hdf5read(fullfile(pathname,filename),'/FullSpectra/MassAxis')';
-                    handles.raw_peakdata(:,2) = hdf5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum')';
+                    mass = hdf5read(fullfile(pathname,filename),'/FullSpectra/MassAxis');
+                    signal = hdf5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum');
+                    handles.raw_peakdata=[mass,signal];
                     handles.startind=1;
                     handles.endind=size(handles.raw_peakdata,1);
                     handles.peakdata=handles.raw_peakdata;

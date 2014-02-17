@@ -25,7 +25,7 @@ for i=1:size(molecule.peakdata,1)
 
     peaksum=peaksum+molecule.peakdata(i,2);
     
-    eta=1; %1... Gauss --- 0... Lorentz
+    eta=0.6; %1... Gauss --- 0... Lorentz
     y=y+eta*area*molecule.peakdata(i,2)*(1./(sigma*sqrt(2*pi))).*exp(-(1/2)*((massaxis-massshiftaxis-molecule.peakdata(i,1))./sigma).^2); %Gauss
     y=y+(1/pi)*(1-eta)*area*molecule.peakdata(i,2)*(sigma./(sigma.^2+(massaxis-massshiftaxis-molecule.peakdata(i,1)).^2)); %Lorentz
 end
