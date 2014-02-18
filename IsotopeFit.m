@@ -184,14 +184,14 @@ ListMethode = uicontrol(Parent,'style','popupmenu',...
 uicontrol(Parent,'Style','Text',...
     'String','Filename:',...
     'Units','normalized',...
-    'Position',gridpos(64,8,62,64,1,1,0.01,0.01));
+    'Position',gridpos(64,64,62,64,4,8,0.01,0.01));
     
 filenamedisplay = uicontrol(Parent,'Style','Text',...
     'Tag','e_massoffset',...
     'Units','normalized',...
     'String','No file loaded',...
     'HorizontalAlignment','left',...
-    'Position',gridpos(64,32,62,64,5,25,0.01,0.01));
+    'Position',gridpos(64,64,62,64,8,50,0.01,0.01));
 
 % This copies the filename to the clipboard (for searching in the
 % labbook etc.
@@ -267,6 +267,15 @@ dataxslider = uicontrol(Parent,'style','slider',...
           'TooltipString','Slide along the mass spec',...
           'Position',gridpos(64,64,32,34,6,50,0.01,0.01));
       
+% Plot overview
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','OV',...
+          'Callback',@plotoverview,...
+          'Units','normalized',...
+          'TooltipString','Plot whole mass spec (overview)',...
+          'Position',gridpos(64,64,62,64,1,3,0.01,0.01));
+      
       
 % Autodetect peaks button
       
@@ -338,7 +347,9 @@ init();
         % some basic settings for the software
         handles.settings = {};
         handles.settings.minpeakwidth = 0.1;
-        handles.settings.logscale = 0;
+        handles.status.logscale = 0;
+        handles.status.overview = 0;
+        handles.status.lastlims = [[0 0] [0 0]];
                 
         set(ListMolecules,'Value',1);
         set(ListMolecules,'String','');
@@ -803,9 +814,9 @@ init();
         %molecule is in calibrationlist
         
         % set semilog plot if necessary
-        if (handles.settings.logscale == 1)
+        if (handles.status.logscale == 1)
             set(dataaxes, 'YScale', 'log');
-        elseif (handles.settings.logscale == 0)
+        elseif (handles.status.logscale == 0)
             set(dataaxes, 'YScale', 'linear');
         end
 
@@ -1019,10 +1030,10 @@ init();
         % toggle function
         if (get(hObject,'Value') == get(hObject,'Max'))
             set(dataaxes, 'YScale', 'log');
-            handles.settings.logscale = 1;
+            handles.status.logscale = 1;
         elseif (get(hObject,'Value') == get(hObject,'Min'))
             set(dataaxes, 'YScale', 'linear');
-            handles.settings.logscale = 0;
+            handles.status.logscale = 0;
         end
         
         % save back
@@ -1142,6 +1153,47 @@ init();
         nl = [com-vrhalf com+vrhalf];
         % jump by one view range
         set(dataaxes, 'XLim', nl);
+    end
+
+    function plotoverview(hObject, eventdata)
+        % get settings
+        handles = guidata(Parent);
+        
+        % if the user jumped away from an overview, we don't want to jump
+        % back to the old coordinates
+        
+        % crude hack: if the viewed range is much (2x) smaller than the
+        % full mass range we were probably not in overview mode. if at the
+        % same time overview is still true, the user probably jumped out of
+        % overview mode to a molecule and we should now go to overview
+        cl = get(dataaxes, 'XLim');
+        viewedrange = (cl(2) - cl(1))*2;
+        
+        maxmass = max(handles.peakdata(:,1));
+        
+        if (viewedrange <= maxmass && handles.status.overview == 1)
+            handles.status.overview = 0;
+        end
+        
+        % are we already in overview?
+        if handles.status.overview == 0
+            % save the old settings so we can toggle back
+            oxl = get(dataaxes, 'XLim');
+            oyl = get(dataaxes, 'YLim');
+            handles.status.lastlims = [oxl oyl];
+            set(dataaxes, 'YLimMode', 'auto');
+            set(dataaxes, 'XLimMode', 'auto');
+            handles.status.overview = 1;
+        elseif handles.status.overview == 1
+            % jump back to last settings
+            handles.status.lastlims;
+            set(dataaxes, 'XLim', [handles.status.lastlims(1) handles.status.lastlims(2)]);
+            set(dataaxes, 'YLim', [handles.status.lastlims(3) handles.status.lastlims(4)]);
+            handles.status.overview = 0;
+        end
+        
+        % save back
+        guidata(Parent,handles);
     end
 end
 
