@@ -6,7 +6,7 @@ Parent = figure( ...
     'MenuBar', 'none', ...
     'ToolBar','figure',...
     'NumberTitle', 'off', ...
-    'Name', 'Mass-offset and resolution calibration',...
+    'Name', 'IsotopeFit',...
     'Units','normalized',...
     'Position',[0.2,0.2,0.6,0.6]); 
 
@@ -50,13 +50,13 @@ dataaxes = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'Position',gridpos(18,32,10,17,2,27,0.04,0.02)); 
+             'Position',gridpos(64,64,35,62,2,54,0.04,0.02)); 
 
 areaaxes = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'Position',gridpos(6,32,1,3,5,27,0.04,0.02)); 
+             'Position',gridpos(6,64,1,3,10,54,0.04,0.02)); 
 
 e_searchstring=uicontrol(Parent,'Style','edit',...
     'Tag','e_searchstring',...
@@ -177,18 +177,21 @@ ListMethode = uicontrol(Parent,'style','popupmenu',...
           'string',{'Ranges', 'Molecules'},...
           'Units','normalized',...
           'Position',gridpos(36,32,3,4,31,32,0.01,0.01));
+      
+% The following two controls display the current filename on top of the
+% window
           
 uicontrol(Parent,'Style','Text',...
     'String','Filename:',...
     'Units','normalized',...
-    'Position',gridpos(18,8,18,18,1,1,0.01,0.01));
+    'Position',gridpos(64,8,62,64,1,1,0.01,0.01));
     
 filenamedisplay = uicontrol(Parent,'Style','Text',...
     'Tag','e_massoffset',...
     'Units','normalized',...
     'String','No file loaded',...
     'HorizontalAlignment','left',...
-    'Position',gridpos(18,32,18,18,5,25,0.01,0.01));
+    'Position',gridpos(64,32,62,64,5,25,0.01,0.01));
 
 % This copies the filename to the clipboard (for searching in the
 % labbook etc.
@@ -198,7 +201,7 @@ uicontrol(Parent,'style','pushbutton',...
           'Callback',@copyfntoclipboard,...
           'Units','normalized',...
           'TooltipString','Click to copy the filename to the clipboard',...
-          'Position',gridpos(18,32,18,18,25,26,0.01,0.01));
+          'Position',gridpos(64,32,62,64,25,26,0.01,0.01));
       
 % Toggle log scale for the data axes
       
@@ -208,34 +211,62 @@ uicontrol(Parent,'style','checkbox',...
           'Value', 0,...
           'Units','normalized',...
           'TooltipString','Toggle log scale',...
-          'Position',gridpos(18,32,17,17,1,2,0.01,0.01));
+          'Position',gridpos(64,64,32,34,1,4,0.01,0.01));
       
-% Multiply axes by a factor of two
+% Multiply y-axis by a factor of two
       
 uicontrol(Parent,'style','pushbutton',...
           'string','*2',...
-          'Callback',@doublescale,...
+          'Callback',@doubleyscale,...
           'Units','normalized',...
           'TooltipString','Multiply axes by a factor of two',...
-          'Position',gridpos(18,32,16,16,1,2,0.01,0.01));
+          'Position',gridpos(64,64,60,62,1,3,0.01,0.01));
       
-% Divide axes by a factor of two
+% Divide y-axis by a factor of two
       
 uicontrol(Parent,'style','pushbutton',...
           'string','/2',...
-          'Callback',@halfscale,...
+          'Callback',@halfyscale,...
           'Units','normalized',...
           'TooltipString','Divide axes by a factor of two',...
-          'Position',gridpos(18,32,10,10,1,2,0.01,0.01));
+          'Position',gridpos(64,64,34,36,1,3,0.01,0.01));
       
-% Autoscale axes
+% Autoscale y-axis
       
 uicontrol(Parent,'style','pushbutton',...
           'string','Y',...
-          'Callback',@autoscale,...
+          'Callback',@autoyscale,...
           'Units','normalized',...
           'TooltipString','Autoscale axes',...
-          'Position',gridpos(18,32,11,15,1,2,0.01,0.01));
+          'Position',gridpos(64,64,36,60,1,3,0.01,0.01));
+      
+% Divide x-axis by a factor of two
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','/2',...
+          'Callback',@halfxscale,...
+          'Units','normalized',...
+          'TooltipString','Multiply axes by a factor of two',...
+          'Position',gridpos(64,64,32,34,4,6,0.01,0.01));
+      
+% Multiply x-axis by a factor of two
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','*2',...
+          'Callback',@doublexscale,...
+          'Units','normalized',...
+          'TooltipString','Divide axes by a factor of two',...
+          'Position',gridpos(64,64,32,34,50,52,0.01,0.01));
+      
+% slider x-axis
+      
+dataxslider = uicontrol(Parent,'style','slider',...
+          'string','/2',...
+          'Callback',@slidedataaxes,...
+          'Units','normalized',...
+          'TooltipString','Slide along the mass spec',...
+          'Position',gridpos(64,64,32,34,6,50,0.01,0.01));
+      
       
 % Autodetect peaks button
       
@@ -310,6 +341,7 @@ init();
         
         %initial calibration data
         handles.calibration=standardcalibration();
+        
         guidata(Parent,handles);
     end
 
@@ -720,6 +752,9 @@ init();
         xlim(dataaxes,[calcmassaxis(1),calcmassaxis(end)]);  
         %ylim(previewaxes,[0,max(max(handles.molecules{index}.peakdata(:,2)),max(handles.peakdata(handles.molecules{index}.minind:handles.molecules{index}.maxind,2)))]);
 
+        % Update the slider bar accordingly:
+        updateslider;
+        
         guidata(Parent,handles);
     end
 
@@ -841,8 +876,6 @@ init();
         end
              guidata(hObject,handles);
         plotmolecule(index);
-        
-        
     end
 
     function showlargedeviations(hObject, eventdata)
@@ -931,36 +964,119 @@ init();
         guidata(Parent,handles);
     end
 
-    function doublescale(hObject, eventdata)
+    function doubleyscale(hObject, eventdata)
         % This function multiplies the Y-axis with a factor of two (hence
         % making the signals smaller)
         
         % current limits
         cl = get(dataaxes, 'YLim');
         % multiply
-        nl = [cl(1) cl(2)*2];
+        nl = [cl(1)*2 cl(2)*2];
         % set back
         set(dataaxes, 'YLim', nl)
     end
 
-    function halfscale(hObject, eventdata)
+    function doublexscale(hObject, eventdata)
+        % This function multiplies the Y-axis with a factor of two (hence
+        % making the signals smaller)
+        
+        % current limits
+        cl = get(dataaxes, 'XLim');
+        %half width to add
+        hw = (cl(2)-cl(1))/2;
+        % add
+        nl = [cl(1)-hw cl(2)+hw];
+        % set back
+        set(dataaxes, 'XLim', nl);
+        
+        updateslider;
+    end
+
+    function halfyscale(hObject, eventdata)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
         % current limits
         cl = get(dataaxes, 'YLim');
         % divide
-        nl = [cl(1) cl(2)/2];
+        nl = [cl(1)/2 cl(2)/2];
         % set back
         set(dataaxes, 'YLim', nl)
     end
 
-    function autoscale(hObject, eventdata)
+    function halfxscale(hObject, eventdata)
+        % This function divides the Y-axis by a factor of two (hence
+        % making the signals bigger)
+        
+        % current limits
+        cl = get(dataaxes, 'XLim');
+        % quarter width to add
+        hw = (cl(2)-cl(1))/4;
+        % add
+        nl = [cl(1)+hw cl(2)-hw];
+        % set back
+        set(dataaxes, 'XLim', nl);
+        
+        updateslider;
+    end
+
+    function autoyscale(hObject, eventdata)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
         % set back
         set(dataaxes, 'YLimMode', 'auto');
+    end
+
+    function updateslider(hObject, eventdata)
+        % This function updates the x-axis slider accordingly whenever 
+        % something changes in the dataaxes
+        
+        % supress warnings in case the user scrolls and pans around in an
+        % uncontrolled manner and withour fear of disaster:
+        warning('off', 'MATLAB:hg:uicontrol:ParameterValuesMustBeValid');
+        
+        % get settings
+        handles = guidata(Parent);
+        
+        % calculate where around we are centered
+        xlims = get(dataaxes, 'XLim');
+        com = (xlims(2) + xlims(1))/2;
+        viewedrange = xlims(2) - xlims(1);
+        
+        % how big is our massspec?
+        try
+            maxmass = max(handles.peakdata(:,1));
+        catch err
+            maxmass = 1;
+        end
+        
+        % we should calculate the width of our slider
+        slwidth = viewedrange/maxmass;
+        % set the max to the maximum mass
+        set(dataxslider, 'Max', maxmass);
+        % since the Max is our mass range we can set this to the center of
+        % mass
+        set(dataxslider, 'Value', com);
+    end
+
+    function slidedataaxes(hObject, eventdata)
+        % This function updates the data axes when the slider for the
+        % x-axis is clicked
+        
+        % calculate where around we are centered
+        cl = get(dataaxes, 'XLim');
+        % we need to add / substract half of the currently viewed range to
+        % the new center of mass
+        vrhalf = (cl(2) - cl(1))/2;
+        
+        % get center of mass
+        com = get(dataxslider, 'Value');
+        
+        % new viewing range
+        nl = [com-vrhalf com+vrhalf];
+        % jump by one view range
+        set(dataaxes, 'XLim', nl);
     end
 end
 
