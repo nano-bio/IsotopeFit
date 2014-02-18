@@ -354,14 +354,18 @@ end
 
 
 set(massmethode,'Value',getnameidx(get(massmethode,'String'),handles.calibration.massoffsetmethode));
+set(e_massoffsetorder,'String',num2str(handles.calibration.massoffsetparam));
 set(resolutionmethode,'Value',getnameidx(get(resolutionmethode,'String'),handles.calibration.resolutionmethode));
-
+set(e_resolutionorder,'String',num2str(handles.calibration.resolutionparam));
 
 %Abspeichern der Struktur 
 guidata(Parent,handles); 
 
 %load moleculelist
 molecules2listbox(ListAllMolecules,handles.molecules);
+
+%update calibrationplots
+updatepolynomials(Parent,0);
 
 uiwait(Parent)
 

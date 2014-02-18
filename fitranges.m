@@ -24,7 +24,7 @@ parfor i=1:l
     drawnow;
     nmolecules=length(ranges{i}.molecules);
     parameters=zeros(1,nmolecules+2);
-    fprintf('Fitting massrange %i (%5.1f - %5.1f): %i molecules\n',i, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
+    fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
     
     ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
         
