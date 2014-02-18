@@ -299,6 +299,10 @@ mfile = uimenu('Label','File');
  mdata= uimenu('Label','Data');
        mdataexport=uimenu(mdata,'Label','Export Data...','Callback',@menuexportdataclick,'Enable','on');
        
+ mplay = uimenu('Label','Play');
+    uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
+    uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
+       
        
 %######################### END OF LAYOUT     
       
@@ -344,6 +348,67 @@ init();
         
         guidata(Parent,handles);
     end
+
+   function menuplay(hObject,eventdata)
+       
+       handles=guidata(hObject);
+       
+       h = figure('units','pixels','Name','Clustersound','NumberTitle', 'off','position',[500 500 200 50],'windowstyle','modal');
+        uicontrol('style','text','string',sprintf('Yeah, Groovy!\nI''ll prepare the data for you...'),'units','pixels','position',[10 10 180 30]);
+       drawnow;
+
+       %h=msgbox('Yeah, Groovy! I''ll prepare the Data...');
+       
+       sample=0.1;
+       onemassfreq=800; %Hz for peaks with deltam=1
+       
+       %mass values need to be distinct:
+       l=size(handles.peakdata,1);
+             
+       mass=spline(1:round(l/1000):l,handles.peakdata(1:round(l/1000):l,1)',1:l);
+       
+       %sometimes, the spectrum isnt incrasing at the begininng. cut out
+       %this region
+       ind=find(diff(mass)<=0);
+       
+       if ~isempty(ind)
+           ind=ind(end)+1;
+       else
+           ind=1;
+       end
+       
+       %mass=mass(ind,end);
+       
+       
+       t=handles.peakdata(ind,1):sample:handles.peakdata(end,1);
+       
+       %plot(dataaxes,diff(mass));
+       f=onemassfreq/sample;
+       
+       switch get(hObject,'Label')
+           case 'Original'
+               spec=double(interp1(mass(ind:end),handles.peakdata(ind:end,2)',t));
+               spec(isnan(spec))=0;
+           case 'Fitted Data'
+               spec=multispec(handles.molecules,3000,0,t);
+       end
+       
+       spec=smooth(spec,10);
+       
+       spec=log(spec-min(spec)+0.1);       
+       spec=spec-mean(spec);
+       
+       spec=spec/max(abs(spec));
+       dspec=diff(spec);
+       dspec=dspec/max(abs(dspec));
+       
+       
+       plot(dataaxes,t,spec);
+       
+       %plot(dataaxes,t(1:end-1),dspec);
+       close(h);
+       sound(dspec,f);
+    end    
 
     function labbookimport(hObject,eventdata)
         [pathname,filename]=readfromlabbook();
