@@ -852,6 +852,11 @@ drawnow;
     function parameterchange(hObject,eventdata)
         handles=guidata(hObject);
         tag=get(hObject,'Tag');
+        
+        % we want to preserve the zoom status on a parameter change
+        xlims = get(previewaxes, 'XLim');
+        ylims = get(previewaxes, 'YLim');
+        
         switch tag
             case 'massoffsetup'
                 value=str2double(get(e_massoffset,'String'));
@@ -880,6 +885,12 @@ drawnow;
         end
         guidata(hObject,handles);
         updatecurrentmolecule();
+        
+        % we write that back now after the plotting, because we don't want
+        % to change the actual plotting function (hence keeping the
+        % behaviour of auto-resizing when selecting a molecule)
+        set(previewaxes, 'XLim', xlims);
+        set(previewaxes, 'YLim', ylims);
 %         handles=guidata(hObject);
 %         
 %         guidata(hObject,handles);
