@@ -969,7 +969,7 @@ init();
                 % ones and add them up to a list (without duplicates)
                 for i = 1:nom
                     A = findinvolvedmolecules(handles.molecules,[1:length(handles.molecules)],index(i),0.3);
-                    allinvolved = union(allinvolved, A);
+                    allinvolved = union(allinvolved, A)';
                 end
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
         end

@@ -28,6 +28,7 @@ parfor i=1:l
     
     ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
         
+    
     for j=1:nmolecules
         if ranges{i}.molecules{j}.area==0 %dirty workaround: when area=0, no fitting. dont know why!
             parameters(j)=0.1;
