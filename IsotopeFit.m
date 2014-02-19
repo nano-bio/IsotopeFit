@@ -82,9 +82,14 @@ uicontrol(Parent,'Style','Text',...
     'Units','normalized',...
     'Position',gridpos(18,16,18,18,14,16,0.01,0.01));         
 
+% Fun fact: Max is set to anything so that Max-Min is greater than one. If
+% that is the case, Matlab lets you select more than one molecule. Note
+% that the actual value of Max-Min does not indicate how many you actually
+% can select.
 ListMolecules=uicontrol(Parent,'Style','Listbox',...
     'Units','normalized',...
     'Callback',@moleculelistclick,...
+    'Max', 3,...
     'Position',gridpos(18,16,8,17,14,16,0.01,0.01));
 
 uicontrol(Parent,'style','pushbutton',...
@@ -160,23 +165,26 @@ down3=uicontrol(Parent,'style','pushbutton',...
     'Units','normalized',...
     'Position',gridpos(18,32,3,3,30,31,0.01,0.01));  
 
-
-uicontrol(Parent,'style','pushbutton',...
-          'string','Fit this',...
-          'Callback',@fitbuttonclick,...
-          'Units','normalized',...
-          'Position',gridpos(36,32,3,4,27,28,0.01,0.01)); 
+% Now for the fit buttons:
       
 uicontrol(Parent,'style','pushbutton',...
           'string','Fit all',...
           'Callback',@fitbuttonclick,...
           'Units','normalized',...
-          'Position',gridpos(36,32,3,4,29,30,0.01,0.01));
+          'Position',gridpos(36,64,3,4,57,60,0.01,0.01));
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','Fit selected',...
+          'Callback',@fitbuttonclick,...
+          'Units','normalized',...
+          'Position',gridpos(36,64,3,4,53,57,0.01,0.01));
+      
+% Listbox for the fit method
       
 ListMethode = uicontrol(Parent,'style','popupmenu',...
           'string',{'Ranges', 'Molecules'},...
           'Units','normalized',...
-          'Position',gridpos(36,32,3,4,31,32,0.01,0.01));
+          'Position',gridpos(36,64,3,4,60,64,0.01,0.01));
       
 % The following two controls display the current filename on top of the
 % window
@@ -774,13 +782,19 @@ init();
     end
 
     function moleculelistclick(hObject,eventdata)
-        index=get(ListMolecules,'Value');
+        index = get(ListMolecules,'Value');
         
         plotmolecule(index);
     end
 
     function plotmolecule(index)
         handles=guidata(Parent);
+        
+        % we can always only plot one molecule. if several have been
+        % selected we just plot the first one
+        if (length(index) >= 2)
+            index = index(1);
+        end
 
         %involvedmolecules=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,0.3);
         involvedmolecules=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,2);
@@ -929,6 +943,7 @@ init();
     function fitbuttonclick(hObject,eventdata)
         handles=guidata(hObject);
         
+        % indices for all molecules selected
         index=get(ListMolecules,'Value');
         
         ranges=findranges(handles.molecules,0.3);
@@ -943,14 +958,23 @@ init();
         calibrationtemp.massoffsetparam=0;
         
         switch get(hObject,'String')
-            case 'Fit this'
-                involved=findinvolvedmolecules(handles.molecules,[1:length(handles.molecules)],index,0.3);
-                handles.molecules(involved)=fitwithcalibration(handles.molecules(involved),handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
-                
             case 'Fit all'
-                    handles.molecules=fitwithcalibration(handles.molecules,handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
+                handles.molecules=fitwithcalibration(handles.molecules,handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
+            case 'Fit selected'
+                % number of molecules?
+                nom = length(index);
+                allinvolved = [];
+                
+                % we loop through all selected molecules, find the involved
+                % ones and add them up to a list (without duplicates)
+                for i = 1:nom
+                    A = findinvolvedmolecules(handles.molecules,[1:length(handles.molecules)],index(i),0.3);
+                    allinvolved = union(allinvolved, A);
+                end
+                handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
         end
-             guidata(hObject,handles);
+        
+        guidata(hObject,handles);
         plotmolecule(index);
     end
 
