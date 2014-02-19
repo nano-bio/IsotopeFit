@@ -1158,6 +1158,8 @@ init();
         % since the Max is our mass range we can set this to the center of
         % mass
         set(dataxslider, 'Value', com);
+        % set the slider width
+        set(dataxslider, 'SliderStep', [slwidth/10 slwidth])
     end
 
     function slidedataaxes(hObject, eventdata)
