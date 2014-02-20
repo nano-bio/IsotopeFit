@@ -20,7 +20,11 @@ end
 molecules=molecules(ix);
 
 spec_calc=zeros(1,size(peakdata,1));
-indtest=findmassrange(massaxis,molecules,1000,0,10);
+%indtest=findmassrange(massaxis,molecules,1000,0,10);
+
+%maximally used datapoints for fitting
+maxdatapoints=1000;
+
 for i=1:l
     drawnow;
     
@@ -43,8 +47,14 @@ for i=1:l
     parameters(nmolecules+1)=resolutionbycalibration(calibration,molecules{i}.com); %resolution
     parameters(nmolecules+2)=massoffsetbycalibration(calibration,molecules{i}.com); %x-offset
     
-    ind=findmassrange2(massaxis,molecules(involved),parameters(nmolecules+1),parameters(nmolecules+2),10);
+    ind=findmassrange(massaxis,molecules(involved),parameters(nmolecules+1),parameters(nmolecules+2),10);
     %ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
+    
+    %is it necessary to cut out some datapoints?
+    ndp=length(ind); %number of datapoints
+    if ndp>maxdatapoints %then cut out some datapoints
+        ind=ind(round((1:maxdatapoints)*(ndp/maxdatapoints)));%ind will be maxdatapoints long
+    end
     
     fitparam=fminsearchbnd(@(x) msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x),parameters,...
         [zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam],...
@@ -54,15 +64,17 @@ for i=1:l
     %fprintf('Error estimation...\n');
     %error estimation
      
-    dof=sum(ind)-2;
+    dof=length(ind)-2;
     sdrq = (msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),fitparam))/dof;
-    J = jacobianest(@(x) multispecparameters(massaxis(ind)-spec_calc(ind),molecules(involved),x),fitparam);
-    sigma = sdrq*pinv(J'*J);
-    %sigma = b/(J'*J);
+    %J = jacobianest(@(x) multispecparameters(massaxis(ind)-spec_calc(ind),molecules(involved),x),fitparam);
+    HD = hessdiag(@(x) msd(massaxis(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x)/dof,fitparam);
     
-    stderr = sqrt(diag(sigma))';
-    
-        
+%     sigma = sdrq*pinv(J'*J);
+%    stderr = sqrt(diag(sigma))';
+
+   % stderr=sqrt(sdrq./diag(J'*J)');
+    stderr=sqrt(sdrq./HD');
+
     %update calculated spec
     spec_calc=spec_calc+multispecparameters(massaxis,molecules(i),fitparam([1,end-1,end]));
     

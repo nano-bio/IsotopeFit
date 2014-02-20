@@ -368,6 +368,30 @@ init();
         guidata(Parent,handles);
     end
 
+    function peakdataout=approxpeakdata(peakdata,samplerate)
+        %this function resamples the peakdata with a given, equidistant
+        %samplerate (i.e. 0.1 massunits)
+        l=size(peakdata,1);
+        
+        %% massaxis needs to be smooth for resampling
+        mass=spline(1:round(l/1000):l,peakdata(1:round(l/1000):l,1)',1:l);
+        
+       %% sometimes, the spectrum isnt incrasing at the begininng. cut out
+       % this region
+       ind=find(diff(mass)<=0);
+       
+       if ~isempty(ind)
+           ind=ind(end)+1;
+       else
+           ind=1;
+       end
+       
+       %% resampling
+       mt=mass(ind):samplerate:mass(end);
+       peakdataout=[mt',...
+                    double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
+    end
+
    function menuplay(hObject,eventdata)
        
        handles=guidata(hObject);
@@ -957,9 +981,12 @@ init();
         calibrationtemp.massoffsetmethode='Flat';
         calibrationtemp.massoffsetparam=0;
         
+        %peakdatatemp=approxpeakdata(handles.peakdata,0.2);%much faster with lower resolution
+        peakdatatemp=handles.peakdata;%full resolution
+        
         switch get(hObject,'String')
             case 'Fit all'
-                handles.molecules=fitwithcalibration(handles.molecules,handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
+                handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
             case 'Fit selected'
                 % number of molecules?
                 nom = length(index);
@@ -971,7 +998,7 @@ init();
                     A = findinvolvedmolecules(handles.molecules,[1:length(handles.molecules)],index(i),0.3);
                     allinvolved = union(allinvolved, A)';
                 end
-                handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
+                handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
         end
         
         guidata(hObject,handles);
