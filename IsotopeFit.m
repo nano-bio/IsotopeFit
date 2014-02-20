@@ -753,6 +753,9 @@ init();
                 {'*.ifd','IsotopeFit data file (*.ifd)'
                 '*.*', 'All Files (*.*)'},...
                 'Save as',[handles.fileinfo.pathname,handles.fileinfo.originalfilename,'.ifd']);
+        elseif strcmp(methode,'autosave')
+            pathname = '';
+            filename = 'bkp.ifd';
         else
             filename=handles.fileinfo.filename;
             pathname=handles.fileinfo.pathname;  
@@ -764,7 +767,6 @@ init();
             
             
             data.raw_peakdata=handles.raw_peakdata;
-            %data.bgpolynom=handles.bgpolynom;
             data.startind=handles.startind;
             data.endind=handles.endind;
             data.molecules=handles.molecules;
@@ -772,8 +774,14 @@ init();
             data.bgcorrectiondata=handles.bgcorrectiondata;
             
             save(fullfile(pathname,filename),'data');
-            handles.fileinfo.filename=filename;
-            handles.fileinfo.pathname=pathname;
+            
+            % if we autosaved, we don't want that temporary filename to be
+            % stored
+            if ~strcmp(methode,'autosave')
+                handles.fileinfo.filename=filename;
+                handles.fileinfo.pathname=pathname;
+            end
+            
             guidata(Parent,handles);
          end
          
@@ -959,7 +967,14 @@ init();
         
         switch get(hObject,'String')
             case 'Fit all'
+                % in the case of Fit all we save the file. it's better to
+                % be safe than sorry.
+                save_file(hObject,eventdata,'autosave')
+                
                 handles.molecules=fitwithcalibration(handles.molecules,handles.peakdata,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
+                
+                % and we're done
+                delete('bkp.idf')
             case 'Fit selected'
                 % number of molecules?
                 nom = length(index);
