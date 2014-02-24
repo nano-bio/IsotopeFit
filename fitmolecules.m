@@ -16,6 +16,7 @@ for i=1:l
 end
 
 [~,ix]=sort(0-arealist); %start with highest molecule
+%[~,ix]=sort(arealist); %start with lowest molecule
 
 molecules=molecules(ix);
 

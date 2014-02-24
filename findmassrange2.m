@@ -12,7 +12,7 @@ for i=1:length(molecules)
     end
 end
 
-out=filter;
+out=find(filter==1);
 
 end
 

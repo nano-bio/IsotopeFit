@@ -64,13 +64,7 @@ parfor i=1:l
         
     parameters(nmolecules+1)=ranges{i}.resolution; %resolution
     parameters(nmolecules+2)=ranges{i}.massoffset; %x-offset
-    
-    %[minind,maxind]=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
-    
-    
-    
-    %ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
-    
+        
     %fitparam=fminsearch(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),parameters,optimset('MaxFunEvals',10000,'MaxIter',10000));
     drawnow;
     
@@ -79,28 +73,21 @@ parfor i=1:l
         [ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam],...
         optimset('MaxFunEvals',5000,'MaxIter',5000));
    
-    %fitparam=fminsearch(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
-    %    optimset('MaxFunEvals',5000,'MaxIter',5000));
-    
     %fprintf('Error estimation...\n');
     %error estimation
-        
     dof=length(ind)-2;
     sdrq = (msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,fitparam))/dof;
+    
+    %error estimation via "squared" Jacobian matrix (first derivatives squared)
     %J = jacobianest(@(x) multispecparameters(massaxis(ind),ranges{i}.molecules,x),fitparam);
     %sigma = sdrq*pinv(J'*J);
-    %sigma = b/(J'*J);
-    
     %stderr = sqrt(diag(sigma))';
     
-     HD = hessdiag(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x)/dof,fitparam);
+   %error estimation via diagonal elements of hessian matrix (=second derivatives)
+   HD = hessdiag(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x)/dof,fitparam); 
+   stderr=sqrt(sdrq./HD');
     
-%     sigma = sdrq*pinv(J'*J);
-%    stderr = sqrt(diag(sigma))';
-
-   % stderr=sqrt(sdrq./diag(J'*J)');
-    stderr=sqrt(sdrq./HD');
-    
+   %write fitparameters to molecules structure
     for j=1:nmolecules
         rangestemp{i}.molecules{j}.area=fitparam(j); %read out fitted areas for every molecule
         rangestemp{i}.molecules{j}.areaerror=stderr(j); %read out fitted areas for every molecule
@@ -110,12 +97,12 @@ parfor i=1:l
     rangestemp{i}.resolution=fitparam(end-1);
     rangestemp{i}.massoffseterror=stderr(end);
     rangestemp{i}.resolutionerror=stderr(end-1);
-   
-    %fprintf('%i\n',prog);
 end
 fprintf('Done.\n')
 close(h);
 
+%center of mass of ranges needs to be recalculated due to different areas
+%of involved molecules:
 out=calccomofranges(rangestemp);
 
 end

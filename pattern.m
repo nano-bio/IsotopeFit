@@ -9,7 +9,7 @@ peaksum=0;
 
 %approx sigma calculation for center of molecule mass:
 sigma=molecule.com./resolutionaxis*(1/(2*sqrt(2*log(2))));
-eta=0.9; %1... Gauss --- 0... Lorentz
+eta=1; %1... Gauss --- 0... Lorentz
 
  for i=1:size(molecule.peakdata,1)
 %     %resolution=polynomial(resolutionpolynom,molecule.peakdata(i,1));
