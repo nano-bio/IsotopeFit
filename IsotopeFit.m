@@ -293,6 +293,7 @@ uicontrol(Parent,'style','pushbutton',...
           'Units','normalized',...
           'Position',gridpos(36,32,1,2,27,32,0.01,0.01));
 
+%%
 %######################### MENU BAR
 
 mfile = uimenu('Label','File');
@@ -313,14 +314,16 @@ mfile = uimenu('Label','File');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
  
- mdata= uimenu('Label','Data');
-       mdataexport=uimenu(mdata,'Label','Export Data...','Callback',@menuexportdataclick,'Enable','on');
+ mdata= uimenu('Label','Export');
+       uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
+       uimenu(mdata,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
+       
        
  mplay = uimenu('Label','Play');
     uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
     uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
        
-       
+%%       
 %######################### END OF LAYOUT     
       
 addpath('DERIVESTsuite');
@@ -330,6 +333,7 @@ addpath('IsotopeDistribution');
 init();
 
     function init()
+        %%
         handles=guidata(Parent);
         %bg correction standard values
         handles.bgcorrectiondata.startmass=-inf;
@@ -390,6 +394,48 @@ init();
        mt=mass(ind):samplerate:mass(end);
        peakdataout=[mt',...
                     double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
+    end
+
+    function menuexportcurrentview(hObject,eventdata)
+        %% Exports Peakdata + fitted curves of current plot to ascii file
+        [filename, pathname, filterindex] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export data');
+        handles=guidata(Parent);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            fid=fopen(fullfile(pathname,filename),'w');
+            handles=guidata(hObject);
+            limits= get(dataaxes, 'XLim');
+            
+            %find molecules that are in current view
+            moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2));
+            minind=mass2ind(handles.peakdata(:,1)',limits(1));
+            maxind=mass2ind(handles.peakdata(:,1)',limits(2));
+            
+            massaxis=handles.peakdata(minind:maxind,1)';
+            resolutionaxis=resolutionbycalibration(handles.calibration,massaxis);
+            
+            fitted_data=zeros(length(massaxis),length(moleculelist));
+            k=1;
+            
+            %write ascii data
+            fprintf(fid,'Massaxis\tOrig. Signal\tFitted Signal');
+            
+            %read out molecule data and write names to first line
+            for i=moleculelist
+                %calculate fitted data for every molecule:
+                fitted_data(:,k)=multispec(handles.molecules(i),resolutionaxis,0,massaxis)';
+                k=k+1;
+                %write name of molecule
+                fprintf(fid,'\t%s',handles.molecules{i}.name);
+            end
+            fprintf(fid,'\n');
+            fclose(fid);
+            
+            %append data matrix to ascii file
+            dlmwrite(fullfile(pathname,filename),[handles.peakdata(minind:maxind,:),sum(fitted_data,2),fitted_data],'-append','delimiter','\t','precision','%e');
+        end
     end
 
    function menuplay(hObject,eventdata)

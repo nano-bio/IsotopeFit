@@ -27,9 +27,7 @@ maxmass=molecules{index}.maxmass+searchrange;
 
 out=[];
 for i=searchlist
-    if ((molecules{i}.minmass<=maxmass)&&(molecules{i}.minmass>=minmass))||...
-       ((molecules{i}.maxmass<=maxmass)&&(molecules{i}.maxmass>=minmass))||...
-       ((molecules{i}.minmass<=minmass)&&(molecules{i}.maxmass>=maxmass))
+    if is_molecule_in_massrange(molecules{i},minmass,maxmass)
         out=[out i];
         %fprintf('%s-',molecules{i}.name);
     end
