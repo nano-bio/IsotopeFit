@@ -1001,7 +1001,7 @@ init();
                 handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
                 
                 % and we're done
-                delete('bkp.idf')
+                delete('bkp.ifd')
             case 'Fit selected'
                 % number of molecules?
                 nom = length(index);
