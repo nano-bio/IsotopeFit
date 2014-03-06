@@ -317,6 +317,7 @@ mfile = uimenu('Label','File');
  mdata= uimenu('Label','Export');
        uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
        uimenu(mdata,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
+       uimenu(mdata,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
        
        
  mplay = uimenu('Label','Play');
@@ -394,6 +395,27 @@ init();
        mt=mass(ind):samplerate:mass(end);
        peakdataout=[mt',...
                     double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
+    end
+
+function menuexportmassspec(hObject,eventdata)
+        %% Exports Peakdata + fitted curves of current plot to ascii file
+        [filename, pathname, filterindex] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export Mass Spectrum');
+        handles=guidata(Parent);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            fid=fopen(fullfile(pathname,filename),'w');
+            handles=guidata(hObject);
+           
+            %write title line
+            fid=fopen(fullfile(pathname,filename),'w');
+            fprintf(fid,'Mass (Dalton)\tSignal (a.u.)\n');
+            fclose(fid);
+
+            %append data
+            dlmwrite(fullfile(pathname,filename),handles.peakdata,'-append','delimiter','\t','precision','%e');
+        end
     end
 
     function menuexportcurrentview(hObject,eventdata)
