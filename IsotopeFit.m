@@ -303,6 +303,8 @@ mfile = uimenu('Label','File');
     uimenu(mfile,'Label','Save as...','Callback',@(a,b) save_file(a,b,'saveas'));
     uimenu(mfile,'Label','Import from Labbook...','Callback',@labbookimport,...
         'Separator','on');
+    uimenu(mfile,'Label','Recover file after crash','Callback',@recoverfile,...
+        'Separator','on');
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        
@@ -532,6 +534,24 @@ function menuexportmassspec(hObject,eventdata)
             
             %write filename to visible display:
             set(filenamedisplay, 'String', handles.fileinfo.originalfilename);
+        end
+    end
+
+    function recoverfile(hObject,eventdata)
+        % This function checks for the existance of a file called bkp.ifd
+        % in the same folder as the the program. This file is usually
+        % created before the "Fit All" routine is carried out and deleted
+        % afterwards (in order to protect the data in case the fitting
+        % routine runs into trouble). If it exists, it's being loaded.
+        filename = 'bkp.ifd';
+        pathname = pwd;
+        fullpath = fullfile(pathname, filename);
+        
+        % actually there?
+        if exist(filename, 'file') == 2
+            open_file(hObject, eventdata, fullpath);
+        else % nope
+            msgbox('No backup file found.');
         end
     end
     
@@ -768,12 +788,30 @@ function menuexportmassspec(hObject,eventdata)
         calibrationmenu('on','off');
     end
 
-    function open_file(hObject,eventdata)
-        [filename, pathname, filterindex] = uigetfile( ...
-            {'*.ifd','IsotopeFit data file (*.ifd)';...
-            '*.h5','HDF5 data file (*.h5)';...
-            '*.*','ASCII data file (*.*)'},...
-            'Open IsotopeFit data file');
+    function open_file(hObject, eventdata, fullpath)
+        % most likely this function will not retrieve filename or pathname
+        % in this case we show a selection dialog.
+
+        if ~exist('fullpath', 'var')
+            [filename, pathname, filterindex] = uigetfile( ...
+                {'*.ifd','IsotopeFit data file (*.ifd)';...
+                '*.h5','HDF5 data file (*.h5)';...
+                '*.*','ASCII data file (*.*)'},...
+                'Open IsotopeFit data file');
+        % if we indeed got a filename to load, we just set the filterindex
+        % to the file suffix
+        else
+            [pathname, filename, suffix] = fileparts(fullpath);
+            if suffix == '.ifd'
+                filterindex = 1;
+            elseif suffix == '.h5'
+                filterindex = 2;
+            else % assume it's ASCII
+                filterindex = 3;
+            end
+            filename = [filename, suffix];
+        end
+        
         handles=guidata(Parent);
         if ~(isequal(filename,0) || isequal(pathname,0))
             set(mmolecules,'Enable','on');
