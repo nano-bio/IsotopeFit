@@ -315,6 +315,7 @@ mfile = uimenu('Label','File');
  mcal= uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
+       mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
  
  mdata= uimenu('Label','Export');
        uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
@@ -462,42 +463,42 @@ function menuexportmassspec(hObject,eventdata)
         end
     end
 
-   function menuplay(hObject,eventdata)
-       
+    function menuplay(hObject,eventdata)
+
        handles=guidata(hObject);
-       
+
        h = figure('units','pixels','Name','Clustersound','NumberTitle', 'off','position',[500 500 200 50],'windowstyle','modal');
         uicontrol('style','text','string',sprintf('Yeah, Groovy!\nI''ll prepare the data for you...'),'units','pixels','position',[10 10 180 30]);
        drawnow;
 
        %h=msgbox('Yeah, Groovy! I''ll prepare the Data...');
-       
+
        sample=0.1;
        onemassfreq=800; %Hz for peaks with deltam=1
-       
+
        %mass values need to be distinct:
        l=size(handles.peakdata,1);
-             
+
        mass=spline(1:round(l/1000):l,handles.peakdata(1:round(l/1000):l,1)',1:l);
-       
+
        %sometimes, the spectrum isnt incrasing at the begininng. cut out
        %this region
        ind=find(diff(mass)<=0);
-       
+
        if ~isempty(ind)
            ind=ind(end)+1;
        else
            ind=1;
        end
-       
+
        %mass=mass(ind,end);
-       
-       
+
+
        t=handles.peakdata(ind,1):sample:handles.peakdata(end,1);
-       
+
        %plot(dataaxes,diff(mass));
        f=onemassfreq/sample;
-       
+
        switch get(hObject,'Label')
            case 'Original'
                spec=double(interp1(mass(ind:end),handles.peakdata(ind:end,2)',t));
@@ -505,23 +506,29 @@ function menuexportmassspec(hObject,eventdata)
            case 'Fitted Data'
                spec=multispec(handles.molecules,3000,0,t);
        end
-       
+
        spec=smooth(spec,10);
-       
+
        spec=log(spec-min(spec)+0.1);       
        spec=spec-mean(spec);
-       
+
        spec=spec/max(abs(spec));
        dspec=diff(spec);
        dspec=dspec/max(abs(dspec));
-       
-       
+
+
        plot(dataaxes,t,spec);
-       
+
        %plot(dataaxes,t(1:end-1),dspec);
        close(h);
        sound(dspec,f);
-    end    
+    end
+    
+    function menudc(hObject,eventdata)
+        handles = guidata(Parent);
+        listindices = get(ListMolecules,'Value');
+        something = driftcorrection(handles, listindices)
+    end
 
     function labbookimport(hObject,eventdata)
         [pathname,filename]=readfromlabbook();
@@ -754,8 +761,8 @@ function menuexportmassspec(hObject,eventdata)
     function load_h5(pathname,filename)
         init();
         handles=guidata(Parent);
-        mass = hdf5read(fullfile(pathname,filename),'/FullSpectra/MassAxis');
-        signal = hdf5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum');
+        mass = h5read(fullfile(pathname,filename),'/FullSpectra/MassAxis');
+        signal = h5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum');
         handles.raw_peakdata=[mass,signal];
         handles.startind=1;
         handles.endind=size(handles.raw_peakdata,1);
