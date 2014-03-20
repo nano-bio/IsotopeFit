@@ -82,7 +82,7 @@ function dcout = driftcorrection(handles, listindices)
     fn = fullfile(handles.fileinfo.pathname,handles.fileinfo.originalfilename);
     % preliminary and hard coded until we have the proper h5-filename in
     % the handles
-    fn = 'C:\dummylibraryfolder\homefolder\Messungen\Coronene\Coronene + CH4\DataFile_2013.12.19-21h04m02s_AS.h5';
+    fn = 'Z:\Experiments\STM\Methanol\D-Meth+C60\DataFile_2012.04.07-02h20m55s_AS.h5';
 
     % how big is our data?
     fileinfo = h5info(fn, '/FullSpectra/TofData');

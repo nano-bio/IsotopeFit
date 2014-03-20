@@ -75,8 +75,12 @@ parfor i=1:l
    
     %fprintf('Error estimation...\n');
     %error estimation
-    dof=length(ind)-2;
-    sdrq = (msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,fitparam))/dof;
+    
+    %for error estimation, use a small range around the peak maxima
+    inderr=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
+    
+    dof=length(inderr)-2;
+    sdrq = (msd(spec_measured(inderr),massaxis(inderr),ranges{i}.molecules,fitparam))/dof;
     
     %error estimation via "squared" Jacobian matrix (first derivatives squared)
     %J = jacobianest(@(x) multispecparameters(massaxis(ind),ranges{i}.molecules,x),fitparam);
@@ -84,7 +88,7 @@ parfor i=1:l
     %stderr = sqrt(diag(sigma))';
     
    %error estimation via diagonal elements of hessian matrix (=second derivatives)
-   HD = hessdiag(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x)/dof,fitparam); 
+   HD = hessdiag(@(x) msd(spec_measured(inderr),massaxis(inderr),ranges{i}.molecules,x)/dof,fitparam); 
    stderr=sqrt(sdrq./HD');
     
    %write fitparameters to molecules structure
