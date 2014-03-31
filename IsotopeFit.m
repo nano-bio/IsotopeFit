@@ -315,6 +315,7 @@ mfile = uimenu('Label','File');
  mcal= uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
+       mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
  
  mdata= uimenu('Label','Export');
@@ -566,7 +567,7 @@ function menuexportmassspec(hObject,eventdata)
         handles=guidata(hObject);
 
         searchstring=get(e_searchstring,'String');        
-        [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring);
+        [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring,handles.peakdata);
         guidata(hObject,handles);
         
         [filename, pathname, filterindex] = uiputfile( ...
@@ -633,7 +634,7 @@ function menuexportmassspec(hObject,eventdata)
         handles=guidata(hObject);
         
         searchstring=get(e_searchstring,'String');        
-        [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring);
+        [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring,handles.peakdata);
         guidata(hObject,handles);
         
         set(ListSeries,'Value',1);
@@ -732,8 +733,46 @@ function menuexportmassspec(hObject,eventdata)
             load(fullfile(pathname,filename),'-mat');
             
             handles.molecules=data.molecules;
+            
+            guidata(Parent,handles);
+            
+            molecules2listbox(ListMolecules,handles.molecules);
         end
-        guidata(Parent,handles);
+        calibrationmenu('on','on');
+    end
+
+    function menuloadcalibration(hObject,eventdata)
+        handles=guidata(Parent);
+        [filename, pathname, filterindex] = uigetfile( ...
+            {'*.ifd','IsotopeFit data file (*.ifd)'},...
+            'Open IsotopeFit data file');
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            data={}; %load needs a predefined variable
+            load(fullfile(pathname,filename),'-mat');
+            
+            % Background correction data
+            handles.bgcorrectiondata=data.bgcorrectiondata;
+            
+            if ~isfield(handles.bgcorrectiondata,'bgm') %compatibility: old bg correction methode
+                handles.bgcorrectiondata.bgm=[];
+                handles.bgcorrectiondata.bgy=[];
+            end
+            
+            handles.molecules=data.molecules;
+            
+            %Calibration data
+            handles.calibration=data.calibration;
+            
+            handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
+            handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
+            handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
+            
+            
+            guidata(Parent,handles);
+            
+            molecules2listbox(ListMolecules,handles.molecules);
+        end
         calibrationmenu('on','on');
     end
 
@@ -1044,7 +1083,7 @@ function menuexportmassspec(hObject,eventdata)
         out(:,1)=out(:,1)-mo;
     end
     
-    function [areaout,areaerrorout,sortlist]=sortmolecules(molecules,searchstring)
+    function [areaout,areaerrorout,sortlist]=sortmolecules(molecules,searchstring,peakdata)
         searchstring=['[' searchstring ']'];
         
         attached={};
@@ -1077,8 +1116,15 @@ function menuexportmassspec(hObject,eventdata)
             else
                 rowix=ix;
             end
-            areaout(lineix,rowix)=molecules{i}.area;
-            areaerrorout(lineix,rowix)=molecules{i}.areaerror;
+            %We need to correct the area to get the number of ions detected
+            %in this massrange. This can be approx. done by dividing the
+            %area by the mean pin-distance. the smaller the msq of delta m,
+            %the better the approximation...
+            npins=mass2ind(peakdata(:,1)',molecules{i}.maxmass)-mass2ind(peakdata(:,1)',molecules{i}.minmass); %number of pins
+            b=(molecules{i}.maxmass-molecules{i}.minmass)/npins; %mean pin-distance
+            
+            areaout(lineix,rowix)=molecules{i}.area/b;
+            areaerrorout(lineix,rowix)=molecules{i}.areaerror/b;
         end
         for i=1:length(attached)
             sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
