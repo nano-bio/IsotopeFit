@@ -1,4 +1,4 @@
-function out = generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alternativenames)
+function out = generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alternativenames,charge)
 %generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alternativenames)
 %   folder...output folder
 %   clusterlist... list of molecules i.e. {'C60' 'H2O' 'CO2'}
@@ -10,6 +10,8 @@ function out = generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alte
 %   th... peaks below this threashold are neglected. values around 1e-6
 %   alternativenames... voluntary list of alternative names for long
 %       molecule formulas
+%   charge: possibility to handle multiply charged ions
+
 
 folder=['molecules\',folder];
 
@@ -20,6 +22,10 @@ end
 
 if nargin==5
     alternativenames=clusterlist;
+end
+
+if nargin<6
+    charge=1;    
 end
 
 nfiles=1;
@@ -60,6 +66,9 @@ for i=1:nfiles
              d=approx_masses(d,minmassdistance);
              d=approx_p(d,th);
              
+             %multiply charged ions: divide masses by charge
+             d(:,1)=d(:,1)/charge;
+                          
              filename=[filename '[' cluster{j}.name ']'];
              if clusternumbers(j)>1
                  filename=[filename num2str(clusternumbers(j))];
