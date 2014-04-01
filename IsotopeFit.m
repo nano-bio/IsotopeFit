@@ -1,7 +1,5 @@
 function IsotopeFit()
 
-scrsz = get(0,'ScreenSize'); 
-
 Parent = figure( ...
     'MenuBar', 'none', ...
     'ToolBar','figure',...
@@ -43,6 +41,7 @@ delete(hTemp);
 hTemp = findall(Parent,'tag','Exploration.Rotate');
 delete(hTemp);
 
+%######################### AXES
 
 %Preview Panel
 
@@ -52,11 +51,15 @@ dataaxes = axes('Parent',Parent,...
              'Units','normalized',...
              'Position',gridpos(64,64,35,62,2,54,0.04,0.02)); 
 
+% Area Axes
+
 areaaxes = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'Position',gridpos(6,64,1,3,10,54,0.04,0.02)); 
+             'Position',gridpos(6,64,1,3,10,54,0.04,0.02));
+         
+%######################### MENU BAR Toolbar left of the area axes
 
 e_searchstring=uicontrol(Parent,'Style','edit',...
     'Tag','e_searchstring',...
@@ -76,94 +79,66 @@ ListSeries=uicontrol(Parent,'Style','Listbox',...
     'Units','normalized',...
     'Callback',@listseriesclick,...
     'Position',gridpos(12,32,1,5,1,4,0.01,0.02));
+
+%######################### tool bar on the right
     
 uicontrol(Parent,'Style','Text',...
     'String','Molecules',...
     'Units','normalized',...
-    'Position',gridpos(18,16,18,18,14,16,0.01,0.01));         
+    'Position',gridpos(64,64,62,64,53,64,0.01,0.01));  
 
 % Fun fact: Max is set to anything so that Max-Min is greater than one. If
 % that is the case, Matlab lets you select more than one molecule. Note
 % that the actual value of Max-Min does not indicate how many you actually
 % can select.
+
 ListMolecules=uicontrol(Parent,'Style','Listbox',...
     'Units','normalized',...
     'Callback',@moleculelistclick,...
     'Max', 3,...
-    'Position',gridpos(18,16,8,17,14,16,0.01,0.01));
+    'Position',gridpos(64,64,17,61,53,64,0.01,0.01));
 
 uicontrol(Parent,'style','pushbutton',...
           'string','Add Molecules',...
           'Callback','',...
           'Units','normalized',...
-          'Position',gridpos(18,16,7,7,14,16,0.01,0.01)); 
+          'Position',gridpos(64,64,13,16,53,64,0.01,0.01));
+      
+% display for the mass of the current molecule
 
 uicontrol(Parent,'Style','Text',...
-    'String','Center of mass: N/A',...
+    'String','Center of mass:',...
     'Units','normalized',...
-    'Position',gridpos(18,16,6,6,14,16,0.01,0.01));
+    'Position',gridpos(64,64,11,13,53,58,0.01,0.01));
 
-% uicontrol(Parent,'Style','Text',...
-%     'String','Resolution: N/A',...
-%     'Units','normalized',...
-%     'Position',gridpos(18,8,5,5,7,8,0.01,0.01));
+comdisplay = uicontrol(Parent,'Style','Text',...
+    'String','',...
+    'Units','normalized',...
+    'Position',gridpos(64,64,11,13,58,64,0.01,0.01));
 
-
+% display for the resolution of the current molecule
 
 uicontrol(Parent,'Style','Text',...
-    'String','Delta Resolution (%)',...
+    'String','Resolution:',...
     'Units','normalized',...
-    'Position',gridpos(18,32,5,5,27,29,0.01,0.01));
+    'Position',gridpos(64,64,9,11,53,58,0.01,0.01));
 
-e_resolution=uicontrol(Parent,'Style','edit',...
-    'Tag','e_resolution',...
+resolutiondisplay = uicontrol(Parent,'Style','Text',...
+    'String','',...
     'Units','normalized',...
-    'String','0',...
-    'Background','white',...
-    'Position',gridpos(18,32,5,5,30,32,0.01,0.01));
+    'Position',gridpos(64,64,9,11,58,64,0.01,0.01));
 
-uicontrol(Parent,'Style','Text',...
-    'String','Delta Mass (amu)',...
-    'Units','normalized',...
-    'Position',gridpos(18,32,4,4,27,29,0.01,0.01));
-
-e_massoffset=uicontrol(Parent,'Style','edit',...
-    'Tag','e_massoffset',...
-    'Units','normalized',...
-    'String','0.01',...
-    'Background','white',...
-    'Enable','on',...
-    'Position',gridpos(18,32,4,4,30,32,0.01,0.01));
+% display for the area of the current molecule
 
 uicontrol(Parent,'Style','Text',...
-    'String','Area',...
+    'String','Area:',...
     'Units','normalized',...
-    'Position',gridpos(18,32,3,3,27,28,0.01,0.01));
+    'Position',gridpos(64,64,7,9,53,58,0.01,0.01));
 
-e_area=uicontrol(Parent,'Style','edit',...
-    'Tag','e_area',...
+areadisplay = uicontrol(Parent,'Style','Text',...
+    'String','',...
     'Units','normalized',...
-    'String','N/A',...
-    'Background','white',...
-    'Callback',@parametereditclick,...
-    'Enable','off',...
-    'Position',gridpos(18,32,3,3,28,29,0.01,0.01));
-
-up3=uicontrol(Parent,'style','pushbutton',...
-    'Tag','areaup',...
-    'string','+',...
-    'Callback',@parameterchange,...
-    'Enable','off',...
-    'Units','normalized',...
-    'Position',gridpos(18,32,3,3,31,32,0.01,0.01));
-
-down3=uicontrol(Parent,'style','pushbutton',...
-    'Tag','areadown',...    
-    'string','-',...
-    'Callback',@parameterchange,...
-    'Enable','off',...
-    'Units','normalized',...
-    'Position',gridpos(18,32,3,3,30,31,0.01,0.01));  
+    'Position',gridpos(64,64,7,9,58,64,0.01,0.01));
 
 % Now for the fit buttons:
       
@@ -171,21 +146,31 @@ uicontrol(Parent,'style','pushbutton',...
           'string','Fit all',...
           'Callback',@fitbuttonclick,...
           'Units','normalized',...
-          'Position',gridpos(36,64,3,4,57,60,0.01,0.01));
+          'Position',gridpos(64,64,4,7,57,60,0.01,0.01));
       
 uicontrol(Parent,'style','pushbutton',...
           'string','Fit selected',...
           'Callback',@fitbuttonclick,...
           'Units','normalized',...
-          'Position',gridpos(36,64,3,4,53,57,0.01,0.01));
+          'Position',gridpos(64,64,4,7,53,57,0.01,0.01));
       
 % Listbox for the fit method
       
 ListMethode = uicontrol(Parent,'style','popupmenu',...
           'string',{'Ranges', 'Molecules'},...
           'Units','normalized',...
-          'Position',gridpos(36,64,3,4,60,64,0.01,0.01));
+          'Position',gridpos(64,64,4,7,60,64,0.01,0.01));
       
+% Autodetect peaks button
+      
+uicontrol(Parent,'style','pushbutton',...
+          'string','Autodetect peaks',...
+          'Callback',@showlargedeviations,...
+          'Units','normalized',...
+          'Position',gridpos(64,64,1,4,53,64,0.01,0.01));
+
+%######################### FILE NAME DISPLAY ON TOP
+
 % The following two controls display the current filename on top of the
 % window
           
@@ -195,7 +180,6 @@ uicontrol(Parent,'Style','Text',...
     'Position',gridpos(64,64,62,64,4,8,0.01,0.01));
     
 filenamedisplay = uicontrol(Parent,'Style','Text',...
-    'Tag','e_massoffset',...
     'Units','normalized',...
     'String','No file loaded',...
     'HorizontalAlignment','left',...
@@ -283,15 +267,6 @@ uicontrol(Parent,'style','pushbutton',...
           'Units','normalized',...
           'TooltipString','Plot whole mass spec (overview)',...
           'Position',gridpos(64,64,62,64,1,3,0.01,0.01));
-      
-      
-% Autodetect peaks button
-      
-uicontrol(Parent,'style','pushbutton',...
-          'string','Autodetect peaks',...
-          'Callback',@showlargedeviations,...
-          'Units','normalized',...
-          'Position',gridpos(36,32,1,2,27,32,0.01,0.01));
 
 %%
 %######################### MENU BAR
@@ -308,23 +283,23 @@ mfile = uimenu('Label','File');
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        
- mmolecules= uimenu('Label','Molecules','Enable','off');
+mmolecules= uimenu('Label','Molecules','Enable','off');
        uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
        uimenu(mmolecules,'Label','Load from ifd...','Callback',@menuloadmoleculesifd);
        
- mcal= uimenu('Label','Calibration');
+mcal= uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
  
- mdata= uimenu('Label','Export');
+mdata= uimenu('Label','Export');
        uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
        uimenu(mdata,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
        uimenu(mdata,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
        
        
- mplay = uimenu('Label','Play');
+mplay = uimenu('Label','Play');
     uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
     uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
        
@@ -364,6 +339,9 @@ init();
         % some basic settings for the software
         handles.settings = {};
         handles.settings.minpeakwidth = 0.1;
+        handles.settings.deltaresolution = 0;
+        handles.settings.deltamass = 0.01;
+        
         handles.status.logscale = 0;
         handles.status.overview = 0;
         handles.status.lastlims = [[0 0] [0 0]];
@@ -401,7 +379,7 @@ init();
                     double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
     end
 
-function menuexportmassspec(hObject,eventdata)
+    function menuexportmassspec(hObject,eventdata)
         %% Exports Peakdata + fitted curves of current plot to ascii file
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
@@ -640,68 +618,6 @@ function menuexportmassspec(hObject,eventdata)
         set(ListSeries,'Value',1);
         set(ListSeries,'String',serieslist);
         
-    end
-
-    function writetopreviewedit(com,massoffset,resolution,area)
-        set(e_com,'String',num2str(com));
-        set(e_area,'String',num2str(area));
-        set(e_massoffset,'String',num2str(massoffset));
-        set(e_resolution,'String',num2str(resolution));
-    end
-
-    function updatecurrentmolecule()
-      
-        index=get(ListMolecules,'Value');
-
-        handles=guidata(Parent);
-
-        handles.ranges{rangeindex}.massoffset=str2double(get(e_massoffset,'String'));
-        handles.ranges{rangeindex}.resolution=str2double(get(e_resolution,'String'));
-        handles.molecules{rootindex}.area=str2double(get(e_area,'String'));
-        handles.ranges{rangeindex}.molecules{moleculeindex}.area=str2double(get(e_area,'String'));
-        
-        handles.ranges(rangeindex)=calccomofranges(handles.ranges(rangeindex));
-        
-        set(e_com,'String',num2str(handles.ranges{rangeindex}.com));
-        
-        guidata(Parent,handles);
-        
-        plotpreview(rootindex);
-        %fitpolynomials();
-        plotdatapoints();
-    end
-
-    function parameterchange(hObject,eventdata)
-        handles=guidata(hObject);
-        tag=get(hObject,'Tag');
-        switch tag
-            case 'massoffsetup'
-                value=str2double(get(e_massoffset,'String'));
-                value=value+0.01;
-                set(e_massoffset,'String',num2str(value));
-            case 'massoffsetdown'
-                value=str2double(get(e_massoffset,'String'));
-                value=value-0.01;
-                set(e_massoffset,'String',num2str(value));
-            case 'resolutionup'
-                value=str2double(get(e_resolution,'String'));
-                value=value+0.05*value;
-                set(e_resolution,'String',num2str(value));
-            case 'resolutiondown'
-                value=str2double(get(e_resolution,'String'));
-                value=value-0.05*value;
-                set(e_resolution,'String',num2str(value));
-            case 'areaup'
-                value=str2double(get(e_area,'String'));
-                value=value+0.05*value;
-                set(e_area,'String',num2str(value));   
-            case 'areadown'
-                value=str2double(get(e_area,'String'));
-                value=value-0.05*value;
-                set(e_area,'String',num2str(value));                
-        end
-        guidata(hObject,handles);
-        updatecurrentmolecule();
     end
 
     function calibrationmenu(value1,value2)
@@ -966,19 +882,29 @@ function menuexportmassspec(hObject,eventdata)
     end
 
     function moleculelistclick(hObject,eventdata)
-        index = get(ListMolecules,'Value');
-        
-        plotmolecule(index);
-    end
-
-    function plotmolecule(index)
         handles=guidata(Parent);
+        
+        index = get(ListMolecules,'Value');
         
         % we can always only plot one molecule. if several have been
         % selected we just plot the first one
         if (length(index) >= 2)
             index = index(1);
         end
+        
+        % plot the molecule
+        plotmolecule(index);
+        
+        % set the displays
+        % note this is not the nominal mass
+        set(comdisplay, 'String', num2str(handles.molecules{index}.com));
+        set(areadisplay, 'String', num2str(handles.molecules{index}.area));
+        res = resolutionbycalibration(handles.calibration,handles.molecules{index}.com);
+        set(resolutiondisplay, 'String', num2str(res));
+    end
+
+    function plotmolecule(index)
+        handles=guidata(Parent);
 
         %involvedmolecules=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,0.3);
         involvedmolecules=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,2);
@@ -1139,8 +1065,8 @@ function menuexportmassspec(hObject,eventdata)
         
         ranges=findranges(handles.molecules,0.3);
         
-        deltar=str2num(get(e_resolution,'String'))/100;
-        deltam=str2num(get(e_massoffset,'String'));
+        deltar=handles.settings.deltaresolution/100;
+        deltam=handles.settings.deltamass;
         
         %be careful: don't double-calibrate masses!
         %set massoffset to zero for final fitting:
@@ -1176,7 +1102,10 @@ function menuexportmassspec(hObject,eventdata)
         end
         
         guidata(hObject,handles);
-        plotmolecule(index);
+        
+        % in order to plot we call moleculelistclick, because this function
+        % plots and updates all the labels!
+        moleculelistclick();
     end
 
     function showlargedeviations(hObject, eventdata)
@@ -1423,4 +1352,3 @@ function menuexportmassspec(hObject,eventdata)
         guidata(Parent,handles);
     end
 end
-
