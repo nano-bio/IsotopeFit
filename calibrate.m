@@ -317,7 +317,7 @@ e_resolutionorder=uicontrol(CalibrationPanel,'Style','edit',...
     'Position',gridpos(10,7,1,1,7,7,0.05,0.01));
 
 uicontrol(CalibrationPanel,'style','pushbutton',...
-          'string','update',...
+          'string','Update',...
           'Callback',@updatepolynomials,...
           'Units','normalized',...
           'Position',gridpos(10,7,1,1,4,4,0.05,0.01)); 
@@ -592,34 +592,56 @@ drawnow;
         if ~isempty(handles.calibrationlist)
             massaxis=handles.peakdata(:,1)';
             
-            %[comlist, massoffsetlist, resolutionlist]=ranges2list(handles.ranges);
-            
+            % plot mass offset
             plot(massoffsetaxes,handles.calibration.comlist,handles.calibration.massoffsetlist,'ko');
-%             hold(massoffsetaxes,'on');
-%             %plot(massoffsetaxes,massaxis,polynomial(handles.calibration.massoffsetlist,massaxis),'k--');
-%                         
-%             %############### testing
-%             y=pchip(comlist,massoffsetlist,comlist(1):0.001:comlist(end));
-%             plot(massoffsetaxes,comlist(1):0.001:comlist(end),y,'k--');
-%                    
-%             %#######################
-%             
-%             hold(massoffsetaxes,'off');
-                        
-             xlim(massoffsetaxes,[min(handles.calibration.comlist)-1,max(handles.calibration.comlist)+1]);       
+            xlim(massoffsetaxes,[min(handles.calibration.comlist)-1,max(handles.calibration.comlist)+1]);       
             
+            % plot resolution
             plot(resolutionaxes,handles.calibration.comlist,handles.calibration.resolutionlist,'ko');
-%             hold(resolutionaxes,'on');
-%             plot(resolutionaxes,massaxis,polynomial(handles.calibration.resolutionlist,massaxis),'k--');
-%             hold(resolutionaxes,'off');
-%             
-%             %xlim(resolutionaxes,[min(massaxis),max(massaxis)]);
-            xlim(resolutionaxes,[min(handles.calibration.comlist)-1,max(handles.calibration.comlist)+2]); 
+            xlim(resolutionaxes,[min(handles.calibration.comlist)-1,max(handles.calibration.comlist)+2]);
+            
+
         else
             cla(massoffsetaxes);
             cla(resolutionaxes);
         end
         
+        
+        guidata(Parent,handles);
+    end
+
+    function markpoints()
+        handles = guidata(Parent);
+        
+        % we only need this if there are calibration values available
+        if ~isempty(handles.calibrationlist)
+            
+            % the only interesting parameter is the range (since we only
+            % have one datapoint for each range
+            callistindex = get(ListRanges,'Value');
+            
+            % get the according values for mass, res and offset
+            com = handles.calibration.comlist(callistindex)
+            res = handles.calibration.resolutionlist(callistindex);
+            mos = handles.calibration.massoffsetlist(callistindex);
+            
+            % first for the massoffset. we try to delete the old marking,
+            % if available
+            hold(massoffsetaxes, 'on')
+            try
+                delete(handles.mowriteindication)
+            end
+            handles.mowriteindication = stem(massoffsetaxes, com, mos,'g');
+            hold(massoffsetaxes, 'off')
+            
+            % now for the resolution
+            hold(resolutionaxes, 'on')
+            try
+                delete(handles.reswriteindication)
+            end
+            handles.reswriteindication = stem(resolutionaxes, com, res,'g');
+            hold(resolutionaxes, 'off')
+        end
         
         guidata(Parent,handles);
     end
@@ -743,6 +765,9 @@ drawnow;
         
         writetopreviewedit(com,currentmassoffset,currentresolution,area)
         plotpreview(index);
+        
+        % in the very end we update the resolution and mass offset axes.
+        markpoints();
         
     end
 
@@ -895,13 +920,5 @@ drawnow;
 %         
 %         guidata(hObject,handles);
         
-    end
-
-%     function moleculepreview(hObject,eventdata)
-%         handles=guidata(hObject);
-%                 
-%         guidata(hObject,handles);
-%     end
-
-  
+    end  
 end
