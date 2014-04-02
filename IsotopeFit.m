@@ -728,6 +728,11 @@ init();
         handles.fileinfo.originalfilename=filename(1:end-3);
         handles.fileinfo.pathname=pathname;
         
+        % we need this if want to access the h5 file later for drift
+        % correction. Note this might differ later from the pathname and
+        % filename, once the data is saved as an idf-file.
+        handles.fileinfo.h5completepath = fullfile(pathname,filename);
+        
         guidata(Parent,handles);
         calibrationmenu('on','off');
     end
