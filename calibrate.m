@@ -1,8 +1,6 @@
 function calout = calibrate(peakdata,molecules,calin)
 
 % ############################## LAYOUT
-%read out screen size
-scrsz = get(0,'ScreenSize'); 
 
 Parent = figure( ...
     'MenuBar', 'none', ...
@@ -336,7 +334,6 @@ handles.options.searchrange=0.3;
 handles.calibrationlist=[]; 
 
 % Init. calibration structure
-calout=calin;
 handles.calibration=calin;
 
 if ~isempty(handles.calibration.namelist)
@@ -379,7 +376,7 @@ drawnow;
 
 
 %################### INTERNAL FUNCTIONS
-    function guessareaclick(hObject,eventdata)
+    function guessareaclick(hObject, ~)
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         
         handles=guidata(hObject);
@@ -414,14 +411,14 @@ drawnow;
         plotdatapoints;
     end
 
-    function massmethodechange(hObject,eventdata)
+    function massmethodechange(hObject, ~)
         handles=guidata(Parent);
         methode=get(hObject,'String');
         handles.calibration.massoffsetmethode=methode{get(hObject,'Value')};
         guidata(Parent,handles);
     end
 
-    function resolutionmethodechange(hObject,eventdata)
+    function resolutionmethodechange(hObject, ~)
         handles=guidata(Parent);
         methode=get(hObject,'String');
         handles.calibration.resolutionmethode=methode{get(hObject,'Value')};
@@ -440,7 +437,7 @@ drawnow;
         
     end
     
-    function fitbuttonclick(hObject,eventdata)
+    function fitbuttonclick(hObject, ~)
         handles=guidata(hObject);
         
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
@@ -473,7 +470,7 @@ drawnow;
         set(e_resolution,'String',num2str(resolution));
     end
 
-    function updatepolynomials(hObject,eventdata)
+    function updatepolynomials(hObject, ~)
       
         handles=guidata(Parent);
         %[comlist, massoffsetlist, resolutionlist]=ranges2list(handles.ranges);
@@ -563,9 +560,12 @@ drawnow;
     end
     
     function [comlist, massoffsetlist, resolutionlist]=ranges2list(ranges)
-        comlist=[];
-        massoffsetlist=[];
-        resolutionlist=[];
+        % how many ranges?
+        nor = length(ranges);
+        
+        comlist = zeros(nor, 1);
+        massoffsetlist = zeros(nor, 1);
+        resolutionlist = zeros(nor, 1);
         
         for i=1:length(ranges)
             comlist(i)=ranges{i}.com;
@@ -585,13 +585,10 @@ drawnow;
         end
     end
 
-
     function plotdatapoints()
         handles=guidata(Parent);
         
         if ~isempty(handles.calibrationlist)
-            massaxis=handles.peakdata(:,1)';
-            
             % plot mass offset
             plot(massoffsetaxes,handles.calibration.comlist,handles.calibration.massoffsetlist,'ko');
             xlim(massoffsetaxes,[min(handles.calibration.comlist)-1,max(handles.calibration.comlist)+1]);       
@@ -621,26 +618,26 @@ drawnow;
             callistindex = get(ListRanges,'Value');
             
             % get the according values for mass, res and offset
-            com = handles.calibration.comlist(callistindex)
+            com = handles.calibration.comlist(callistindex);
             res = handles.calibration.resolutionlist(callistindex);
             mos = handles.calibration.massoffsetlist(callistindex);
             
             % first for the massoffset. we try to delete the old marking,
             % if available
-            hold(massoffsetaxes, 'on')
+            hold(massoffsetaxes, 'on');
             try
                 delete(handles.mowriteindication)
             end
             handles.mowriteindication = stem(massoffsetaxes, com, mos,'g');
-            hold(massoffsetaxes, 'off')
+            hold(massoffsetaxes, 'off');
             
             % now for the resolution
-            hold(resolutionaxes, 'on')
+            hold(resolutionaxes, 'on');
             try
-                delete(handles.reswriteindication)
+                delete(handles.reswriteindication);
             end
             handles.reswriteindication = stem(resolutionaxes, com, res,'g');
-            hold(resolutionaxes, 'off')
+            hold(resolutionaxes, 'off');
         end
         
         guidata(Parent,handles);
@@ -649,7 +646,6 @@ drawnow;
     function plotpreview(index)
         handles=guidata(Parent);
         
-        area=handles.molecules{index}.area;
         com=handles.molecules{index}.com;
         
         [inrange, rangeindex, moleculeindex] = memberofrange(handles.ranges,index);
@@ -718,7 +714,7 @@ drawnow;
         guidata(Parent,handles);
     end
 
-    function moleculepreview(hObject,eventdata)
+    function moleculepreview(hObject, ~)
         handles=guidata(hObject);
         sendertag=get(hObject,'Tag');
         
@@ -784,7 +780,7 @@ drawnow;
         set(down3,'Enable',value);
     end
 
-    function addtolist(hObject,eventdata)
+    function addtolist(hObject, ~)
         %adds marked element in moleculelistbox to calibration listbox
         
         handles=guidata(hObject);
@@ -815,7 +811,7 @@ drawnow;
         end        
     end
 
-    function removefromlist(hObject,eventdata)
+    function removefromlist(hObject, ~)
         %removes marked element from calibration listbox
         
         handles=guidata(hObject);
@@ -870,11 +866,11 @@ drawnow;
         guidata(Parent,handles);
     end
   
-    function parametereditclick(hObject, eventdata)
+    function parametereditclick(hObject, ~)
         updatecurrentmolecule();
     end
 
-    function parameterchange(hObject,eventdata)
+    function parameterchange(hObject, ~)
         handles=guidata(hObject);
         tag=get(hObject,'Tag');
         

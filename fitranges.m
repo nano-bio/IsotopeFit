@@ -8,7 +8,7 @@ spec_measured=peakdata(:,2)';
 
 l=length(ranges);
 
-%check if there are too much molecules per range
+%check if there are too many molecules per range
 maxmolperrange=1;
 for i=1:l
     maxmolperrange=max(length(ranges{i}.molecules),maxmolperrange);

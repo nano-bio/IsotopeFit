@@ -110,7 +110,7 @@ function dcout = driftcorrection(handles, listindices)
         plot(peakaxes{i},(handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind), avgdata(handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind, 1));
         title(handles.molecules{listindices(i)}.name)
     end
-    dcout = 0
+    dcout = 0;
     
     % ===== GUI FUNCTIONS ===== %
     
@@ -193,7 +193,7 @@ function dcout = driftcorrection(handles, listindices)
         plot(dcaxes{molindex}, handles.shifts(molindex, :), 'ro');
         
         % we indicate the current displayed write
-        current_write = str2num(get(writedisplay, 'String'));
+        current_write = str2double(get(writedisplay, 'String'));
         hold(dcaxes{molindex}, 'on')
         handles.writeindication{molindex} = stem(dcaxes{molindex}, current_write, handles.shifts(molindex, current_write),'g');
         hold(dcaxes{molindex}, 'off')

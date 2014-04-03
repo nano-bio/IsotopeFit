@@ -380,15 +380,13 @@ init();
                     double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
     end
 
-    function menuexportmassspec(hObject,eventdata)
+    function menuexportmassspec(hObject,~)
         %% Exports Peakdata + fitted curves of current plot to ascii file
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
             'Export Mass Spectrum');
-        handles=guidata(Parent);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-            fid=fopen(fullfile(pathname,filename),'w');
             handles=guidata(hObject);
            
             %write title line
@@ -401,12 +399,11 @@ init();
         end
     end
 
-    function menuexportcurrentview(hObject,eventdata)
+    function menuexportcurrentview(hObject,~)
         %% Exports Peakdata + fitted curves of current plot to ascii file
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
             'Export data');
-        handles=guidata(Parent);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             fid=fopen(fullfile(pathname,filename),'w');
@@ -443,7 +440,7 @@ init();
         end
     end
 
-    function menuplay(hObject,eventdata)
+    function menuplay(hObject,~)
 
        handles=guidata(hObject);
 
@@ -504,13 +501,13 @@ init();
        sound(dspec,f);
     end
     
-    function menudc(hObject,eventdata)
+    function menudc(hObject,~)
         handles = guidata(Parent);
         listindices = get(ListMolecules,'Value');
         something = driftcorrection(handles, listindices)
     end
 
-    function labbookimport(hObject,eventdata)
+    function labbookimport(hObject,~)
         [pathname,filename]=readfromlabbook();
         
         if ~strcmp(filename,'')
@@ -542,7 +539,7 @@ init();
         end
     end
     
-    function menuexportdataclick(hObject,eventdata)
+    function menuexportdataclick(hObject,~)
         handles=guidata(hObject);
 
         searchstring=get(e_searchstring,'String');        
@@ -573,7 +570,7 @@ init();
         end
     end
 
-    function listseriesclick(hObject,eventdata)
+    function listseriesclick(hObject,~)
         handles=guidata(hObject);
 
         ix=get(ListSeries,'Value');
@@ -594,10 +591,10 @@ init();
         plot(areaaxes,n,data,'k--');
         hold on;
         
-        p=stem(areaaxes,n,data,'filled','+k'); 
+        stem(areaaxes,n,data,'filled','+k'); 
         
-        p=stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none');
-        p=stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none');
+        stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none');
+        stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none');
         
         hold off;
         
@@ -609,7 +606,7 @@ init();
         
     end
 
-    function sortlistclick(hObject,eventdata)
+    function sortlistclick(hObject,~)
         handles=guidata(hObject);
         
         searchstring=get(e_searchstring,'String');        
@@ -626,7 +623,7 @@ init();
         set(mcalcal,'Enable',value2);
     end
 
-    function menuloadmoleculesfolder(hObject,eventdata)
+    function menuloadmoleculesfolder(hObject,~)
         handles=guidata(Parent);
         folder=uigetdir();
         
@@ -639,7 +636,7 @@ init();
         calibrationmenu('on','on');
     end
 
-    function menuloadmoleculesifd(hObject,eventdata)
+    function menuloadmoleculesifd(hObject,~)
         handles=guidata(Parent);
         [filename, pathname, filterindex] = uigetfile( ...
             {'*.ifd','IsotopeFit data file (*.ifd)'},...
@@ -658,7 +655,7 @@ init();
         calibrationmenu('on','on');
     end
 
-    function menuloadcalibration(hObject,eventdata)
+    function menuloadcalibration(hObject,~)
         handles=guidata(Parent);
         [filename, pathname, filterindex] = uigetfile( ...
             {'*.ifd','IsotopeFit data file (*.ifd)'},...
@@ -693,7 +690,7 @@ init();
         calibrationmenu('on','on');
     end
 
-    function menubgcorrection(hObject,eventdata)
+    function menubgcorrection(hObject,~)
         handles=guidata(Parent);
         [handles.bgcorrectiondata, handles.startind, handles.endind]=bg_correction(handles.raw_peakdata,handles.bgcorrectiondata);    
         handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
@@ -701,7 +698,7 @@ init();
         guidata(Parent,handles);
     end
 
-    function menucalibration(hObject,eventdata)
+    function menucalibration(hObject,~)
         handles=guidata(Parent);
         
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
@@ -756,7 +753,7 @@ init();
         calibrationmenu('on','off');
     end
 
-    function open_file(hObject, eventdata, fullpath)
+    function open_file(hObject, ~, fullpath)
         % most likely this function will not retrieve filename or pathname
         % in this case we show a selection dialog.
 
@@ -770,9 +767,9 @@ init();
         % to the file suffix
         else
             [pathname, filename, suffix] = fileparts(fullpath);
-            if suffix == '.ifd'
+            if strcmp(suffix, '.ifd')
                 filterindex = 1;
-            elseif suffix == '.h5'
+            elseif strcmp(suffix, '.h5')
                 filterindex = 2;
             else % assume it's ASCII
                 filterindex = 3;
@@ -846,11 +843,11 @@ init();
         out.namelist={};
     end
 
-    function save_file(hObject,eventdata,methode)
+    function save_file(hObject, ~, methode)
         handles=guidata(Parent);
         
         if strcmp(methode,'saveas')||strcmp(handles.fileinfo.filename,'')
-            [filename, pathname, filterindex] = uiputfile( ...
+            [filename, pathname, ~] = uiputfile( ...
                 {'*.ifd','IsotopeFit data file (*.ifd)'
                 '*.*', 'All Files (*.*)'},...
                 'Save as',[handles.fileinfo.pathname,handles.fileinfo.originalfilename,'.ifd']);
@@ -890,7 +887,7 @@ init();
         set(filenamedisplay, 'String', handles.fileinfo.filename)
     end
 
-    function moleculelistclick(hObject,eventdata)
+    function moleculelistclick(hObject,~)
         handles=guidata(Parent);
         
         index = get(ListMolecules,'Value');
@@ -967,38 +964,6 @@ init();
         guidata(Parent,handles);
     end
 
-    function test(hObject,eventdata)
-        folder='PET\allmolecules\';
-        datafile='PET\1.txt';
-        
-        handles=guidata(Parent);
-        
-        %Load peakdata from ASCII file
-        handles.raw_peakdata=load(datafile);
-           
-        
-        [handles.bgcorrectiondata, handles.startind, handles.endind]=bg_correction(handles.raw_peakdata,handles.bgcorrectiondata);
-        
-        handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
-        handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
-        
-        %Load molecules in Structure
-        moleculelist=foldertolist(folder);
-        handles.molecules=loadmolecules(folder,moleculelist,handles.peakdata);
-        
-        %do massoffset and resolution calibration
-        handles.calibration= calibrate(handles.peakdata,handles.molecules,handles.calibration);
-        
-        handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
-        
-        plot(dataaxes, handles.peakdata(:,1),handles.peakdata(:,2));
-        
-        molecules2listbox(ListMolecules,handles.molecules);
-        
-        %Abspeichern der Struktur
-        guidata(Parent,handles);
-    end
-
     function out=croppeakdata(peakdata,ix1,ix2)
         out=peakdata(ix1:ix2,:);
     end
@@ -1039,7 +1004,7 @@ init();
                 if isempty(num)
                     lineix=2;
                 else
-                    lineix=str2num(num)+1;
+                    lineix=str2double(num)+1;
                 end
             end
             %find rowindex
@@ -1071,8 +1036,6 @@ init();
         
         % indices for all molecules selected
         index=get(ListMolecules,'Value');
-        
-        ranges=findranges(handles.molecules,0.3);
         
         deltar=handles.settings.deltaresolution/100;
         deltam=handles.settings.deltamass;
@@ -1117,7 +1080,7 @@ init();
         moleculelistclick();
     end
 
-    function showlargedeviations(hObject, eventdata)
+    function showlargedeviations(hObject, ~)
         handles=guidata(Parent);
 
         % we check for a background level in the mass range between 2.1 and
@@ -1173,14 +1136,14 @@ init();
         guidata(Parent,handles);
     end
 
-    function copyfntoclipboard(hObject, eventdata)
+    function copyfntoclipboard(hObject, ~)
         % This copies the filename to the clipboard (for searching in the
         % labbook etc.
         fn = get(filenamedisplay, 'String');
         clipboard('copy', fn);
     end
 
-    function togglelogscale(hObject, eventdata)
+    function togglelogscale(hObject, ~)
         % This button toggles the logarithmic display of the data axes in
         % y-direction.
         
@@ -1203,7 +1166,7 @@ init();
         guidata(Parent,handles);
     end
 
-    function doubleyscale(hObject, eventdata)
+    function doubleyscale(hObject, ~)
         % This function multiplies the Y-axis with a factor of two (hence
         % making the signals smaller)
         
@@ -1215,7 +1178,7 @@ init();
         set(dataaxes, 'YLim', nl)
     end
 
-    function doublexscale(hObject, eventdata)
+    function doublexscale(hObject, ~)
         % This function multiplies the Y-axis with a factor of two (hence
         % making the signals smaller)
         
@@ -1231,7 +1194,7 @@ init();
         updateslider;
     end
 
-    function halfyscale(hObject, eventdata)
+    function halfyscale(hObject, ~)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
@@ -1243,7 +1206,7 @@ init();
         set(dataaxes, 'YLim', nl)
     end
 
-    function halfxscale(hObject, eventdata)
+    function halfxscale(hObject, ~)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
@@ -1259,7 +1222,7 @@ init();
         updateslider;
     end
 
-    function autoyscale(hObject, eventdata)
+    function autoyscale(hObject, ~)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
@@ -1267,7 +1230,7 @@ init();
         set(dataaxes, 'YLimMode', 'auto');
     end
 
-    function updateslider(hObject, eventdata)
+    function updateslider(hObject, ~)
         % This function updates the x-axis slider accordingly whenever 
         % something changes in the dataaxes
         
@@ -1286,7 +1249,7 @@ init();
         % how big is our massspec?
         try
             maxmass = max(handles.peakdata(:,1));
-        catch err
+        catch
             maxmass = 1;
         end
         
@@ -1301,7 +1264,7 @@ init();
         set(dataxslider, 'SliderStep', [slwidth/10 slwidth])
     end
 
-    function slidedataaxes(hObject, eventdata)
+    function slidedataaxes(hObject, ~)
         % This function updates the data axes when the slider for the
         % x-axis is clicked
         
@@ -1320,7 +1283,7 @@ init();
         set(dataaxes, 'XLim', nl);
     end
 
-    function plotoverview(hObject, eventdata)
+    function plotoverview(hObject, ~)
         % get settings
         handles = guidata(Parent);
         

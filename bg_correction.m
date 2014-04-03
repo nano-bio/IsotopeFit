@@ -153,7 +153,7 @@ guidata(Parent,handles);
 
 show(Parent,0);
 
-    function show(hObject,eventdata)
+    function show(hObject, ~)
         handles=guidata(hObject);
         handles.bgcorrectiondata.ndiv=str2num(get(e_ndiv,'String'));
         handles.bgcorrectiondata.percent=str2num(get(e_percent,'String'));
