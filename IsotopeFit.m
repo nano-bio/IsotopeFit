@@ -349,9 +349,6 @@ init();
         handles.status.logscale = 0;
         handles.status.overview = 0;
         handles.status.lastlims = [[0 0] [0 0]];
-                
-        set(ListMolecules,'Value',1);
-        set(ListMolecules,'String','');
         
         %initial calibration data
         handles.calibration=standardcalibration();
@@ -1379,5 +1376,8 @@ init();
         % clear series list
         set(ListSeries,'Value',1);
         set(ListSeries,'String','');
+        
+        % this sets default values to begin with
+        init();
     end
 end
