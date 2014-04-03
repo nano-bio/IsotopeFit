@@ -344,6 +344,8 @@ init();
         handles.settings.deltaresolution = 0;
         handles.settings.deltamass = 0.01;
         
+        % these variables represent values that are necessary for the
+        % program to determine its current state.
         handles.status.logscale = 0;
         handles.status.overview = 0;
         handles.status.lastlims = [[0 0] [0 0]];
@@ -780,6 +782,9 @@ init();
             end
             filename = [filename, suffix];
         end
+        
+        % before we load the file we clear all listboxes and plots
+        clearall();
         
         handles=guidata(Parent);
         if ~(isequal(filename,0) || isequal(pathname,0))
@@ -1357,5 +1362,22 @@ init();
         
         % save back
         guidata(Parent,handles);
+    end
+
+    function clearall()
+        % this function clears everything and is supposed to be called when
+        % a new file is loaded.
+        
+        % clear plots
+        cla(dataaxes);
+        cla(areaaxes);
+        
+        % empty molecule list
+        set(ListMolecules,'Value',1);
+        set(ListMolecules,'String','');
+        
+        % clear series list
+        set(ListSeries,'Value',1);
+        set(ListSeries,'String','');
     end
 end
