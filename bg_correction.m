@@ -70,8 +70,7 @@ axis1 = axes('Parent',Parent,...
              'ActivePositionProperty','OuterPosition',...
              'Units','normalized',...
              'Position',gridpos(layoutlines,layoutrows,3,10,1,5,0.04,0.04)); 
-
-         
+  
 e_ndiv=uicontrol(Parent,'Style','edit',...
     'Tag','edit_ndiv',...
     'String','10',...
@@ -97,20 +96,6 @@ uicontrol(Parent,'Style','Text',...
     'String','Evaluation points (%)',...
     'Units','normalized',...
     'Position',gridpos(layoutlines,layoutrows,2,2,2,2,0.01,0.03));
-
-% e_polydegree=uicontrol(Parent,'Style','edit',...
-%     'Tag','edit_polydegree',...
-%     'Units','normalized',...,...
-%     'String','2',...
-%     'Background','white',...
-%     'Position',gridpos(layoutlines,layoutrows,1,1,3,3,0.05,0.025),...
-%     'Callback',@edit1_callback);
-% 
-% uicontrol(Parent,'Style','Text',...
-%     'Tag','Text3',...
-%     'String','Polynom degree',...
-%     'Units','normalized',...
-%     'Position',gridpos(layoutlines,layoutrows,2,2,3,3,0.01,0.03));
          
 uicontrol(Parent,'style','pushbutton',...
           'string','Show',...
@@ -155,8 +140,8 @@ show(Parent,0);
 
     function show(hObject, ~)
         handles=guidata(hObject);
-        handles.bgcorrectiondata.ndiv=str2num(get(e_ndiv,'String'));
-        handles.bgcorrectiondata.percent=str2num(get(e_percent,'String'));
+        handles.bgcorrectiondata.ndiv=str2double(get(e_ndiv,'String'));
+        handles.bgcorrectiondata.percent=str2double(get(e_percent,'String'));
         %handles.bgcorrectiondata.polydegree=str2num(get(e_polydegree,'String'));
         
         % retrieve current view settings from axes:
@@ -165,20 +150,29 @@ show(Parent,0);
             ylim = get(axis1, 'YLim');
         end
         
-        temp=get(e_startmass,'String');
-        if strcmp(temp,'start')
+        % read out the two fields for start and end mass. in case they are
+        % set to "start" and "end" respectively, set them to +- infinity
+        
+        % start mass
+        sm_str=get(e_startmass,'String');
+        if strcmp(sm_str,'start')
             handles.bgcorrectiondata.startmass=-inf;
         else
-            handles.bgcorrectiondata.startmass=str2double(temp);
+            handles.bgcorrectiondata.startmass=str2double(sm_str);
         end
         
-        temp=get(e_endmass,'String');
-        if strcmp(temp,'end')
+        % end mass
+        em_str=get(e_endmass,'String');
+        if strcmp(em_str,'end')
             handles.bgcorrectiondata.endmass=+inf;
         else
-            handles.bgcorrectiondata.endmass=str2double(temp);
+            handles.bgcorrectiondata.endmass=str2double(em_str);
         end
-               
+
+        % call the function that actually calculates the background values
+        % for each section. it returns two lists: bgm und bgy - bgy gives a
+        % background level for each section, bgm the according mass (placed
+        % in the center of the section)
         [handles.bgcorrectiondata.bgm,handles.bgcorrectiondata.bgy, handles.startind, handles.endind]=...
             find_bg(handles.massaxis,handles.signal,...
                 handles.bgcorrectiondata.ndiv,...
@@ -186,6 +180,8 @@ show(Parent,0);
                 handles.bgcorrectiondata.startmass,...
                 handles.bgcorrectiondata.endmass);
         
+        % crop the mass and signal axes to the values used for determining
+        % the background levels
         handles.massaxiscrop=handles.massaxis(handles.startind:handles.endind);
         handles.signalcrop=handles.signal(handles.startind:handles.endind);
         
@@ -220,5 +216,4 @@ endind=handles.endind;
 close(Parent);
 drawnow;
 
-  
 end
