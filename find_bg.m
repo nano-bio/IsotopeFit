@@ -1,8 +1,15 @@
 function [bgm,bgy,startind,endind] = find_bg(m,y,sections,level,startmass,endmass)
-    % This function takes a mass axis and a signal axis and computes the 
-    % average of the lowest level% of the signal points for n sections 
-    % (equally dividing the axes). It can be restricted by start and
-    % endmasses (and returns them).
+    %find_bg calculates a list of bgr values for a certain number of data points i.e. masses
+    %   for input parmeters     m (list of masses from raw data, massaxis) 
+    %                           y (list of yields from raw data, signal)
+    %                           sections (= ndiv, intervall size for cutting the spec)
+    %                           level (= percent, amount of data points used for bgr correction)
+    %                           startmass (taken from e_startmass), endmass (taken from e_endmass)
+    %   the function calculates a list of bgr values belonging to certain mass values.
+    %   The output values are   bgm (list of masses)
+    %                           bgy (list of background yields)
+    %                           startind (index of lowest mass that will be considered)
+    %                           endind (inex of highest mass that will be considered)
 
     % in case the start (end) mass is larger then the beginning (smaller 
     % then the end), we shorten our signal and mass axis
@@ -49,10 +56,6 @@ function [bgm,bgy,startind,endind] = find_bg(m,y,sections,level,startmass,endmas
         % calculate the average value of the points considered noise
         bgy(i)=mean(minmasses);
     end
-
-    % ????? WHY SORT?
-    [bgm,ix]=sort(bgm);
-    bgy=bgy(ix);
 
     startind=ix1;
     endind=ix2;
