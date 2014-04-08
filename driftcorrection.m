@@ -7,7 +7,7 @@ function dcout = driftcorrection(handles, listindices)
         'NumberTitle', 'off', ...
         'Name', 'Drift correction',...
         'Units','normalized',...
-        'Position',[0.4,0.1,0.4,0.8]);
+        'OuterPosition', [0, 0, 1, 1]);
 
     %remove unused tools:
     hTemp = findall(Parent,'tag','Plottools.PlottoolsOn');
@@ -34,22 +34,27 @@ function dcout = driftcorrection(handles, listindices)
     delete(hTemp);
     hTemp = findall(Parent,'tag','Standard.SaveFigure');
     delete(hTemp);
-    
-    uicontrol(Parent,'style','pushbutton',...
-          'string','Fit that shit',...
-          'Callback',@fitmolecule2,...
-          'Units','normalized',...
-          'Position',gridpos(64,30,1,4,2,4,0.01,0.01));
       
     uicontrol(Parent,'Style','Text',...
             'String','Current write',...
             'Units','normalized',...
-            'Position',gridpos(64,30,32,33,1,3,0.01,0.01));
+            'Position',gridpos(64,30,21,23,1,3,0.01,0.01));
 
     writedisplay = uicontrol(Parent,'Style','Text',...
             'String','1',...
             'Units','normalized',...
-            'Position',gridpos(64,30,31,32,1,3,0.01,0.01));
+            'Position',gridpos(64,30,21,23,3,4,0.01,0.01));
+        
+    massaxes = axes(...
+         'ButtonDownFcn','disp(''axis callback'')',...
+         'Units','normalized',...
+         'OuterPosition',gridpos(64,64,3,21,1,64,0.00,0.01));
+     
+    uicontrol(Parent,'style','pushbutton',...
+          'string','Correct shift',...
+          'Callback',@correctshift,...
+          'Units','normalized',...
+          'Position',gridpos(64,64,1,3,1,64,0.01,0.01));
     
     nom = length(listindices);
 
@@ -58,24 +63,12 @@ function dcout = driftcorrection(handles, listindices)
         peakaxes{i} = axes(...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'OuterPosition',gridpos(64,30,33,64,(i-1)*5+1,i*5+1,0.01,0.00));
+             'OuterPosition',gridpos(64,30,40,64,(i-1)*5+1,i*5+1,0.01,0.00));
         
         dcaxes{i} = axes(...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'OuterPosition',gridpos(64,30,3,31,(i-1)*5+1,i*5+1,0.01,0.00));
-         
-        calcbutton{i} = uicontrol(Parent,'style','pushbutton',...
-          'string','Calculate shift',...
-          'Callback',{@calcmolshift, i},...
-          'Units','normalized',...
-          'Position',gridpos(64,30,1,4,(i-1)*5+2,(i-1)*5+3,0.01,0.01));
-      
-        fitbutton{i} = uicontrol(Parent,'style','pushbutton',...
-          'string','Fit shift',...
-          'Callback',@fitmol_selector,...
-          'Units','normalized',...
-          'Position',gridpos(64,30,1,4,(i-1)*5+4,(i-1)*5+5,0.01,0.01));
+             'OuterPosition',gridpos(64,30,23,40,(i-1)*5+1,i*5+1,0.01,0.00));
     end
     
     % load file
@@ -99,22 +92,34 @@ function dcout = driftcorrection(handles, listindices)
           'Callback',@slidetimeaxes,...
           'Units','normalized',...
           'TooltipString','Slide through the writes',...
-          'Max',writes,...
+          'Max',writes-1,...
           'Min',1,...
           'Value',1,...
-          'SliderStep',[1/(writes) 1/(writes)],...
-          'Position',gridpos(64,30,31,33,4,30,0.01,0.01));
+          'SliderStep',[1/(writes-1) 1/(writes-1)],...
+          'Position',gridpos(64,30,21,23,4,30,0.01,0.01));
 
     % let's plot each peak
     for i=1:nom
         plot(peakaxes{i},(handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind), avgdata(handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind, 1));
         title(handles.molecules{listindices(i)}.name)
     end
+    
+    % calculate the shifts for each molecule
+    for i=1:nom
+        calcmolshift(i);
+    end
+    
+    % now we fit a polynomial over the massrange for each write
+    fitmolshifts;
+    
+    % hit slidetimeaxis, so we plot everything
+    slidetimeaxis('', '');
+    
     dcout = 0;
     
     % ===== GUI FUNCTIONS ===== %
     
-    function slidetimeaxes(hObject, eventdata)
+    function slidetimeaxes(~, ~)
         %handles = guidata(Parent);
         % This function updates all the plots when the time (= writes)
         % slider is clicked
@@ -133,6 +138,22 @@ function dcout = driftcorrection(handles, listindices)
             try
                 set(handles.writeindication{i}, 'XData', current_write, 'YData', handles.shifts(i, current_write));
             end
+        end
+        
+        % we can also update the massaxes if everything is already
+        % calculated
+        try
+            plot(massaxes, handles.coms, handles.shifts(:, current_write), 'ro')
+
+            % for plotting the polynomial we need more points than just writes
+            % (we use 100, the default of linspace)
+            massaxis = linspace(1, max(handles.coms));
+            out = polynomial(handles.shiftpolynoms{current_write}, massaxis);
+
+            % now we are ready to plot
+            hold(massaxes, 'on')
+            plot(massaxes,massaxis,out,'k--');
+            hold(massaxes, 'off')
         end
         
         % display the current write number
@@ -160,12 +181,12 @@ function dcout = driftcorrection(handles, listindices)
         return
     end
 
-    function calcmolshift(src,eventdata, molindex)
+    function calcmolshift(molindex)
         % how broad is our molecule?
         molwidth = handles.molecules{listindices(molindex)}.maxind - handles.molecules{listindices(molindex)}.minind;
         
         % initialize waitbar
-        h = waitbar(0, 'Computing shift for each write...');
+        h = waitbar(0, ['Computing shift for each write for ', handles.molecules{listindices(molindex)}.name, '...']);
         
         % go through every write
         for w=1:writes-1
@@ -191,11 +212,48 @@ function dcout = driftcorrection(handles, listindices)
         
         % we plot the shift over time (=writes) in the corresponding axis
         plot(dcaxes{molindex}, handles.shifts(molindex, :), 'ro');
-        
+
         % we indicate the current displayed write
         current_write = str2double(get(writedisplay, 'String'));
         hold(dcaxes{molindex}, 'on')
         handles.writeindication{molindex} = stem(dcaxes{molindex}, current_write, handles.shifts(molindex, current_write),'g');
         hold(dcaxes{molindex}, 'off')
+        
+        % as eye-candy, we fit the resulting shifts with a polynomial.
+        % first of all we need a linear space with the steps of the writes:
+        writeaxis = linspace(1, writes - 1, writes - 1);
+        
+        % fit witha polynomial of 2nd order
+        p = polyfit(writeaxis, handles.shifts(molindex, :), 2);
+        
+        % for plotting the polynomial we need more points than just writes
+        % (we use 100, the default of linspace)
+        fitaxis = linspace(1, writes - 1);
+        out = polynomial(p, fitaxis);
+        
+        % now we are ready to plot
+        hold(dcaxes{molindex}, 'on')
+        plot(dcaxes{molindex},fitaxis,out,'k--');
+        hold(dcaxes{molindex}, 'off')
+    end
+
+    function fitmolshifts()
+        % this fits polynoms over the massrange for each write, using the
+        % calculated shifts
+        
+        % we need a list of centers of masses
+        handles.coms = [];
+        for i=1:nom
+            handles.coms = [handles.coms, handles.molecules{listindices(i)}.com]
+        end
+
+        % fit a 2nd order polynom to over the massrange for each write
+        for w=1:writes-1
+            handles.shiftpolynoms{w} = polyfit(handles.coms, handles.shifts(:, w)', 2)
+        end
+    end
+
+    function correctshift(hObject, eventdata)
+        'hello'
     end
 end
