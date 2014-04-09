@@ -82,7 +82,7 @@ uiwait(Parent)
 
 drawnow;
 
-    function okclick(hObject,eventdata)
+    function okclick(hObject, ~)
         %download file
         handles=guidata(hObject);
             
@@ -93,7 +93,7 @@ drawnow;
         dlurl = ['http://138.232.72.25/clustof/export/', num2str(mid)];
         
         %save dialog
-        [filename, pathname, filterindex] = uiputfile( ...
+        [filename, pathname, ~] = uiputfile( ...
             {'*.h5','HDF5 data file (*.h5)'},...
             'Save File from Labbook',orig_filename);
         
@@ -121,15 +121,15 @@ drawnow;
         end;
     end
 
-    function show(hObject,eventdata)
+    function show(hObject, ~)
         handles=guidata(hObject);
-        count = str2num(get(e_entries,'String'));
+        count = str2double(get(e_entries,'String'));
         try
             a = urlread(['http://138.232.72.25/clustof/csv/',num2str(count+handles.offset),'/',num2str(handles.offset)]);
         catch err
-            if (err.identifier == 'MATLAB:urlread:FileNotFound')
+            if strcmp(err.identifier, 'MATLAB:urlread:FileNotFound')
                 msgbox('Could not go any further back.')
-                handles.offset = handles.offset + str2num(get(e_entries,'String'));
+                handles.offset = handles.offset + str2double(get(e_entries,'String'));
                 guidata(hObject,handles);
                 return;
             end
@@ -142,7 +142,7 @@ drawnow;
         for i = 1:count
             try
                 mstring = [num2str(f{1, 1}(i)),', ',f{1, 3}{i},':        ',f{1, 2}{i}];
-            catch err
+            catch
                 mstring = 'Could not parse that measurement. Something is weird here';
             end
             measurementlist{i}  = mstring;
@@ -152,16 +152,16 @@ drawnow;
         guidata(hObject,handles);
     end
 
-    function next(hObject,eventdata)
+    function next(hObject, ~)
         handles=guidata(hObject);
-        handles.offset = handles.offset + str2num(get(e_entries,'String'));
+        handles.offset = handles.offset + str2double(get(e_entries,'String'));
         guidata(hObject,handles);
         show(Parent,0);
     end
 
-    function previous(hObject,eventdata)
+    function previous(hObject, ~)
         handles=guidata(hObject);
-        handles.offset = handles.offset - str2num(get(e_entries,'String'));
+        handles.offset = handles.offset - str2double(get(e_entries,'String'));
         guidata(hObject,handles);
         show(Parent,0);
     end
