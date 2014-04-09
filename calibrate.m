@@ -59,7 +59,7 @@ CalibrationPanel=uipanel(Parent,...
 
 uicontrol(Parent,'style','pushbutton',...
           'string','OK',...
-          'Callback','uiresume(gcbf)',...
+          'Callback',@donecalib,...
           'Units','normalized',...
           'Position',gridpos(16,7,1,1,4,4,0.01,0.01)); 
      
@@ -364,16 +364,61 @@ molecules2listbox(ListAllMolecules,handles.molecules);
 %update calibrationplots
 updatepolynomials(Parent,0);
 
-uiwait(Parent)
-
-handles=guidata(Parent);
-
 calout=handles.calibration;
 calout.namelist=ranges2namelist(handles.ranges);
 
-close(Parent);
-drawnow;
+uiwait(Parent)
 
+
+    function donecalib(hObject,~)
+        
+    % check if fitted resolution is negative for any mass (can be the case
+    % for high masses when using polynomial fit)
+        res = resolutionbycalibration(handles.calibration, peakdata(:,1));
+        offset = massoffsetbycalibration(handles.calibration, peakdata(:,1));
+        offsetdiff = diff(peakdata(:,1))-diff(offset);
+        if sum(res<0) > 0
+            choise = questdlg(sprintf('Resolution gets negative for high masses. This could lead to problems in the fitting procedure. \n Please, change method or add calibration molecules. \n Do you want to continue without changing your settings?'),...
+                'Negative Resolution',...
+                'Yes', 'No', 'No');
+            switch choise
+                case 'Yes'
+                    calout=handles.calibration;
+                    calout.namelist=ranges2namelist(handles.ranges);
+
+                    drawnow;
+                    uiresume(gcbf);
+                    close(Parent);
+        
+                %case 'No'
+            end
+        % check if gradient of mass offset is not steeper than gradient of
+        % original mass axis in order to keep monotonicity of calibrated
+        % mass axis  
+        elseif sum(offsetdiff<0)>0
+             choise = questdlg(sprintf('Gradient of mass offset is too steep. This could lead to problems in the fitting procedure. \n Please, change method or add calibration molecules. \n Do you want to continue without changing your settings?'),...
+                'Mass Offset Gradient Too Steep',...
+                'Yes', 'No', 'No');
+            switch choise
+                case 'Yes'
+                    calout=handles.calibration;
+                    calout.namelist=ranges2namelist(handles.ranges);
+
+                    drawnow;
+                    uiresume(gcbf);
+                    close(Parent);
+        
+                %case 'No'
+            end
+        else
+            calout=handles.calibration;
+            calout.namelist=ranges2namelist(handles.ranges);
+
+            drawnow;
+            uiresume(gcbf);
+            close(Parent);
+        end
+    end
 
 %################### INTERNAL FUNCTIONS
     function guessareaclick(hObject, ~)
