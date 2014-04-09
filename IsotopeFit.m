@@ -1046,9 +1046,14 @@ init();
             %in this massrange. This can be approx. done by dividing the
             %area by the mean pin-distance. the smaller the msq of delta m,
             %the better the approximation...
-            npins=mass2ind(peakdata(:,1)',molecules{i}.maxmass)-mass2ind(peakdata(:,1)',molecules{i}.minmass); %number of pins
-            b=(molecules{i}.maxmass-molecules{i}.minmass)/npins; %mean pin-distance
             
+%           Division by mean-pin-distance
+%           npins=mass2ind(peakdata(:,1)',molecules{i}.maxmass)-mass2ind(peakdata(:,1)',molecules{i}.minmass); %number of pins
+%           b=(molecules{i}.maxmass-molecules{i}.minmass)/npins; %mean pin-distance
+           
+%           dividion by sqrt(m):
+            b=sqrt(molecules{i}.com);
+     
             areaout(lineix,rowix)=molecules{i}.area/b;
             areaerrorout(lineix,rowix)=molecules{i}.areaerror/b;
         end

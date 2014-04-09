@@ -57,10 +57,22 @@ for i=1:l
         ind=ind(round((1:maxdatapoints)*(ndp/maxdatapoints)));%ind will be maxdatapoints long
     end
     
+    %define upper and lower bound for fitting process:
+    lb=[zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam];
+    ub=[ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam];
+    
+    %simplex fitting:
     fitparam=fminsearchbnd(@(x) msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x),parameters,...
-        [zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam],...
-        [ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam],...
-        optimset('MaxFunEvals',5000,'MaxIter',5000));
+                          lb,ub,optimset('MaxFunEvals',5000,'MaxIter',5000));
+    
+    %Genetic algorithm
+%      opt = gaoptimset('PopInitRange',[parameters/2;parameters*2]);
+%      opt = gaoptimset(opt,'EliteCount',2*length(parameters));
+%      opt = gaoptimset(opt,'PopulationSize',50*length(parameters));
+%      opt = gaoptimset(opt,'Display','iter');
+%      opt = gaoptimset(opt,'TolFun',0.1);
+%      fitparam = ga(@(x) msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x),length(parameters),...
+%                        [],[],[],[],lb,ub,[],opt);
     
     %fprintf('Error estimation...\n');
     %error estimation

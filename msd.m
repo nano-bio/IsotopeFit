@@ -8,7 +8,7 @@ function out = msd(spec_measured,massaxis,molecules,parameters)
     
 spec_calc=multispecparameters(massaxis,molecules,parameters);
 %out=sum((spec_measured-spec_calc).^2.*(spec_measured).^4);
-out=sum((spec_measured-spec_calc).^2);
+out=double(sum((spec_measured-spec_calc).^2));
 %out=sum((spec_measured-spec_calc).^2);
 %out=sum(abs(spec_measured-spec));
     

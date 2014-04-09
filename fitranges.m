@@ -39,6 +39,11 @@ rangestemp=ranges;
 %maximally used datapoints for fitting
 maxdatapoints=1000;
 
+%try to fit more often, when maximum number of function evaluations or 
+%iterations was reached.
+maxruns=10;
+
+
 h = waitbar(0,'Please wait...'); 
 parfor i=1:l
     nmolecules=length(ranges{i}.molecules)
@@ -68,11 +73,31 @@ parfor i=1:l
     %fitparam=fminsearch(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),parameters,optimset('MaxFunEvals',10000,'MaxIter',10000));
     drawnow;
     
-    fitparam=fminsearchbnd(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
-        [zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam],...
-        [ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam],...
-        optimset('MaxFunEvals',5000,'MaxIter',5000));
-   
+    %define upper and lower bound for fitting process:
+    lb=[zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam];
+    ub=[ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam];
+    
+
+    %SIMPLEX FITTING:
+    run=1;
+    exitflag=0;
+    while (run<=maxruns)&&(exitflag==0) %exitflag==0 --> Maximum number of function evaluations or iterations was reached.
+        [fitparam,~,exitflag]=fminsearchbnd(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
+            lb,ub,optimset('MaxFunEvals',5000,'MaxIter',5000));
+        parameters=fitparam;
+        run=run+1;
+    end
+    
+%     GENETIC FITTING:
+%     opt = gaoptimset('PopInitRange',[parameters/2;parameters*2]);
+%     opt = gaoptimset(opt,'EliteCount',2*length(parameters));
+%     opt = gaoptimset(opt,'PopulationSize',50*length(parameters));
+%     opt = gaoptimset(opt,'Display','iter');
+%     %opt = gaoptimset(opt,'PlotFcns',{@gaplotbestf,@gaplotstopping});
+%     opt = gaoptimset(opt,'TolFun',0.1);
+%     fitparam = ga(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),length(parameters),...
+%                       [],[],[],[],lb,ub,[],opt);
+                        
     %fprintf('Error estimation...\n');
     %error estimation
     
