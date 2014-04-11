@@ -9,7 +9,11 @@ switch methode
             ranges{i}.massoffset=0;
         end
         
+        h = waitbar(0, 'Please wait. This progress bar does not show progress.');
+        
         ranges=fitranges(peakdata,ranges,Inf,deltar,deltam);
+        
+        close(h);
         
         k=1;
         for i=1:length(ranges)
@@ -23,4 +27,3 @@ switch methode
 end
 
 end
-
