@@ -1,8 +1,8 @@
-function out = fitwithcalibration(molecules,peakdata,calibration,methode,deltam,deltar)
+function out = fitwithcalibration(molecules,peakdata,calibration,methode,searchrange,deltam,deltar)
 
 switch methode
     case 1
-        ranges=findranges(molecules,0.3);
+        ranges=findranges(molecules,calibration,searchrange);
         
         for i=1:length(ranges)
             ranges{i}.resolution=resolutionbycalibration(calibration,ranges{i}.com);

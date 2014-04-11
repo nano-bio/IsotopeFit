@@ -343,6 +343,7 @@ init();
         handles.settings.minpeakwidth = 0.1;
         handles.settings.deltaresolution = 0;
         handles.settings.deltamass = 0.01;
+        handles.settings.searchrange = 3; %searchrange for overlapping isotopic patterns in sigma
         
         % these variables represent values that are necessary for the
         % program to determine its current state.
@@ -704,7 +705,7 @@ init();
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
-        handles.calibration= calibrate(peakdata,handles.molecules,handles.calibration);
+        handles.calibration= calibrate(peakdata,handles.molecules,handles.calibration,handles.settings);
             
         
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
@@ -1064,7 +1065,7 @@ init();
                 % be safe than sorry.
                 save_file(hObject,eventdata,'autosave')
                 
-                handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
+                handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar);
                 
                 % and we're done
                 delete('bkp.ifd')
@@ -1079,7 +1080,7 @@ init();
                     A = findinvolvedmolecules(handles.molecules,[1:length(handles.molecules)],index(i),0.3);
                     allinvolved = union(allinvolved, A)';
                 end
-                handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),deltam,deltar);
+                handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar);
         end
         
         guidata(hObject,handles);

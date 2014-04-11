@@ -1,4 +1,4 @@
-function calout = calibrate(peakdata,molecules,calin)
+function calout = calibrate(peakdata,molecules,calin,settings)
 
 % ############################## LAYOUT
 
@@ -329,7 +329,7 @@ handles.peakdata = peakdata;
 handles.molecules = molecules;
 handles.ranges = {};
 
-handles.options.searchrange=0.3;
+handles.settings=settings;
 
 handles.calibrationlist=[]; 
 
@@ -343,7 +343,7 @@ if ~isempty(handles.calibration.namelist)
         end
     end
     
-    handles.ranges=findranges(handles.molecules(handles.calibrationlist),handles.options.searchrange);
+    handles.ranges=findranges(handles.molecules(handles.calibrationlist),handles.calibration,handles.settings.searchrange);
     handles.ranges=addrangeparameters(handles.ranges,handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist);
     guidata(Parent,handles);
     ranges2listbox(1,1);
@@ -705,7 +705,7 @@ uiwait(Parent)
 %             xmin=handles.molecules{index}.minmass;
 %             xmax=handles.molecules{index}.maxmass;
         else
-            involvedmolecules=findinvolvedmolecules(handles.molecules,handles.calibrationlist,index,handles.options.searchrange);%search in calibrationlist
+            involvedmolecules=findinvolvedmolecules(handles.molecules,handles.calibrationlist,index,handles.settings.searchrange);%search in calibrationlist
             currentmassoffset=handles.ranges{rangeindex}.massoffset;
             currentresolution=handles.ranges{rangeindex}.resolution;
             
@@ -837,7 +837,7 @@ uiwait(Parent)
         else
             [handles.calibrationlist]=sort([handles.calibrationlist index]);
 
-            handles.ranges=findranges(handles.molecules(handles.calibrationlist),handles.options.searchrange);
+            handles.ranges=findranges(handles.molecules(handles.calibrationlist),handles.calibration,handles.settings.searchrange);
             handles.ranges=addrangeparameters(handles.ranges,handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist);
             
             [handles.calibration.comlist, handles.calibration.massoffsetlist, handles.calibration.resolutionlist]=ranges2list(handles.ranges);
@@ -866,7 +866,7 @@ uiwait(Parent)
         handles.calibrationlist=handles.calibrationlist(handles.calibrationlist~=index);
         
         if ~isempty(handles.calibrationlist)
-            handles.ranges=findranges(handles.molecules(handles.calibrationlist),handles.options.searchrange);
+            handles.ranges=findranges(handles.molecules(handles.calibrationlist),handles.calibration,handles.settings.searchrange);
             handles.ranges=addrangeparameters(handles.ranges,handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist);
             [handles.calibration.comlist, handles.calibration.massoffsetlist, handles.calibration.resolutionlist]=ranges2list(handles.ranges); 
         else
