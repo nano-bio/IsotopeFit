@@ -105,6 +105,8 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
         %option if patternsearch runs slowly because it is taking a long time to compute
         %the objective function.
         opt=psoptimset(opt,'Cache','on');
+        opt=psoptimset(opt,'ScaleMesh','on');
+        opt=psoptimset(opt,'TolMesh',1);
         
         fitparam = patternsearch(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
             [],[],[],[],lb,ub,[],opt);

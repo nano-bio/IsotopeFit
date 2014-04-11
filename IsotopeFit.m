@@ -1070,16 +1070,11 @@ init();
                 % and we're done
                 delete('bkp.ifd')
             case 'Fit selected'
-                % number of molecules?
-                nom = length(index);
-                allinvolved = [];
+                %index consists of a list of molecules.
+                %for fitting, we need to find all molecules that overlap
+                %with the selected ones
+                allinvolved=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,handles.settings.searchrange,handles.calibration);
                 
-                % we loop through all selected molecules, find the involved
-                % ones and add them up to a list (without duplicates)
-                for i = 1:nom
-                    A = findinvolvedmolecules(handles.molecules,[1:length(handles.molecules)],index(i),0.3);
-                    allinvolved = union(allinvolved, A)';
-                end
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar);
         end
         

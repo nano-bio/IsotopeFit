@@ -705,7 +705,7 @@ uiwait(Parent)
 %             xmin=handles.molecules{index}.minmass;
 %             xmax=handles.molecules{index}.maxmass;
         else
-            involvedmolecules=findinvolvedmolecules(handles.molecules,handles.calibrationlist,index,handles.settings.searchrange);%search in calibrationlist
+            involvedmolecules=findinvolvedmolecules(handles.molecules,handles.calibrationlist,index,handles.settings.searchrange,handles.calibration);%search in calibrationlist
             currentmassoffset=handles.ranges{rangeindex}.massoffset;
             currentresolution=handles.ranges{rangeindex}.resolution;
             
