@@ -488,11 +488,11 @@ uiwait(Parent)
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         switch get(hObject,'String')
             case 'Fit this'
-                handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0.5,0.5);
+                handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0.5,0.5,'simplex');
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges(rangeindex));
             case 'Fit all'
-                handles.ranges=fitranges(handles.peakdata,handles.ranges,inf,0.5,0.5);
+                handles.ranges=fitranges(handles.peakdata,handles.ranges,inf,0.5,0.5,'simplex');
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges);
         end

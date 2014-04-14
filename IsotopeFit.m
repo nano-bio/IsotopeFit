@@ -1072,7 +1072,7 @@ init();
                 % be safe than sorry.
                 save_file(hObject,eventdata,'autosave')
                 
-                handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar);
+                handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,'linear_system');
                 
                 % and we're done
                 delete('bkp.ifd')
@@ -1082,7 +1082,7 @@ init();
                 %with the selected ones
                 allinvolved=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,handles.settings.searchrange,handles.calibration);
                 
-                handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar);
+                handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,'linear_system');
         end
         
         guidata(hObject,handles);

@@ -1,4 +1,4 @@
-function out = fitmolecules(peakdata,molecules,calibration,areaup,deltares,deltam)
+function out = fitmolecules(peakdata,molecules,calibration,areaup,deltares,deltam,fitting_method)
 %out = fitranges(peakdata,ranges)
 %   fits molecules organized in ranges to peakdata
 %   fits area, resolution and massoffset
@@ -8,7 +8,7 @@ spec_measured=peakdata(:,2)';
 
 l=length(molecules);
 
-h = waitbar(0,'Please wait...'); 
+h = waitbar(0,'Please wait...');
 
 arealist=[];
 for i=1:l
@@ -26,10 +26,11 @@ spec_calc=zeros(1,size(peakdata,1));
 %maximally used datapoints for fitting
 maxdatapoints=1000;
 
+fprintf('Start fitting %i molecules using %s\n',l, fitting_method);
+
 for i=1:l
     drawnow;
-    
-    involved=findinvolvedmolecules(molecules,i:l,i,0.3);
+    involved=findinvolvedmolecules(molecules,i:l,i,0.3,calibration);
     
     nmolecules=length(involved);
     parameters=zeros(1,nmolecules+2);
@@ -48,7 +49,7 @@ for i=1:l
     parameters(nmolecules+1)=resolutionbycalibration(calibration,molecules{i}.com); %resolution
     parameters(nmolecules+2)=massoffsetbycalibration(calibration,molecules{i}.com); %x-offset
     
-    ind=findmassrange(massaxis,molecules(involved),parameters(nmolecules+1),parameters(nmolecules+2),10);
+    ind=findmassrange(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),10);
     %ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
     
     %is it necessary to cut out some datapoints?
@@ -61,37 +62,19 @@ for i=1:l
     lb=[zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam];
     ub=[ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam];
     
-    %simplex fitting:
-    fitparam=fminsearchbnd(@(x) msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x),parameters,...
-                          lb,ub,optimset('MaxFunEvals',5000,'MaxIter',5000));
+    switch fitting_method
+        case 'linear_system'
+            [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+        case 'simplex'
+            [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+        case 'genetic'
+            [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+        case 'pattern_search'
+            [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+    end
     
-    %Genetic algorithm
-%      opt = gaoptimset('PopInitRange',[parameters/2;parameters*2]);
-%      opt = gaoptimset(opt,'EliteCount',2*length(parameters));
-%      opt = gaoptimset(opt,'PopulationSize',50*length(parameters));
-%      opt = gaoptimset(opt,'Display','iter');
-%      opt = gaoptimset(opt,'TolFun',0.1);
-%      fitparam = ga(@(x) msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x),length(parameters),...
-%                        [],[],[],[],lb,ub,[],opt);
-    
-    %fprintf('Error estimation...\n');
-    %error estimation
-     
-    dof=length(ind)-2;
-    sdrq = (msd(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),fitparam))/dof;
-    %J = jacobianest(@(x) multispecparameters(massaxis(ind)-spec_calc(ind),molecules(involved),x),fitparam);
-    HD = hessdiag(@(x) msd(massaxis(ind)-spec_calc(ind),massaxis(ind),molecules(involved),x)/dof,fitparam);
-    
-%     sigma = sdrq*pinv(J'*J);
-%    stderr = sqrt(diag(sigma))';
-
-   % stderr=sqrt(sdrq./diag(J'*J)');
-    stderr=sqrt(sdrq./HD');
-
     %update calculated spec
     spec_calc=spec_calc+multispecparameters(massaxis,molecules(i),fitparam([1,end-1,end]));
-    
-    %plot(axes,massaxis(indtest),spec_measured(indtest)-spec_calc(indtest));
     
     k=1;
     for j=involved
@@ -99,7 +82,7 @@ for i=1:l
         molecules{j}.areaerror=stderr(k); %read out fitted areas for every molecule
         k=k+1;
     end
-
+    
     waitbar(i/l);
 end
 fprintf('Done.\n')

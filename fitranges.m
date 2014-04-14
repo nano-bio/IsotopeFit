@@ -1,4 +1,4 @@
-function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
+function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
     %out = fitranges(peakdata,ranges)
     %   fits molecules organized in ranges to peakdata
     %   fits area, resolution and massoffset
@@ -44,7 +44,11 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
     maxruns=10;
 
     h = waitbar(0,'Please wait...'); 
-    for i=1:l
+    
+    fprintf('Start fitting %i ranges using %s\n',l, fitting_method);
+    
+    %parfor i=1:l
+    for i=1:l %use this for patternsearch
         nmolecules=length(ranges{i}.molecules);
         parameters=zeros(1,nmolecules+2);
         fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
@@ -69,66 +73,23 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
         parameters(nmolecules+1)=ranges{i}.resolution; %resolution
         parameters(nmolecules+2)=ranges{i}.massoffset; %x-offset
 
-        %fitparam=fminsearch(@(x) msd(spec_measured(ranges{i}.minind:ranges{i}.maxind),massaxis(ranges{i}.minind:ranges{i}.maxind),ranges{i}.molecules,x),parameters,optimset('MaxFunEvals',10000,'MaxIter',10000));
         drawnow;
 
         %define upper and lower bound for fitting process:
         lb=[zeros(1,length(parameters)-2),parameters(end-1)-parameters(end-1)*deltares, parameters(end)-deltam];
         ub=[ones(1,length(parameters)-2)*areaup,parameters(end-1)+parameters(end-1)*deltares, parameters(end)+deltam];
-
-
-        %SIMPLEX FITTING:
-        % run=1;
-        % exitflag=0;
-        % while (run<=maxruns)&&(exitflag==0) %exitflag==0 --> Maximum number of function evaluations or iterations was reached.
-        %     [fitparam,~,exitflag]=fminsearchbnd(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
-        %         lb,ub,optimset('MaxFunEvals',5000,'MaxIter',5000));
-        %     parameters=fitparam;
-        %     run=run+1;
-        % end
-
-        % GENETIC FITTING:
-        % opt = gaoptimset('PopInitRange',[parameters/2;parameters*2]);
-        % opt = gaoptimset(opt,'EliteCount',2*length(parameters));
-        % opt = gaoptimset(opt,'PopulationSize',50*length(parameters));
-        % opt = gaoptimset(opt,'Display','iter');
-        % %opt = gaoptimset(opt,'PlotFcns',{@gaplotbestf,@gaplotstopping});
-        % opt = gaoptimset(opt,'TolFun',0.1);
-        % fitparam = ga(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),length(parameters),...
-        %     [],[],[],[],lb,ub,[],opt);
         
-        %PATTERN SEARCH ALGORITHM
-        opt=psoptimset('Display','iter');
-        opt=psoptimset(opt,'UseParallel', 'always', 'CompletePoll', 'on', 'Vectorized', 'off');
-        %With Cache set to 'on', patternsearch keeps a history of the mesh points it polls
-        %and does not poll points close to them again at subsequent iterations. Use this
-        %option if patternsearch runs slowly because it is taking a long time to compute
-        %the objective function.
-        opt=psoptimset(opt,'Cache','on');
-        opt=psoptimset(opt,'ScaleMesh','on');
-        opt=psoptimset(opt,'TolMesh',1);
-        
-        fitparam = patternsearch(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
-            [],[],[],[],lb,ub,[],opt);
-    
-        %fprintf('Error estimation...\n');
-        %error estimation
-
-        % for error estimation, use a small range around the peak maxima
-        inderr=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
-
-        dof=length(inderr)-2;
-        sdrq = (msd(spec_measured(inderr),massaxis(inderr),ranges{i}.molecules,fitparam))/dof;
-
-        %error estimation via "squared" Jacobian matrix (first derivatives squared)
-        %J = jacobianest(@(x) multispecparameters(massaxis(ind),ranges{i}.molecules,x),fitparam);
-        %sigma = sdrq*pinv(J'*J);
-        %stderr = sqrt(diag(sigma))';
-
-        % error estimation via diagonal elements of hessian matrix (=second derivatives)
-        HD = hessdiag(@(x) msd(spec_measured(inderr),massaxis(inderr),ranges{i}.molecules,x)/dof,fitparam);
-        stderr=sqrt(sdrq./HD');
-        
+        switch fitting_method
+            case 'linear_system'
+                [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+            case 'simplex'    
+                [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+            case 'genetic'
+                [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+            case 'pattern_search'
+                [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+        end
+       
         % write fitparameters to molecules structure
         for j=1:nmolecules
             rangestemp{i}.molecules{j}.area=fitparam(j); %read out fitted areas for every molecule
@@ -140,7 +101,7 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
         rangestemp{i}.massoffseterror=stderr(end);
         rangestemp{i}.resolutionerror=stderr(end-1);
         
-        waitbar(i/l);
+        waitbar(i/l); %only possible for patternsearch
     end
     close(h);
     fprintf('Done.\n')
