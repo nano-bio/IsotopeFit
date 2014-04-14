@@ -1,4 +1,4 @@
-function ranges = findranges(molecules,searchrange)
+function ranges = findranges(molecules,calibration,searchrange)
 %out = findranges(molecules)
 %   finds mass-ovelapping molecules and orders them into ranges
 %   output: out{rangenumber}.moleculese{moleculenumber}.[molecule structure]
@@ -14,7 +14,10 @@ else
     ranges{1}.molecules{1}=molecules{1};
     
     for i=2:length(molecules)
-        if molecules{i}.minmass-searchrange<=ranges{rangecount}.maxmass %molecule massrange ovelaps
+        %check if molecules overlap:
+        mass_minus=searchrange*sigmabycalibration(calibration,molecules{i}.com);
+        mass_plus=searchrange*sigmabycalibration(calibration,molecules{i-1}.com);
+        if molecules{i}.minmass-mass_minus<=ranges{rangecount}.maxmass+mass_plus %molecule massrange ovelaps
             if ranges{rangecount}.maxind<molecules{i}.maxind
                 ranges{rangecount}.maxind=molecules{i}.maxind;
                 ranges{rangecount}.maxmass=molecules{i}.maxmass;

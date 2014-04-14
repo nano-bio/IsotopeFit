@@ -1,19 +1,15 @@
-function out = fitwithcalibration(molecules,peakdata,calibration,methode,deltam,deltar)
+function out = fitwithcalibration(molecules,peakdata,calibration,methode,searchrange,deltam,deltar)
 
 switch methode
     case 1
-        ranges=findranges(molecules,0.3);
+        ranges=findranges(molecules,calibration,searchrange);
         
         for i=1:length(ranges)
             ranges{i}.resolution=resolutionbycalibration(calibration,ranges{i}.com);
             ranges{i}.massoffset=0;
         end
         
-        h = waitbar(0, 'Please wait. This progress bar does not show progress.');
-        
         ranges=fitranges(peakdata,ranges,Inf,deltar,deltam);
-        
-        close(h);
         
         k=1;
         for i=1:length(ranges)

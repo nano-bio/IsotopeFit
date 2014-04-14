@@ -43,12 +43,9 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
     %iterations was reached.
     maxruns=10;
 
-    % this is giving us a text status bar. better than nothing i guess.
-    % matlab sucks.
-    parfor_progress(l);
-    
-    parfor i=1:l
-        nmolecules=length(ranges{i}.molecules)
+    h = waitbar(0,'Please wait...'); 
+    for i=1:l
+        nmolecules=length(ranges{i}.molecules);
         parameters=zeros(1,nmolecules+2);
         fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
 
@@ -81,14 +78,14 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
 
 
         %SIMPLEX FITTING:
-        run=1;
-        exitflag=0;
-        while (run<=maxruns)&&(exitflag==0) %exitflag==0 --> Maximum number of function evaluations or iterations was reached.
-            [fitparam,~,exitflag]=fminsearchbnd(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
-                lb,ub,optimset('MaxFunEvals',5000,'MaxIter',5000));
-            parameters=fitparam;
-            run=run+1;
-        end
+        % run=1;
+        % exitflag=0;
+        % while (run<=maxruns)&&(exitflag==0) %exitflag==0 --> Maximum number of function evaluations or iterations was reached.
+        %     [fitparam,~,exitflag]=fminsearchbnd(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
+        %         lb,ub,optimset('MaxFunEvals',5000,'MaxIter',5000));
+        %     parameters=fitparam;
+        %     run=run+1;
+        % end
 
         % GENETIC FITTING:
         % opt = gaoptimset('PopInitRange',[parameters/2;parameters*2]);
@@ -99,7 +96,21 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
         % opt = gaoptimset(opt,'TolFun',0.1);
         % fitparam = ga(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),length(parameters),...
         %     [],[],[],[],lb,ub,[],opt);
-
+        
+        %PATTERN SEARCH ALGORITHM
+        opt=psoptimset('Display','iter');
+        opt=psoptimset(opt,'UseParallel', 'always', 'CompletePoll', 'on', 'Vectorized', 'off');
+        %With Cache set to 'on', patternsearch keeps a history of the mesh points it polls
+        %and does not poll points close to them again at subsequent iterations. Use this
+        %option if patternsearch runs slowly because it is taking a long time to compute
+        %the objective function.
+        opt=psoptimset(opt,'Cache','on');
+        opt=psoptimset(opt,'ScaleMesh','on');
+        opt=psoptimset(opt,'TolMesh',1);
+        
+        fitparam = patternsearch(@(x) msd(spec_measured(ind),massaxis(ind),ranges{i}.molecules,x),parameters,...
+            [],[],[],[],lb,ub,[],opt);
+    
         %fprintf('Error estimation...\n');
         %error estimation
 
@@ -129,13 +140,10 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,handles)
         rangestemp{i}.massoffseterror=stderr(end);
         rangestemp{i}.resolutionerror=stderr(end-1);
         
-        % update our progress bar
-        parfor_progress();
+        waitbar(i/l);
     end
+    close(h);
     fprintf('Done.\n')
-    
-    % finish progress bar
-    parfor_progress(0);
 
     %center of mass of ranges needs to be recalculated due to different areas
     %of involved molecules:

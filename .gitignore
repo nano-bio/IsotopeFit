@@ -9,6 +9,7 @@ DERIVESTsuite/
 FMINSEARCHBND/
 *Thumbs.db
 IsotopeDistribution/molecules/
+IsotopeDistribution/generate_makros/
 Binary/
 /out*.txt
 *.asv
