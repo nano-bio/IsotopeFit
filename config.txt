@@ -1,0 +1,4 @@
+minpeakwidth  =  0.1
+deltaresolution  =  0
+deltamass  =  0.01
+searchrange  =  3

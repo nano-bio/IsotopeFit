@@ -282,6 +282,8 @@ mfile = uimenu('Label','File');
         'Separator','on');
     uimenu(mfile,'Label','Recover file after crash','Callback',@recoverfile,...
         'Separator','on');
+    uimenu(mfile,'Label','Edit Settings','Callback',@callsettings,...
+        'Separator','on');
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        
@@ -339,10 +341,7 @@ init();
         handles.molecules={};
         
         % some basic settings for the software
-        handles.settings = {};
-        handles.settings.minpeakwidth = 0.1;
-        handles.settings.deltaresolution = 0;
-        handles.settings.deltamass = 0.01;
+        handles.settings = settingswindow(Parent, 'nothing', 'read');
         
         % these variables represent values that are necessary for the
         % program to determine its current state.
@@ -438,6 +437,14 @@ init();
             %append data matrix to ascii file
             dlmwrite(fullfile(pathname,filename),[handles.peakdata(minind:maxind,:),sum(fitted_data,2),fitted_data],'-append','delimiter','\t','precision','%e');
         end
+    end
+    
+    function callsettings(hObject, eventdata)
+        handles=guidata(hObject);
+        % the last parameter doesn't really matter, as long it isn't 'read'
+        % because that doesn't show the window
+        handles.settings = settingswindow(hObject, eventdata, 'show');
+        guidata(Parent,handles);
     end
 
     function menuplay(hObject,~)
