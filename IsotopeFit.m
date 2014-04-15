@@ -711,7 +711,7 @@ init();
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
-        handles.calibration= calibrate(peakdata,handles.molecules,handles.calibration,handles.settings);
+        [handles.calibration,handles.molecules]= calibrate(peakdata,handles.molecules,handles.calibration,handles.settings);
             
         
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);

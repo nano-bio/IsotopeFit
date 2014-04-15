@@ -1,4 +1,4 @@
-function calout = calibrate(peakdata,molecules,calin,settings)
+function [calout, moleculesout] = calibrate(peakdata,molecules,calin,settings)
 
 % ############################## LAYOUT
 
@@ -365,6 +365,7 @@ molecules2listbox(ListAllMolecules,handles.molecules);
 updatepolynomials(Parent,0);
 
 calout=handles.calibration;
+moleculesout=handles.molecules;
 calout.namelist=ranges2namelist(handles.ranges);
 
 uiwait(Parent)
@@ -385,6 +386,7 @@ uiwait(Parent)
                 case 'Yes'
                     calout=handles.calibration;
                     calout.namelist=ranges2namelist(handles.ranges);
+                    moleculesout=handles.molecules;
 
                     drawnow;
                     uiresume(gcbf);
@@ -403,6 +405,7 @@ uiwait(Parent)
                 case 'Yes'
                     calout=handles.calibration;
                     calout.namelist=ranges2namelist(handles.ranges);
+                    moleculesout=handles.molecules;
 
                     drawnow;
                     uiresume(gcbf);
@@ -413,6 +416,7 @@ uiwait(Parent)
         else
             calout=handles.calibration;
             calout.namelist=ranges2namelist(handles.ranges);
+            moleculesout=handles.molecules;
 
             drawnow;
             uiresume(gcbf);
