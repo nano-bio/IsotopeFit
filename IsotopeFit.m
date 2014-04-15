@@ -511,7 +511,7 @@ init();
     function menudc(hObject,~)
         handles = guidata(Parent);
         listindices = get(ListMolecules,'Value');
-        something = driftcorrection(handles, listindices)
+        something = driftcorrection(handles, listindices);
     end
 
     function labbookimport(hObject,~)
