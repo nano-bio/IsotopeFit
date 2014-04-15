@@ -65,10 +65,7 @@ for i=1:nfiles
              d=convolute(d,cluster{j}.peakdata{clusternumbers(j)});
              d=approx_masses(d,minmassdistance);
              d=approx_p(d,th);
-             
-             %multiply charged ions: divide masses by charge
-             d(:,1)=d(:,1)/charge;
-                          
+                                       
              filename=[filename '[' cluster{j}.name ']'];
              if clusternumbers(j)>1
                  filename=[filename num2str(clusternumbers(j))];
@@ -76,6 +73,8 @@ for i=1:nfiles
          end
      end
      if ~strcmp(filename,'')
+         %multiply charged ions: divide masses by charge
+         d(:,1)=d(:,1)/charge;
          dlmwrite([folder '\' filename '.txt'],d,'delimiter','\t','precision','%e');
      end
  end
