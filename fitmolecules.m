@@ -23,14 +23,14 @@ molecules=molecules(ix);
 spec_calc=zeros(1,size(peakdata,1));
 %indtest=findmassrange(massaxis,molecules,1000,0,10);
 
-%maximally used datapoints for fitting
-maxdatapoints=1000;
-
 fprintf('Start fitting %i molecules using %s\n',l, fitting_method);
 
 for i=1:l
     drawnow;
     involved=findinvolvedmolecules(molecules,i:l,i,0.3,calibration);
+    
+    %maximally used datapoints for fitting per molecule
+    maxdatapoints=50*length(involved);
     
     nmolecules=length(involved);
     parameters=zeros(1,nmolecules+2);
@@ -49,8 +49,8 @@ for i=1:l
     parameters(nmolecules+1)=resolutionbycalibration(calibration,molecules{i}.com); %resolution
     parameters(nmolecules+2)=massoffsetbycalibration(calibration,molecules{i}.com); %x-offset
     
-    ind=findmassrange(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),10);
-    %ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,0.5);
+    %ind=findmassrange(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),10);
+    ind=findmassrange2(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),0.5);
     
     %is it necessary to cut out some datapoints?
     ndp=length(ind); %number of datapoints

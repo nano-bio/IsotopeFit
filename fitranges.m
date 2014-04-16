@@ -36,9 +36,6 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
     % because parfor cannot access the original one! 
     rangestemp=ranges;
 
-    %maximally used datapoints for fitting
-    maxdatapoints=1000;
-
     %try to fit more often, when maximum number of function evaluations or 
     %iterations was reached.
     maxruns=10;
@@ -50,10 +47,15 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
     %parfor i=1:l
     for i=1:l %use this for patternsearch
         nmolecules=length(ranges{i}.molecules);
+        
+        %maximally used datapoints for fitting per molecule
+        maxdatapoints=50*nmolecules;
+        
         parameters=zeros(1,nmolecules+2);
         fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
 
-        ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
+        %ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
+        ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,1);
 
         %is it necessary to cut out some datapoints?
         ndp=length(ind); %number of datapoints
