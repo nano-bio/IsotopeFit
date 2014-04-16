@@ -13,10 +13,8 @@ function ok = comp_ms(original_data, corrected_data, xaxis, position)
         'Units','normalized',...
         'OuterPosition', position);
 
-    massaxes = axes(...
-        'ButtonDownFcn','disp(''axis callback'')',...
-        'Units','normalized',...
-        'OuterPosition',gridpos(64,64,4,64,1,64,0.01,0.01));
+    tmp = dataviewer(Parent, gridpos(64,64,4,64,1,64,0.025,0.02), 50, 50, false);
+    massaxes = tmp.axes;
 
     uicontrol(Parent,'style','pushbutton',...
         'string','Cancel',...
@@ -32,10 +30,10 @@ function ok = comp_ms(original_data, corrected_data, xaxis, position)
 
     % plot
     hold on;
-    plot(massaxes,original_data,'r');
-    plot(massaxes,corrected_data,'g');
+    plot(massaxes, xaxis, original_data, 'r');
+    plot(massaxes, xaxis, corrected_data, 'g');
     hold off;
-    
+
     ok = false;
     
     uiwait(Parent);

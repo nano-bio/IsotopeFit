@@ -45,19 +45,16 @@ delete(hTemp);
 
 %Preview Panel
 
-dataaxes = axes('Parent',Parent,...
-             'ActivePositionProperty','OuterPosition',...
-             'ButtonDownFcn','disp(''axis callback'')',...
-             'Units','normalized',...
-             'Position',gridpos(64,64,35,62,2,54,0.04,0.02)); 
+% for backwards compatibility with the existing code, we map updateslider
+% to the function inside the dataviewer object
+dvhandle = dataviewer(Parent, gridpos(64,64,33,62,1,54,0.025,0.01), 50, 29, true);
+dataaxes = dvhandle.axes;
+updateslider = dvhandle.updateslider;
 
 % Area Axes
 
-areaaxes = axes('Parent',Parent,...
-             'ActivePositionProperty','OuterPosition',...
-             'ButtonDownFcn','disp(''axis callback'')',...
-             'Units','normalized',...
-             'Position',gridpos(64,64,1,32,10,54,0.04,0.02));
+tmp = dataviewer(Parent, gridpos(64,64,1,32,10,54,0.025,0.03), 50, 29, false);
+areaaxes = tmp.axes;
          
 % ===== TOOLBAR LEFT OF AREA AXES ===== %
 
@@ -194,72 +191,6 @@ uicontrol(Parent,'style','pushbutton',...
           'Units','normalized',...
           'TooltipString','Click to copy the filename to the clipboard',...
           'Position',gridpos(64,32,62,64,25,26,0.01,0.01));
-
-% ===== GUI ELEMENTS TO CHANGE VIEW IN DATA AXES ===== %
-      
-% Toggle log scale for the data axes
-      
-uicontrol(Parent,'style','checkbox',...
-          'string','Log',...
-          'Callback',@togglelogscale,...
-          'Value', 0,...
-          'Units','normalized',...
-          'TooltipString','Toggle log scale',...
-          'Position',gridpos(64,64,32,34,1,4,0.01,0.01));
-      
-% Multiply y-axis by a factor of two
-      
-uicontrol(Parent,'style','pushbutton',...
-          'string','*2',...
-          'Callback',@doubleyscale,...
-          'Units','normalized',...
-          'TooltipString','Multiply axes by a factor of two',...
-          'Position',gridpos(64,64,60,62,1,3,0.01,0.01));
-      
-% Divide y-axis by a factor of two
-      
-uicontrol(Parent,'style','pushbutton',...
-          'string','/2',...
-          'Callback',@halfyscale,...
-          'Units','normalized',...
-          'TooltipString','Divide axes by a factor of two',...
-          'Position',gridpos(64,64,34,36,1,3,0.01,0.01));
-      
-% Autoscale y-axis
-      
-uicontrol(Parent,'style','pushbutton',...
-          'string','Y',...
-          'Callback',@autoyscale,...
-          'Units','normalized',...
-          'TooltipString','Autoscale axes',...
-          'Position',gridpos(64,64,36,60,1,3,0.01,0.01));
-      
-% Divide x-axis by a factor of two
-      
-uicontrol(Parent,'style','pushbutton',...
-          'string','/2',...
-          'Callback',@halfxscale,...
-          'Units','normalized',...
-          'TooltipString','Multiply axes by a factor of two',...
-          'Position',gridpos(64,64,32,34,4,6,0.01,0.01));
-      
-% Multiply x-axis by a factor of two
-      
-uicontrol(Parent,'style','pushbutton',...
-          'string','*2',...
-          'Callback',@doublexscale,...
-          'Units','normalized',...
-          'TooltipString','Divide axes by a factor of two',...
-          'Position',gridpos(64,64,32,34,50,52,0.01,0.01));
-      
-% slider x-axis
-      
-dataxslider = uicontrol(Parent,'style','slider',...
-          'string','/2',...
-          'Callback',@slidedataaxes,...
-          'Units','normalized',...
-          'TooltipString','Slide along the mass spec',...
-          'Position',gridpos(64,64,32,34,6,50,0.01,0.01));
       
 % Plot overview
       
@@ -1153,146 +1084,6 @@ init();
         % labbook etc.
         fn = get(filenamedisplay, 'String');
         clipboard('copy', fn);
-    end
-
-    function togglelogscale(hObject, ~)
-        % This button toggles the logarithmic display of the data axes in
-        % y-direction.
-        
-        % get settings
-        handles = guidata(Parent);
-        
-        % turn warning about negative values off
-        warning('off', 'MATLAB:Axes:NegativeDataInLogAxis')
-        
-        % toggle function
-        if (get(hObject,'Value') == get(hObject,'Max'))
-            set(dataaxes, 'YScale', 'log');
-            handles.status.logscale = 1;
-        elseif (get(hObject,'Value') == get(hObject,'Min'))
-            set(dataaxes, 'YScale', 'linear');
-            handles.status.logscale = 0;
-        end
-        
-        % save back
-        guidata(Parent,handles);
-    end
-
-    function doubleyscale(hObject, ~)
-        % This function multiplies the Y-axis with a factor of two (hence
-        % making the signals smaller)
-        
-        % current limits
-        cl = get(dataaxes, 'YLim');
-        % multiply
-        nl = [cl(1)*2 cl(2)*2];
-        % set back
-        set(dataaxes, 'YLim', nl)
-    end
-
-    function doublexscale(hObject, ~)
-        % This function multiplies the Y-axis with a factor of two (hence
-        % making the signals smaller)
-        
-        % current limits
-        cl = get(dataaxes, 'XLim');
-        %half width to add
-        hw = (cl(2)-cl(1))/2;
-        % add
-        nl = [cl(1)-hw cl(2)+hw];
-        % set back
-        set(dataaxes, 'XLim', nl);
-        
-        updateslider;
-    end
-
-    function halfyscale(hObject, ~)
-        % This function divides the Y-axis by a factor of two (hence
-        % making the signals bigger)
-        
-        % current limits
-        cl = get(dataaxes, 'YLim');
-        % divide
-        nl = [cl(1)/2 cl(2)/2];
-        % set back
-        set(dataaxes, 'YLim', nl)
-    end
-
-    function halfxscale(hObject, ~)
-        % This function divides the Y-axis by a factor of two (hence
-        % making the signals bigger)
-        
-        % current limits
-        cl = get(dataaxes, 'XLim');
-        % quarter width to add
-        hw = (cl(2)-cl(1))/4;
-        % add
-        nl = [cl(1)+hw cl(2)-hw];
-        % set back
-        set(dataaxes, 'XLim', nl);
-        
-        updateslider;
-    end
-
-    function autoyscale(hObject, ~)
-        % This function divides the Y-axis by a factor of two (hence
-        % making the signals bigger)
-        
-        % set back
-        set(dataaxes, 'YLimMode', 'auto');
-    end
-
-    function updateslider(hObject, ~)
-        % This function updates the x-axis slider accordingly whenever 
-        % something changes in the dataaxes
-        
-        % supress warnings in case the user scrolls and pans around in an
-        % uncontrolled manner and withour fear of disaster:
-        warning('off', 'MATLAB:hg:uicontrol:ParameterValuesMustBeValid');
-        
-        % get settings
-        handles = guidata(Parent);
-        
-        % calculate where around we are centered
-        xlims = get(dataaxes, 'XLim');
-        com = (xlims(2) + xlims(1))/2;
-        viewedrange = xlims(2) - xlims(1);
-        
-        % how big is our massspec?
-        try
-            maxmass = max(handles.peakdata(:,1));
-        catch
-            maxmass = 1;
-        end
-        
-        % we should calculate the width of our slider
-        slwidth = viewedrange/maxmass;
-        % set the max to the maximum mass
-        set(dataxslider, 'Max', maxmass);
-        % since the Max is our mass range we can set this to the center of
-        % mass
-        set(dataxslider, 'Value', com);
-        % set the slider width
-        set(dataxslider, 'SliderStep', [slwidth/10 slwidth])
-    end
-
-    function slidedataaxes(hObject, ~)
-        % This function updates the data axes when the slider for the
-        % x-axis is clicked
-        
-        % calculate where around we are centered
-        cl = get(dataaxes, 'XLim');
-        % we need to add / substract half of the currently viewed range to
-        % the new center of mass
-        vrhalf = (cl(2) - cl(1))/2;
-        
-        % get center of mass
-        com = get(dataxslider, 'Value');
-        
-        % new viewing range
-        nl = [com-vrhalf com+vrhalf];
-        % jump by one view range
-        set(dataaxes, 'XLim', nl);
     end
 
     function plotoverview(hObject, ~)
