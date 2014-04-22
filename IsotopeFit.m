@@ -221,6 +221,7 @@ mfile = uimenu('Label','File');
 mmolecules= uimenu('Label','Molecules','Enable','off');
        uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
        uimenu(mmolecules,'Label','Load from ifd...','Callback',@menuloadmoleculesifd);
+       uimenu(mmolecules,'Label','Load from ifm...','Callback',@menuloadmoleculesifm);
        
 mcal= uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
@@ -566,7 +567,7 @@ init();
         folder=uigetdir();
         
         if length(folder)>1 %cancel returns folder=0
-            handles.molecules=loadmolecules(folder,foldertolist(folder),handles.peakdata);
+            handles.molecules=load_molecules_from_folder(folder,foldertolist(folder),handles.peakdata);
             guidata(Parent,handles);
             molecules2listbox(ListMolecules,handles.molecules);
         end
@@ -585,6 +586,22 @@ init();
             load(fullfile(pathname,filename),'-mat');
             
             handles.molecules=data.molecules;
+            
+            guidata(Parent,handles);
+            
+            molecules2listbox(ListMolecules,handles.molecules);
+        end
+        calibrationmenu('on','on');
+    end
+
+    function menuloadmoleculesifm(hObject,~)
+        handles=guidata(Parent);
+        [filename, pathname, filterindex] = uigetfile( ...
+            {'*.ifm','IsotopeFit molecules file (*.ifm)'},...
+            'Open IsotopeFit molecules file');
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            handles.molecules=load_molecules_from_ifm(fullfile(pathname,filename),handles.peakdata);
             
             guidata(Parent,handles);
             

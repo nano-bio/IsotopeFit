@@ -32,13 +32,18 @@ nfiles=1;
 system=zeros(1,length(clusterlist));
 offset=system;
 
+fprintf('Generating ');
+for i=1:length(alternativenames)-1
+    fprintf(' %s +',alternativenames{i});
+end
+fprintf(' %s clusters... ',alternativenames{end});
+
 for i=1:length(clusterlist)
-    cluster{i}.nend=nlist{i}(2);
+    cluster{i}.nend=nlist{i}(end);
     cluster{i}.nstart=nlist{i}(1);
     
-    offset(i)=cluster{i}.nstart;
     cluster{i}.nelements=(cluster{i}.nend-cluster{i}.nstart+1);
-    system(i)=cluster{i}.nelements;
+    system(i)=length(nlist{i});
     
     cluster{i}.name=alternativenames{i};
     cluster{i}.sumformula=clusterlist{i};
@@ -49,26 +54,22 @@ for i=1:length(clusterlist)
         cluster{i}.peakdata{j}=approx_masses(cluster{i}.peakdata{j},minmassdistance);
         cluster{i}.peakdata{j}=approx_p(cluster{i}.peakdata{j},th);
     end
-    nfiles=nfiles*cluster{i}.nelements;
 end
 
-
-
-for i=1:nfiles
+for i=1:prod(system) %number of combinations=product of basis numbers in varible number system
     filename='';
-    clusternumbers=ten2variablesystem(i-1,system)+offset;
+    clusternumbers=ten2variablesystem(i-1,system);
      d=[0 1];
      for j=1:length(clusternumbers);
-         if clusternumbers(j)>0
-             %d
-             %cluster{j}.peakdata(clusternumbers(j))
-             d=convolute(d,cluster{j}.peakdata{clusternumbers(j)});
+         multimer_number=nlist{j}(clusternumbers(j)+1);
+         if multimer_number>0 %then attach this species
+             d=convolute(d,cluster{j}.peakdata{multimer_number});
              d=approx_masses(d,minmassdistance);
              d=approx_p(d,th);
                                        
              filename=[filename '[' cluster{j}.name ']'];
-             if clusternumbers(j)>1
-                 filename=[filename num2str(clusternumbers(j))];
+             if multimer_number>1
+                 filename=[filename num2str(multimer_number)];
              end
          end
      end
@@ -77,8 +78,10 @@ for i=1:nfiles
          d(:,1)=d(:,1)/charge;
          dlmwrite([folder '\' filename '.txt'],d,'delimiter','\t','precision','%e');
      end
- end
+end
 
+ 
+fprintf('done\n');
 
 end
 
