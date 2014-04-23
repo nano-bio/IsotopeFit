@@ -117,12 +117,12 @@ previewaxes = axes('Parent',PreviewPanel,...
              'ActivePositionProperty','OuterPosition',...
              'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
-             'Position',gridpos(10,8,2,10,1,6,0.05,0.15)); 
+             'Position',gridpos(20,20,4,20,1,15,0.03,0.07)); 
 
 uicontrol(PreviewPanel,'Style','Text',...
     'String','Zoomfaktor',...
     'Units','normalized',...
-    'Position',gridpos(10,10,1,1,1,1,0.01,0.01));        
+    'Position',gridpos(20,20,1,2,1,2,0.01,0.01));        
          
 e_zoomfaktor = uicontrol(PreviewPanel,'Style','edit',...
     'Tag','e_zoomfaktor',...
@@ -130,7 +130,14 @@ e_zoomfaktor = uicontrol(PreviewPanel,'Style','edit',...
     'String','30',...
     'Background','white',...
     'Enable','on',...
-    'Position',gridpos(10,10,1,1,2,2,0.01,0.01));
+    'Position',gridpos(20,20,1,2,3,3,0.01,0.01));
+
+% autozoom in preview panel
+uicontrol(PreviewPanel,'style','pushbutton',...
+          'string','Autozoom',...
+          'Callback',@autozoombutton,...
+          'Units','normalized',...
+          'Position',gridpos(20,20,1,2,4,6,0.01,0.01)); 
          
 uicontrol(PreviewPanel,'Style','Text',...
     'String','Masscenter',...
@@ -155,7 +162,7 @@ e_massoffset=uicontrol(PreviewPanel,'Style','edit',...
     'Units','normalized',...
     'String','N/A',...
     'Background','white',...
-    'Callback',@parametereditclick,...
+    'Callback',@updatecurrentmolecule,...
     'Enable','off',...
     'Position',gridpos(10,8,7,7,7,7.4,0.01,0.01));
 
@@ -184,7 +191,7 @@ e_resolution=uicontrol(PreviewPanel,'Style','edit',...
     'Tag','e_resolution',...
     'Units','normalized',...
     'String','N/A',...
-    'Callback',@parametereditclick,...
+    'Callback',@updatecurrentmolecule,...
     'Background','white',...
     'Enable','off',...
     'Position',gridpos(10,8,5,5,7,7.4,0.01,0.01));
@@ -215,7 +222,7 @@ e_area=uicontrol(PreviewPanel,'Style','edit',...
     'Units','normalized',...
     'String','N/A',...
     'Background','white',...
-    'Callback',@parametereditclick,...
+    'Callback',@updatecurrentmolecule,...
     'Enable','off',...
     'Position',gridpos(10,8,3,3,7,7.4,0.01,0.01));
 
@@ -261,7 +268,6 @@ uicontrol(PreviewPanel,'style','pushbutton',...
 
 massoffsetaxes = axes('Parent',CalibrationPanel,...
              'ActivePositionProperty','OuterPosition',...
-             'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
              'Position',gridpos(10,2,2,10,1,1,0.05,0.15)); 
 title(massoffsetaxes,'Mass offset');
@@ -269,7 +275,6 @@ title(massoffsetaxes,'Mass offset');
          
 resolutionaxes = axes('Parent',CalibrationPanel,...
              'ActivePositionProperty','OuterPosition',...
-             'ButtonDownFcn','disp(''axis callback'')',...
              'Units','normalized',...
              'Position',gridpos(10,2,2,10,2,2,0.05,0.15)); 
 title(resolutionaxes,'Resolution');
@@ -370,6 +375,7 @@ calout.namelist=ranges2namelist(handles.ranges);
 
 uiwait(Parent)
 
+%################### INTERNAL FUNCTIONS
 
     function donecalib(hObject,~)
         
@@ -424,7 +430,6 @@ uiwait(Parent)
         end
     end
 
-%################### INTERNAL FUNCTIONS
     function guessareaclick(hObject, ~)
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         
@@ -456,7 +461,7 @@ uiwait(Parent)
         
         guidata(hObject,handles);
         
-        plotpreview(rootindex);
+        plotpreview(rootindex, false);
         plotdatapoints;
     end
 
@@ -508,7 +513,7 @@ uiwait(Parent)
         
         guidata(hObject,handles);
         
-        plotpreview(rootindex);
+        plotpreview(rootindex, false);
         plotdatapoints;
     end
 
@@ -586,8 +591,7 @@ uiwait(Parent)
         rootindex=handles.ranges{rangeindex}.molecules{moleculeindex}.rootindex;
     end
 
-    function updatecurrentmolecule()
-      
+    function updatecurrentmolecule(~, ~)      
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
 
         handles=guidata(Parent);
@@ -603,7 +607,7 @@ uiwait(Parent)
      
         [handles.calibration.comlist, handles.calibration.massoffsetlist, handles.calibration.resolutionlist]=ranges2list(handles.ranges);
         guidata(Parent,handles);
-        plotpreview(rootindex);
+        plotpreview(rootindex, false);
         %fitpolynomials();
         plotdatapoints();
     end
@@ -692,8 +696,12 @@ uiwait(Parent)
         guidata(Parent,handles);
     end
 
-    function plotpreview(index)
+    function plotpreview(index, autozoom)
         handles=guidata(Parent);
+                
+        % in case we want to preserve the zoom status
+        xlims = get(previewaxes, 'XLim');
+        ylims = get(previewaxes, 'YLim');
         
         com=handles.molecules{index}.com;
         
@@ -754,10 +762,14 @@ uiwait(Parent)
         
         hold(previewaxes,'off');
         
-        %Zoom data
-        %[~,i]=max(handles.molecules{index}.peakdata(:,2));
+        % write back zoom status in case it is still visible
+        if (com > xlims(1) && com < xlims(2) && autozoom == false)
+            set(previewaxes, 'XLim', xlims);
+            set(previewaxes, 'YLim', ylims);
+        else
+            set(previewaxes, 'XLim', [calcmassaxis(1),calcmassaxis(end)]);
+        end
         
-        xlim(previewaxes,[calcmassaxis(1),calcmassaxis(end)]);  
         %ylim(previewaxes,[0,max(max(handles.molecules{index}.peakdata(:,2)),max(handles.peakdata(handles.molecules{index}.minind:handles.molecules{index}.maxind,2)))]);
         
         guidata(Parent,handles);
@@ -809,7 +821,7 @@ uiwait(Parent)
         guidata(hObject,handles);
         
         writetopreviewedit(com,currentmassoffset,currentresolution,area)
-        plotpreview(index);
+        plotpreview(index, false);
         
         % in the very end we update the resolution and mass offset axes.
         markpoints();
@@ -914,18 +926,10 @@ uiwait(Parent)
         
         guidata(Parent,handles);
     end
-  
-    function parametereditclick(hObject, ~)
-        updatecurrentmolecule();
-    end
 
     function parameterchange(hObject, ~)
         handles=guidata(hObject);
         tag=get(hObject,'Tag');
-        
-        % we want to preserve the zoom status on a parameter change
-        xlims = get(previewaxes, 'XLim');
-        ylims = get(previewaxes, 'YLim');
         
         switch tag
             case 'massoffsetup'
@@ -954,16 +958,16 @@ uiwait(Parent)
                 set(e_area,'String',num2str(value));                
         end
         guidata(hObject,handles);
+        
+        % plot
         updatecurrentmolecule();
         
-        % we write that back now after the plotting, because we don't want
-        % to change the actual plotting function (hence keeping the
-        % behaviour of auto-resizing when selecting a molecule)
-        set(previewaxes, 'XLim', xlims);
-        set(previewaxes, 'YLim', ylims);
-%         handles=guidata(hObject);
-%         
-%         guidata(hObject,handles);
-        
-    end  
+    end 
+
+    function autozoombutton(~, ~)
+        clickedindex=get(ListRelevantMolecules,'Value');
+        rangeindex=get(ListRanges,'Value');
+        index=handles.ranges{rangeindex}.molecules{clickedindex}.rootindex;
+        plotpreview(index, true);
+    end
 end
