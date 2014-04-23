@@ -207,8 +207,8 @@ uicontrol(Parent,'style','pushbutton',...
 mfile = uimenu('Label','File');
     %uimenu(mfile,'Label','Testdata','Callback',@test);
     uimenu(mfile,'Label','Open','Callback',@open_file,'Accelerator','O');
-    uimenu(mfile,'Label','Save','Callback',@(a,b) save_file(a,b,'save'),'Accelerator','S');
-    uimenu(mfile,'Label','Save as...','Callback',@(a,b) save_file(a,b,'saveas'));
+    msave = uimenu(mfile,'Label','Save','Callback',@(a,b) save_file(a,b,'save'),'Accelerator','S');
+    msaveas = uimenu(mfile,'Label','Save as...','Callback',@(a,b) save_file(a,b,'saveas'));
     uimenu(mfile,'Label','Import from Labbook...','Callback',@labbookimport,...
         'Separator','on');
     uimenu(mfile,'Label','Recover file after crash','Callback',@recoverfile,...
@@ -218,21 +218,21 @@ mfile = uimenu('Label','File');
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        
-mmolecules= uimenu('Label','Molecules','Enable','off');
+mmolecules = uimenu('Label','Molecules','Enable','off');
        uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
        uimenu(mmolecules,'Label','Load from ifd...','Callback',@menuloadmoleculesifd);
        uimenu(mmolecules,'Label','Load from ifm...','Callback',@menuloadmoleculesifm);
        
-mcal= uimenu('Label','Calibration');
+mcal = uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
  
-mdata= uimenu('Label','Export');
-       uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
-       uimenu(mdata,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
-       uimenu(mdata,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
+mdata = uimenu('Label','Export');
+       mdatacs = uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
+       mdatacv = uimenu(mdata,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
+       mdatacms = uimenu(mdata,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
        
        
 mplay = uimenu('Label','Play');
@@ -281,8 +281,64 @@ init();
         handles.status.overview = 0;
         handles.status.lastlims = [[0 0] [0 0]];
         
+        handles.status.guistatusvector = [0 0 0 0 0];
+
         %initial calibration data
         handles.calibration=standardcalibration();
+        
+        guidata(Parent,handles);
+        
+        gui_status_update();
+    end
+
+    function gui_status_update(statusvariable, value)
+        % This function updates the availability of GUI elements according
+        % certain states of the evaluation. E.g. a mass spec can only be
+        % calibrated if molecules have been loaded. It either takes no
+        % argument and then updates all GUI elements according to the
+        % status vector handles.status.guistatusvector or it takes two
+        % arguments:
+        % statusvariable -> state to be changed
+        % value -> value (0|1) for the given state
+        % for a list of possible statusvariables, see the variable 
+        % statusvectortemplate
+        
+        % load handles with status vector
+        handles=guidata(Parent);
+        
+        % possible status elements
+        statusvectortemplate = {'file_loaded',...
+            'molecules_loaded',...
+            'calibrated',...
+            'bg_corrected',...
+            'drift_corrected'};
+        
+        % list of gui elements that should be hidden/shown
+        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms'};
+        % according requirement list. each entry in each vector corresponds
+        % to one of the states defined above
+        guirequirements = {[1 0 0 0 0], [1 1 0 0 0], [1 0 0 0 0], [1 1 1 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 1 1 0 0]};
+        
+        if nargin > 1
+            % we want to update the status vector
+            
+            % which element in the vector do we want to change?
+            vecind = strmatch(statusvariable, statusvectortemplate);
+            handles.status.guistatusvector(vecind) = value;
+        end
+        
+        % in this case no update, just a call to update all elements
+        for i = 1:length(guielements)
+            % we substract the status vector with the respective definition
+            % for each element. if -1 shows up, a requirement is not
+            % fulfilled and we hide the corresponding UI element
+            diff = handles.status.guistatusvector - guirequirements{i};
+            if ismember(-1, diff)
+                set(eval(guielements{i}), 'Enable', 'off');
+            else
+                set(eval(guielements{i}), 'Enable', 'on');
+            end
+        end
         
         guidata(Parent,handles);
     end
@@ -444,13 +500,13 @@ init();
         handles = guidata(Parent);
         listindices = get(ListMolecules,'Value');
         something = driftcorrection(handles, listindices);
+        gui_status_update('drift_corrected', 1);
     end
 
     function labbookimport(hObject,~)
         [pathname,filename]=readfromlabbook();
         
         if ~strcmp(filename,'')
-            set(mmolecules,'Enable','on');
             load_h5(pathname,filename);
             handles=guidata(Parent);
             plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2));
@@ -557,11 +613,6 @@ init();
         
     end
 
-    function calibrationmenu(value1,value2)
-        set(mcalbgc,'Enable',value1);
-        set(mcalcal,'Enable',value2);
-    end
-
     function menuloadmoleculesfolder(hObject,~)
         handles=guidata(Parent);
         folder=uigetdir();
@@ -572,7 +623,7 @@ init();
             molecules2listbox(ListMolecules,handles.molecules);
         end
         
-        calibrationmenu('on','on');
+        gui_status_update('molecules_loaded', 1);
     end
 
     function menuloadmoleculesifd(hObject,~)
@@ -591,7 +642,8 @@ init();
             
             molecules2listbox(ListMolecules,handles.molecules);
         end
-        calibrationmenu('on','on');
+        
+        gui_status_update('molecules_loaded', 1);
     end
 
     function menuloadmoleculesifm(hObject,~)
@@ -607,7 +659,8 @@ init();
             
             molecules2listbox(ListMolecules,handles.molecules);
         end
-        calibrationmenu('on','on');
+
+        gui_status_update('molecules_loaded', 1);
     end
 
     function menuloadcalibration(hObject,~)
@@ -642,7 +695,9 @@ init();
             
             molecules2listbox(ListMolecules,handles.molecules);
         end
-        calibrationmenu('on','on');
+        
+        gui_status_update('molecules_loaded', 1);
+        gui_status_update('calibrated', 1);
     end
 
     function menubgcorrection(hObject,~)
@@ -651,6 +706,7 @@ init();
         handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
         guidata(Parent,handles);
+        gui_status_update('bg_corrected', 1);
     end
 
     function menucalibration(hObject,~)
@@ -664,6 +720,7 @@ init();
         
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
         guidata(Parent,handles);
+        gui_status_update('calibrated', 1);
     end
 
     function load_h5(pathname,filename)
@@ -687,7 +744,10 @@ init();
         handles.fileinfo.h5completepath = fullfile(pathname,filename);
         
         guidata(Parent,handles);
-        calibrationmenu('on','off');
+        
+        gui_status_update('file_loaded', 1);
+        gui_status_update('calibrated', 0);
+        gui_status_update('molecules_loaded', 0);
     end
 
     function load_ascii(pathname,filename)
@@ -705,7 +765,10 @@ init();
         handles.fileinfo.pathname=pathname;
         
         guidata(Parent,handles);
-        calibrationmenu('on','off');
+        
+        gui_status_update('file_loaded', 1);
+        gui_status_update('calibrated', 0);
+        gui_status_update('molecules_loaded', 0);
     end
 
     function open_file(hObject, ~, fullpath)
@@ -720,25 +783,36 @@ init();
                 '*.*','ASCII data file (*.*)'},...
                 'Open IsotopeFit data file');
         % if we indeed got a filename to load, we just set the filterindex
-        % to the file suffix
+        % to 3 (= any file) and determine later what it is
         else
             [pathname, filename, suffix] = fileparts(fullpath);
+            filename = [filename, suffix];
+            filterindex = 3;
+        end
+        
+        % check if the user clicked on Cancel
+        if (strcmp(class(filename),'double') && strcmp(class(pathname),'double'))
+            return
+        end
+        
+        % if the filterindex is 3, we do not know for sure which file was
+        % chosen. hence we have to retrieve the actual filename suffix
+        if filterindex == 3
+            [~, ~, suffix] = fileparts(filename);
             if strcmp(suffix, '.ifd')
                 filterindex = 1;
             elseif strcmp(suffix, '.h5')
                 filterindex = 2;
             else % assume it's ASCII
-                filterindex = 3;
+                filterindex = 4;
             end
-            filename = [filename, suffix];
         end
         
         % before we load the file we clear all listboxes and plots
         clearall();
-        
+
         handles=guidata(Parent);
         if ~(isequal(filename,0) || isequal(pathname,0))
-            set(mmolecules,'Enable','on');
             switch filterindex
                 case 1 %ifd
                     data={}; %load needs a predefined variable
@@ -774,10 +848,12 @@ init();
                     
                     molecules2listbox(ListMolecules,handles.molecules);
                     
-                    calibrationmenu('on','on');
+                    gui_status_update('file_loaded', 1);
+                    gui_status_update('calibrated', 1);
+                    gui_status_update('molecules_loaded', 1);
                 case 2 %h5
                     load_h5(pathname,filename);
-                case 3 %ASCII
+                case 4 %ASCII
                     load_ascii(pathname,filename);
             end
             handles=guidata(Parent);
