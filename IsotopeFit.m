@@ -783,22 +783,29 @@ init();
                 '*.*','ASCII data file (*.*)'},...
                 'Open IsotopeFit data file');
         % if we indeed got a filename to load, we just set the filterindex
-        % to the file suffix
+        % to 3 (= any file) and determine later what it is
         else
             [pathname, filename, suffix] = fileparts(fullpath);
+            filename = [filename, suffix];
+            filterindex = 3;
+        end
+        
+        % if the filterindex is 3, we do not know for sure which file was
+        % chosen. hence we have to retrieve the actual filename suffix
+        if filterindex == 3
+            [~, ~, suffix] = fileparts(filename);
             if strcmp(suffix, '.ifd')
                 filterindex = 1;
             elseif strcmp(suffix, '.h5')
                 filterindex = 2;
             else % assume it's ASCII
-                filterindex = 3;
+                filterindex = 4;
             end
-            filename = [filename, suffix];
         end
         
         % before we load the file we clear all listboxes and plots
         clearall();
-        
+
         handles=guidata(Parent);
         if ~(isequal(filename,0) || isequal(pathname,0))
             switch filterindex
@@ -841,7 +848,7 @@ init();
                     gui_status_update('molecules_loaded', 1);
                 case 2 %h5
                     load_h5(pathname,filename);
-                case 3 %ASCII
+                case 4 %ASCII
                     load_ascii(pathname,filename);
             end
             handles=guidata(Parent);
