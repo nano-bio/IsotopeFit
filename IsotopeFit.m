@@ -790,6 +790,11 @@ init();
             filterindex = 3;
         end
         
+        % check if the user clicked on Cancel
+        if (strcmp(class(filename),'double') && strcmp(class(pathname),'double'))
+            return
+        end
+        
         % if the filterindex is 3, we do not know for sure which file was
         % chosen. hence we have to retrieve the actual filename suffix
         if filterindex == 3
