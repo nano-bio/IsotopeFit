@@ -27,35 +27,49 @@ hwb=waitbar(0,'Initialization of molecule parameters...');
 drawnow;
 l=length(out);
 
+out_of_range_ix=[];
+
 for i = 1:l
     masses=out{i}.peakdata(:,1)';
     peaks=out{i}.peakdata(:,2)';
-    
-    out{i}.com=sum(masses.*peaks)/sum(peaks);
-    %out{i}.useforcal=false;
-   
-    masses=masses(find(peaks>=0));
+        
+    %masses=masses(find(peaks>=0));
     
     out{i}.minmass=min(masses);
     out{i}.maxmass=max(masses);
-        
-    out{i}.minind=mass2ind(massaxis,out{i}.minmass);
-    out{i}.maxind=mass2ind(massaxis,out{i}.maxmass);
-
     
-    %Area guessing:
-    if out{i}.maxind==out{i}.minind %molecule out of massrange
-        out{i}.area=0;
-    else
-        out{i}.area=guessarea(peakdata(out{i}.minind:out{i}.maxind-1,:));
+    if out{i}.minmass<peakdata(end,1) %molecule in range
+        out{i}.com=sum(masses.*peaks)/sum(peaks);
+        
+        out{i}.minind=mass2ind(massaxis,out{i}.minmass);
+        out{i}.maxind=mass2ind(massaxis,out{i}.maxmass);
+        
+        %Area guessing:
+        if (out{i}.maxind-out{i}.minind)<=1 %integration not possible
+            out{i}.area=0;
+        else
+            out{i}.area=guessarea(peakdata(out{i}.minind:out{i}.maxind-1,:));
+        end
+        
+        out{i}.areaerror=+inf;
+        
+        minmasses(i)=out{i}.minmass;
+        %filter(minind:maxind)=1;
+    else %molecule out of range
+        fprintf('Molecule %s out of range\n',out{i}.name);
+        out_of_range_ix=[out_of_range_ix,i];
     end
     
-    out{i}.areaerror=+inf;
-    
-    minmasses(i)=out{i}.minmass;
-    %filter(minind:maxind)=1;
     if mod(i,10)==0,  waitbar(i/l); end;
 end
+
+in_range_ix=setdiff(1:l,out_of_range_ix);
+
+minmasses=minmasses(in_range_ix);
+out=out(in_range_ix);
+
+fprintf('\n%i molecules out of massrange\n',length(out_of_range_ix));
+fprintf('%i molecules loadet\n',length(in_range_ix));
 
 %sort molecules with correlated startvalues by minind
 [~,indices]=sort(minmasses);
