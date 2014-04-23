@@ -1,4 +1,4 @@
-function out = load_molecules(folder,moleculelist,peakdata)
+function [molecules_out,masslist_out] = load_molecules(folder,moleculelist,peakdata)
 %loadmolecules( moleculelist,massaxis,startvalues )
 %Output stucture: out{l} cell array of length l with following fields:
 %out.peakdata... [mass, rel.abundance]
@@ -18,8 +18,8 @@ hwb=waitbar(0,'Loading molecule peakdata...');
 drawnow;
 l=length(moleculelist);
 for i=1:l
-    out{i}.peakdata=renorm(load([folder '\' moleculelist{i}]));
-    out{i}.name=moleculelist{i}(1:end-4);
+    molecules_out{i}.peakdata=renorm(load([folder '\' moleculelist{i}]));
+    molecules_out{i}.name=moleculelist{i}(1:end-4);
     if mod(i,10)==0,  waitbar(i/l); end;
 end
 
@@ -27,7 +27,7 @@ close(hwb);
 
 fprintf('\nDone.\n')
 
-out = init_molecule_properties(out,peakdata);
+[molecules_out,masslist_out] = init_molecule_properties(molecules_out,peakdata);
 
 end
 

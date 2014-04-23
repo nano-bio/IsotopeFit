@@ -1,4 +1,4 @@
-function out = loadmolecules_from_ifm(file,peakdata)
+function [molecules_out,masslist_out] = load_molecules_from_ifm(file,peakdata)
 %loadmolecules( moleculelist,massaxis,startvalues )
 %Output stucture: out{l} cell array of length l with following fields:
 %out.peakdata... [mass, rel.abundance]
@@ -20,7 +20,7 @@ peaks=[];
 massaxis=peakdata(:,1)';
 minmasses=zeros(1,length(data.molecules));
 
-out = init_molecule_properties(data.molecules,peakdata);
+[molecules_out,masslist_out] = init_molecule_properties(data.molecules,peakdata);
 
 end
 

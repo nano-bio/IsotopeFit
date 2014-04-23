@@ -261,6 +261,9 @@ init();
         handles.bgcorrectiondata.bgm=[];
         handles.bgcorrectiondata.bgy=[];
         
+        handles.masslist.minmasses=[];
+        handles.masslist.maxmasses=[];
+        
         handles.peakdata=[];
         handles.raw_peakdata=[];
         
@@ -398,7 +401,7 @@ init();
             limits= get(dataaxes, 'XLim');
             
             %find molecules that are in current view
-            moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2));
+            moleculelist=molecules_in_massrange(handles.masslist,limits(1),limits(2));
             minind=mass2ind(handles.peakdata(:,1)',limits(1));
             maxind=mass2ind(handles.peakdata(:,1)',limits(2));
             
@@ -822,17 +825,32 @@ init();
                     %handles.bgpolynom=data.bgpolynom;
                     handles.startind=data.startind;
                     handles.endind=data.endind;
-
+                                       
                     % Background correction data
                     handles.bgcorrectiondata=data.bgcorrectiondata;
                     
                     if ~isfield(handles.bgcorrectiondata,'bgm') %compatibility: old bg correction methode
+                        fprintf('Old File. Fixing background correction data...');
                         handles.bgcorrectiondata.bgm=[];
                         handles.bgcorrectiondata.bgy=[];
+                        fprintf(' done\n');
                     end
                     
                     handles.molecules=data.molecules;
+                                        
+                    % Masslist vectors (for better performance)
+                    if isfield(data,'masslist')
+                        handles.masslist=data.masslist;
+                    else %generate list
+                        fprintf('Old File. Generating masslist for better performance...');
+                        for i=1:length(handles.molecules)
+                            handles.masslist.minmasses(i)=handles.molecules{i}.minmass;
+                            handles.masslist.maxmasses(i)=handles.molecules{i}.maxmass;
+                        end
+                        fprintf(' done\n');
+                    end
                     
+                        
                     %Calibration data
                     handles.calibration=data.calibration;
                     
@@ -902,6 +920,7 @@ init();
             data.molecules=handles.molecules;
             data.calibration=handles.calibration;
             data.bgcorrectiondata=handles.bgcorrectiondata;
+            data.masslist=handles.masslist;
             
             save(fullfile(pathname,filename),'data');
             
@@ -965,7 +984,7 @@ init();
         
     % plot fitted data for all peaks that are displayed (need to find out which molecules are involved in this range) 
         limits = [calcmassaxis(1) calcmassaxis(end)];
-        involvedmolecules=molecules_in_massrange(handles.molecules, limits(1), limits(2));
+        involvedmolecules=molecules_in_massrange(handles.masslist, limits(1), limits(2));
         
     % calculated fitted spec for all involved molecules
         sumspectrum=multispec(handles.molecules(involvedmolecules),...
