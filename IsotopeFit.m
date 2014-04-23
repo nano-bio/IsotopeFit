@@ -659,7 +659,8 @@ init();
             
             molecules2listbox(ListMolecules,handles.molecules);
         end
-        calibrationmenu('on','on');
+
+        gui_status_update('molecules_loaded', 1);
     end
 
     function menuloadcalibration(hObject,~)
