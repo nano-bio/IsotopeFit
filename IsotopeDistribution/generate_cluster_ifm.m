@@ -47,7 +47,6 @@ end
 
 nfiles=1;
 system=zeros(1,length(clusterlist));
-offset=system;
 
 % generate convolutions for every cluster in clusterlist.
 % i.e. [C60]1, [C60]2, [C60]3, [CO2]1, [CO2]2, [CO2]3, [CO2]4
@@ -66,8 +65,6 @@ for i=1:length(clusterlist)
     cluster{i}.nend=nlist{i}(end);
     cluster{i}.nstart=nlist{i}(1);
     
-    offset(i)=cluster{i}.nstart;
-    cluster{i}.nelements=(cluster{i}.nend-cluster{i}.nstart+1);
     system(i)=length(nlist{i});
     
     cluster{i}.name=alternativenames{i};
@@ -103,7 +100,7 @@ for i=1:prod(system) %number of combinations=product of basis numbers in varible
         d=[0 1];
         for j=1:length(clusternumbers);
             multimer_number=nlist{j}(clusternumbers(j)+1);
-            if clusternumbers(j)>0
+            if multimer_number>0
                 d=convolute(d,cluster{j}.peakdata{multimer_number});
                 d=approx_masses(d,minmassdistance);
                 d=approx_p(d,th);
