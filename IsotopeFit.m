@@ -934,6 +934,10 @@ init();
             if ~strcmp(method,'autosave')
                 handles.fileinfo.filename=filename;
                 handles.fileinfo.pathname=pathname;
+                
+                % also belongs in here: if we didn't autosave, we want our
+                % status to be "unchanged"
+                gui_status_update('changed', 0);
             end
             
             guidata(Parent,handles);
@@ -1012,11 +1016,13 @@ init();
             molnames = listboxText(index);
 
             finalindex = [];
+                        
+            molnamelist = molecules2namelist(handles.molecules);
 
             % walk through molecule list
-            for i = 1:length(handles.molecules)
+            for i = 1:length(molnamelist)
                 % ... and check if any of the names match
-                if any(strcmp(handles.molecules{i}.name, molnames))
+                if any(strcmp(molnamelist{i}, molnames))
                     finalindex = [finalindex, i];
                 end
             end
@@ -1028,37 +1034,37 @@ init();
 
     function plotmolecule(index)
         handles=guidata(Parent);
-
-    % find min and max index of mass range that should be plotted i.e.
-    % certain range (30 sigma) around the selected molecules
+        
+        % find min and max index of mass range that should be plotted i.e.
+        % certain range (30 sigma) around the selected molecules
         ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules{index}.com),0,30);
         
-    % corresponding mass values of axis
+        % corresponding mass values of axis
         calcmassaxis=handles.peakdata(ind,1)';
         
         resolutionaxis=resolutionbycalibration(handles.calibration,calcmassaxis);
         
-    % calculate fitted spec for 1 (chosen) molecule
+        % calculate fitted spec for 1 (chosen) molecule
         calcsignal=multispec(handles.molecules(index),...
             resolutionaxis,...
             0,...
             calcmassaxis);
         
-    % plot data (= calibrated raw data)
+        % plot data (= calibrated raw data)
         plot(dataaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5]);
         hold(dataaxes,'on');
         
-    % plot fitted data for all peaks that are displayed (need to find out which molecules are involved in this range) 
+        % plot fitted data for all peaks that are displayed (need to find out which molecules are involved in this range)
         limits = [calcmassaxis(1) calcmassaxis(end)];
         involvedmolecules=molecules_in_massrange(handles.molecules, limits(1), limits(2));
         
-    % calculated fitted spec for all involved molecules
+        % calculated fitted spec for all involved molecules
         sumspectrum=multispec(handles.molecules(involvedmolecules),...
             resolutionaxis,...
             0,...
             calcmassaxis);
         
-        plot(dataaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2); 
+        plot(dataaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2);
         plot(dataaxes,calcmassaxis,calcsignal,'Color','red'); 
    
         %calculate and plot sum spectrum of involved molecules if current
@@ -1193,6 +1199,8 @@ init();
                 
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,'linear_system');
         end
+        
+        gui_status_update('changed', 1);
         
         guidata(hObject,handles);
         
