@@ -94,13 +94,25 @@ ListMolecules=uicontrol(Parent,'Style','Listbox',...
     'Units','normalized',...
     'Callback',@moleculelistclick,...
     'Max', 3,...
-    'Position',gridpos(64,64,17,61,53,64,0.01,0.01));
+    'Position',gridpos(64,64,18,61,53,64,0.01,0.01));
+
+ListFilter = uicontrol(Parent,'Style','edit',...
+    'String','',...
+    'Units','normalized',...
+    'Callback',@filterListMolecules,...
+    'Position',gridpos(64,64,16,18,53,61,0.01,0.01));
 
 uicontrol(Parent,'style','pushbutton',...
-          'string','Add Molecules',...
-          'Callback','',...
-          'Units','normalized',...
-          'Position',gridpos(64,64,13,16,53,64,0.01,0.01));
+    'string','Filter',...
+    'Callback',@filterListMolecules,...
+    'Units','normalized',...
+    'Position',gridpos(64,64,16,18,61,64,0.01,0.01));
+
+uicontrol(Parent,'style','pushbutton',...
+    'string','Add Molecules',...
+    'Callback','',...
+    'Units','normalized',...
+    'Position',gridpos(64,64,13,16,53,64,0.01,0.01));
       
 % display for the mass of the current molecule
 
@@ -284,6 +296,8 @@ init();
         handles.status.logscale = 0;
         handles.status.overview = 0;
         handles.status.lastlims = [[0 0] [0 0]];
+        
+        handles.status.moleculesfiltered = 0;
         
         handles.status.guistatusvector = [0 0 0 0 0 0];
 
@@ -503,7 +517,7 @@ init();
     
     function menudc(hObject,~)
         handles = guidata(Parent);
-        listindices = get(ListMolecules,'Value');
+        listindices = getrealselectedmolecules();
         something = driftcorrection(handles, listindices);
         gui_status_update('drift_corrected', 1);
         gui_status_update('changed', 1);
@@ -950,7 +964,7 @@ init();
     function moleculelistclick(hObject,~)
         handles=guidata(Parent);
         
-        index = get(ListMolecules,'Value');
+        index = getrealselectedmolecules();
         
         % we can always only plot one molecule. if several have been
         % selected we just plot the first one
@@ -967,6 +981,67 @@ init();
         set(areadisplay, 'String', num2str(handles.molecules{index}.area));
         res = resolutionbycalibration(handles.calibration,handles.molecules{index}.com);
         set(resolutiondisplay, 'String', num2str(res));
+    end
+
+    function filterListMolecules(~,~)
+        handles=guidata(Parent);
+        
+        % Get text currently in molecule listbox
+        listboxText = get(ListMolecules,'string');
+        
+        % get text to be used as a filter
+        filtertext = get(ListFilter,'string');
+        
+        % check if our filtertext is empty
+        if ~isempty(filtertext)
+            % filter
+            cellArrayOfMatches = regexpi(listboxText,['(.*' filtertext '.*)']);
+            arrayOfMatches = cellfun(@(x) ~isempty(x), cellArrayOfMatches);
+
+            % create new listbox text
+            newListMoleculesText = listboxText(arrayOfMatches);
+            set(ListMolecules,'string', newListMoleculesText);
+            
+            handles.status.moleculesfiltered = 1;
+        else
+            % it's empty. we just fill the Listbox with all molecules
+            molecules2listbox(ListMolecules, handles.molecules);
+            handles.status.moleculesfiltered = 0;
+        end
+        
+        guidata(Parent,handles);
+    end
+
+    function finalindex = getrealselectedmolecules()
+        % this function retrieves the real molecule ids, even if there is
+        % currently only a subset in the listbox displayed (filtered)
+        
+        handles=guidata(Parent);
+        
+        % retrieve indices
+        index=get(ListMolecules,'Value');
+        
+        if handles.status.moleculesfiltered == 1
+            % this is computationally expensive. we only do this if
+            % necessary
+            
+            % create a list of selected names
+            listboxText = get(ListMolecules,'string');
+            molnames = listboxText(index);
+
+            finalindex = [];
+
+            % walk through molecule list
+            for i = 1:length(handles.molecules)
+                % ... and check if any of the names match
+                if any(strcmp(handles.molecules{i}.name, molnames))
+                    finalindex = [finalindex, i];
+                end
+            end
+        else
+            % not filtered.
+            finalindex = index;
+        end
     end
 
     function plotmolecule(index)
@@ -1104,7 +1179,7 @@ init();
         handles=guidata(hObject);
         
         % indices for all molecules selected
-        index=get(ListMolecules,'Value');
+        index=getrealselectedmolecules();
         
         deltar=handles.settings.deltaresolution/100;
         deltam=handles.settings.deltamass;
