@@ -763,7 +763,7 @@ uiwait(Parent)
         hold(previewaxes,'off');
         
         % write back zoom status in case it is still visible
-        if (com > xlims(1) && com < xlims(2) && autozoom == false)
+        if (~isempty(molecules_in_massrange(handles.molecules(index), xlims(1), xlims(2))) && autozoom == false)
             set(previewaxes, 'XLim', xlims);
             set(previewaxes, 'YLim', ylims);
         else
