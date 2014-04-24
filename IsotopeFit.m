@@ -274,9 +274,6 @@ init();
         handles.bgcorrectiondata.bgm=[];
         handles.bgcorrectiondata.bgy=[];
         
-        handles.masslist.minmasses=[];
-        handles.masslist.maxmasses=[];
-        
         handles.peakdata=[];
         handles.raw_peakdata=[];
         
@@ -417,7 +414,7 @@ init();
             limits= get(dataaxes, 'XLim');
             
             %find molecules that are in current view
-            moleculelist=molecules_in_massrange(handles.masslist,limits(1),limits(2));
+            moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2));
             minind=mass2ind(handles.peakdata(:,1)',limits(1));
             maxind=mass2ind(handles.peakdata(:,1)',limits(2));
             
@@ -458,8 +455,7 @@ init();
 
        handles=guidata(hObject);
 
-       h = figure('units','pixels','Name','Clustersound','NumberTitle', 'off','position',[500 500 200 50],'windowstyle','modal');
-        uicontrol('style','text','string',sprintf('Yeah, Groovy!\nI''ll prepare the data for you...'),'units','pixels','position',[10 10 180 30]);
+       h = information_box('Clustersound','Yeah, Groovy!\nI''ll prepare the data for you...');
        drawnow;
 
        %h=msgbox('Yeah, Groovy! I''ll prepare the Data...');
@@ -860,19 +856,6 @@ init();
                     end
                     
                     handles.molecules=data.molecules;
-                                        
-                    % Masslist vectors (for better performance)
-                    if isfield(data,'masslist')
-                        handles.masslist=data.masslist;
-                    else %generate list
-                        fprintf('Old File. Generating masslist for better performance...');
-                        for i=1:length(handles.molecules)
-                            handles.masslist.minmasses(i)=handles.molecules{i}.minmass;
-                            handles.masslist.maxmasses(i)=handles.molecules{i}.maxmass;
-                        end
-                        fprintf(' done\n');
-                    end
-                    
                         
                     %Calibration data
                     handles.calibration=data.calibration;
@@ -943,7 +926,6 @@ init();
             data.molecules=handles.molecules;
             data.calibration=handles.calibration;
             data.bgcorrectiondata=handles.bgcorrectiondata;
-            data.masslist=handles.masslist;
             
             save(fullfile(pathname,filename),'data');
             
@@ -1046,7 +1028,7 @@ init();
 
     function plotmolecule(index)
         handles=guidata(Parent);
-index
+
     % find min and max index of mass range that should be plotted i.e.
     % certain range (30 sigma) around the selected molecules
         ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules{index}.com),0,30);
@@ -1068,7 +1050,7 @@ index
         
     % plot fitted data for all peaks that are displayed (need to find out which molecules are involved in this range) 
         limits = [calcmassaxis(1) calcmassaxis(end)];
-        involvedmolecules=molecules_in_massrange(handles.masslist, limits(1), limits(2))
+        involvedmolecules=molecules_in_massrange(handles.molecules, limits(1), limits(2));
         
     % calculated fitted spec for all involved molecules
         sumspectrum=multispec(handles.molecules(involvedmolecules),...

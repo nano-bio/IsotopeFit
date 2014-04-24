@@ -1,4 +1,4 @@
-function [molecules_out,masslist_out] = init_molecule_properties(molecules_in,peakdata)
+function molecules_out = init_molecule_properties(molecules_in,peakdata)
 % out = init_molecule_properties(molecules_in,peakdata)
 %   molecules_in: needs molecules_in.peakdata
 %                 and   molecules_in.name
@@ -54,7 +54,6 @@ for i = 1:l
         molecules_out{i}.areaerror=+inf;
         
         minmasses(i)=molecules_out{i}.minmass;
-        maxmasses(i)=molecules_out{i}.maxmass;
         %filter(minind:maxind)=1;
     else %molecule out of range
         fprintf('Molecule %s out of range\n',molecules_out{i}.name);
@@ -67,7 +66,6 @@ end
 in_range_ix=setdiff(1:l,out_of_range_ix);
 
 minmasses=minmasses(in_range_ix);
-maxmasses=maxmasses(in_range_ix);
 molecules_out=molecules_out(in_range_ix);
 
 fprintf('\n%i molecules out of massrange\n',length(out_of_range_ix));
@@ -75,15 +73,11 @@ fprintf('%i molecules loadet\n',length(in_range_ix));
 
 %sort molecules with correlated startvalues by minind
 [minmasses,indices]=sort(minmasses);
-maxmasses=maxmasses(indices);
 molecules_out=molecules_out(indices);
 
 for i = 1:length(molecules_out)
     molecules_out{i}.rootindex=i; %needet for molecule grouping
 end
-
-masslist_out.minmasses=minmasses;
-masslist_out.maxmasses=maxmasses;
 
 close(hwb);
 

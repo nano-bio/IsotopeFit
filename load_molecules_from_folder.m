@@ -1,4 +1,4 @@
-function [molecules_out,masslist_out] = load_molecules(folder,moleculelist,peakdata)
+function molecules_out = load_molecules(folder,moleculelist,peakdata)
 %loadmolecules( moleculelist,massaxis,startvalues )
 %Output stucture: out{l} cell array of length l with following fields:
 %out.peakdata... [mass, rel.abundance]
@@ -27,7 +27,7 @@ close(hwb);
 
 fprintf('\nDone.\n')
 
-[molecules_out,masslist_out] = init_molecule_properties(molecules_out,peakdata);
+molecules_out = init_molecule_properties(molecules_out,peakdata);
 
 end
 
