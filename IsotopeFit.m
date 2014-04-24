@@ -725,6 +725,11 @@ init();
         [handles.bgcorrectiondata, handles.startind, handles.endind]=bg_correction(handles.raw_peakdata,handles.bgcorrectiondata);    
         handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
+        
+        % run calibration again, because it is lost, when the background
+        % correction is applied
+        handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
+
         guidata(Parent,handles);
         gui_status_update('bg_corrected', 1);
         gui_status_update('changed', 1);
