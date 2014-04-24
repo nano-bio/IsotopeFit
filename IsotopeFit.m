@@ -6,6 +6,7 @@ Parent = figure( ...
     'NumberTitle', 'off', ...
     'Name', 'IsotopeFit',...
     'Units','normalized',...
+    'CloseRequestFcn',@closeandsave,...
     'Position',[0.2,0.2,0.6,0.6]); 
 
 % Display tags to read out handle:
@@ -284,7 +285,7 @@ init();
         handles.status.overview = 0;
         handles.status.lastlims = [[0 0] [0 0]];
         
-        handles.status.guistatusvector = [0 0 0 0 0];
+        handles.status.guistatusvector = [0 0 0 0 0 0];
 
         %initial calibration data
         handles.calibration=standardcalibration();
@@ -314,13 +315,14 @@ init();
             'molecules_loaded',...
             'calibrated',...
             'bg_corrected',...
-            'drift_corrected'};
+            'drift_corrected',...
+            'changed'};
         
         % list of gui elements that should be hidden/shown
         guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
-        guirequirements = {[1 0 0 0 0], [1 1 0 0 0], [1 0 0 0 0], [1 1 1 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 0 0 0 0], [1 1 1 0 0]};
+        guirequirements = {[1 0 0 0 0 0], [1 1 0 0 0 0], [1 0 0 0 0 0], [1 1 1 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 1 1 0 0 0]};
         
         if nargin > 1
             % we want to update the status vector
@@ -504,6 +506,7 @@ init();
         listindices = get(ListMolecules,'Value');
         something = driftcorrection(handles, listindices);
         gui_status_update('drift_corrected', 1);
+        gui_status_update('changed', 1);
     end
 
     function labbookimport(hObject,~)
@@ -627,6 +630,7 @@ init();
         end
         
         gui_status_update('molecules_loaded', 1);
+        gui_status_update('changed', 1);
     end
 
     function menuloadmoleculesifd(hObject,~)
@@ -647,6 +651,7 @@ init();
         end
         
         gui_status_update('molecules_loaded', 1);
+        gui_status_update('changed', 1);
     end
 
     function menuloadmoleculesifm(hObject,~)
@@ -664,6 +669,7 @@ init();
         end
 
         gui_status_update('molecules_loaded', 1);
+        gui_status_update('changed', 1);
     end
 
     function menuloadcalibration(hObject,~)
@@ -701,6 +707,7 @@ init();
         
         gui_status_update('molecules_loaded', 1);
         gui_status_update('calibrated', 1);
+        gui_status_update('changed', 1);
     end
 
     function menubgcorrection(hObject,~)
@@ -710,6 +717,7 @@ init();
         handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
         guidata(Parent,handles);
         gui_status_update('bg_corrected', 1);
+        gui_status_update('changed', 1);
     end
 
     function menucalibration(hObject,~)
@@ -724,6 +732,7 @@ init();
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
         guidata(Parent,handles);
         gui_status_update('calibrated', 1);
+        gui_status_update('changed', 1);
     end
 
     function load_h5(pathname,filename)
@@ -893,15 +902,15 @@ init();
         out.namelist={};
     end
 
-    function save_file(hObject, ~, methode)
+    function save_file(hObject, ~, method)
         handles=guidata(Parent);
         
-        if strcmp(methode,'saveas')||strcmp(handles.fileinfo.filename,'')
+        if strcmp(method,'saveas')||strcmp(handles.fileinfo.filename,'')
             [filename, pathname, ~] = uiputfile( ...
                 {'*.ifd','IsotopeFit data file (*.ifd)'
                 '*.*', 'All Files (*.*)'},...
                 'Save as',[handles.fileinfo.pathname,handles.fileinfo.originalfilename,'.ifd']);
-        elseif strcmp(methode,'autosave')
+        elseif strcmp(method,'autosave')
             pathname = '';
             filename = 'bkp.ifd';
         else
@@ -926,7 +935,7 @@ init();
             
             % if we autosaved, we don't want that temporary filename to be
             % stored
-            if ~strcmp(methode,'autosave')
+            if ~strcmp(method,'autosave')
                 handles.fileinfo.filename=filename;
                 handles.fileinfo.pathname=pathname;
             end
@@ -1257,5 +1266,29 @@ init();
         
         % this sets default values to begin with
         init();
+    end
+
+    function closeandsave(~, ~)
+        % get settings
+        handles = guidata(Parent);
+        
+        % is a file loaded?
+        if handles.status.guistatusvector(1) == 1
+            % has it changed?
+            if handles.status.guistatusvector(6) == 1
+                result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
+                switch result
+                    case 'Yes'
+                        save_file(Parent,'','save');
+                    case 'Cancel'
+                        return
+                    case 'No'
+                        ;
+                end
+            end
+        end
+        
+        % finally close
+        delete(Parent)
     end
 end
