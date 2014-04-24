@@ -6,6 +6,16 @@ cd ('..');
 folder='folder_for_ifm_file';
 file='molecules';
 
+% DONT CARE ABOUT THE FOLLOWING LINES
+% -------------------------------------------------------
+% If file exists, delete it and generate a new one
+if exist([folder,'\',filename,'.ifm'])==2
+    fprintf('Old File removed.\n');
+    delete([folder,'\',filename,'.ifm']);
+end
+% -------------------------------------------------------
+% CARE AGAIN
+
 %set threshold for isotope abundance
 th=1e-3;
 %set threshold for minimum peak distance
@@ -32,5 +42,5 @@ generate_cluster_ifm(folder,file,{'C60' 'CO2'},{nC60 nCO2},mapprox,th,{'C60++' '
 
 % for generation of single files, use generate_cluster function:
 % --> i.e. generate_cluster_ifm(folder,{'C60' 'CO2' 'H'},{nC60 nCO2 [0 1]},mapprox,th); 
-% no filename needet!
+% no filename needed!
 % but ifm files are recommended!
