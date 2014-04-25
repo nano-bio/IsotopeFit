@@ -434,7 +434,7 @@ init();
                 fitted_data(:,k)=multispec(handles.molecules(i),resolutionaxis,0,massaxis)';
                 k=k+1;
                 %write name of molecule
-                fprintf(fid,'\t%s',handles.molecules{i}.name);
+                fprintf(fid,'\t%s',handles.molecules(i).name);
             end
             fprintf(fid,'\n');
             fclose(fid);
@@ -666,9 +666,9 @@ init();
         if ~(isequal(filename,0) || isequal(pathname,0))
             data={}; %load needs a predefined variable
             load(fullfile(pathname,filename),'-mat');
-            
-            handles.molecules=data.molecules;
-            
+
+            handles.molecules=convert_molecule_datatype(data.molecules);
+                       
             guidata(Parent,handles);
             
             molecules2listbox(ListMolecules,handles.molecules);
@@ -714,7 +714,7 @@ init();
                 handles.bgcorrectiondata.bgy=[];
             end
             
-            handles.molecules=data.molecules;
+            handles.molecules=convert_molecule_datatype(data.molecules);
             
             %Calibration data
             handles.calibration=data.calibration;
@@ -874,8 +874,8 @@ init();
                         fprintf(' done\n');
                     end
                     
-                    handles.molecules=data.molecules;
-                        
+                    handles.molecules=convert_molecule_datatype(data.molecules);
+                    
                     %Calibration data
                     handles.calibration=data.calibration;
                     
@@ -942,7 +942,9 @@ init();
             data.raw_peakdata=handles.raw_peakdata;
             data.startind=handles.startind;
             data.endind=handles.endind;
+            
             data.molecules=handles.molecules;
+            
             data.calibration=handles.calibration;
             data.bgcorrectiondata=handles.bgcorrectiondata;
             
@@ -966,6 +968,8 @@ init();
         set(filenamedisplay, 'String', handles.fileinfo.filename)
     end
 
+
+
     function moleculelistclick(hObject,~)
         handles=guidata(Parent);
         
@@ -982,9 +986,9 @@ init();
         
         % set the displays
         % note this is not the nominal mass
-        set(comdisplay, 'String', num2str(handles.molecules{index}.com));
-        set(areadisplay, 'String', num2str(handles.molecules{index}.area));
-        res = resolutionbycalibration(handles.calibration,handles.molecules{index}.com);
+        set(comdisplay, 'String', num2str(handles.molecules(index).com));
+        set(areadisplay, 'String', num2str(handles.molecules(index).area));
+        res = resolutionbycalibration(handles.calibration,handles.molecules(index).com);
         set(resolutiondisplay, 'String', num2str(res));
     end
 
@@ -1045,7 +1049,7 @@ init();
 
             finalindex = [];
                         
-            molnamelist = molecules2namelist(handles.molecules);
+            molnamelist = {handles.molecules.name};
 
             % walk through molecule list
             for i = 1:length(molnamelist)
@@ -1065,7 +1069,7 @@ init();
         
         % find min and max index of mass range that should be plotted i.e.
         % certain range (30 sigma) around the selected molecules
-        ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules{index}.com),0,30);
+        ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules(index).com),0,30);
         
         % corresponding mass values of axis
         calcmassaxis=handles.peakdata(ind,1)';
@@ -1108,10 +1112,10 @@ init();
         hold(dataaxes,'off');
         
         %Zoom data
-        %[~,i]=max(handles.molecules{index}.peakdata(:,2));
+        %[~,i]=max(handles.molecules(index).peakdata(:,2));
  %       calcmassaxis
         xlim(dataaxes,[calcmassaxis(1),calcmassaxis(end)]);  
-        %ylim(previewaxes,[0,max(max(handles.molecules{index}.peakdata(:,2)),max(handles.peakdata(handles.molecules{index}.minind:handles.molecules{index}.maxind,2)))]);
+        %ylim(previewaxes,[0,max(max(handles.molecules(index).peakdata(:,2)),max(handles.peakdata(handles.molecules(index).minind:handles.molecules(index).maxind,2)))]);
 
         % Update the slider bar accordingly:
         updateslider;
@@ -1143,7 +1147,7 @@ init();
         
         attached={};
         for i=1:length(molecules)
-            name=[molecules{i}.name '['];
+            name=[molecules(i).name '['];
             %find lineindex
             ix=strfind(name,searchstring);
             if isempty(ix)
@@ -1177,14 +1181,14 @@ init();
             %the better the approximation...
             
 %           Division by mean-pin-distance
-%           npins=mass2ind(peakdata(:,1)',molecules{i}.maxmass)-mass2ind(peakdata(:,1)',molecules{i}.minmass); %number of pins
-%           b=(molecules{i}.maxmass-molecules{i}.minmass)/npins; %mean pin-distance
+%           npins=mass2ind(peakdata(:,1)',molecules(i).maxmass)-mass2ind(peakdata(:,1)',molecules(i).minmass); %number of pins
+%           b=(molecules(i).maxmass-molecules(i).minmass)/npins; %mean pin-distance
            
 %           dividion by sqrt(m):
-            b=sqrt(molecules{i}.com);
+            b=sqrt(molecules(i).com);
      
-            areaout(lineix,rowix)=molecules{i}.area/b;
-            areaerrorout(lineix,rowix)=molecules{i}.areaerror/b;
+            areaout(lineix,rowix)=molecules(i).area/b;
+            areaerrorout(lineix,rowix)=molecules(i).areaerror/b;
         end
         for i=1:length(attached)
             sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];

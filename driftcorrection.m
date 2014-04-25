@@ -116,8 +116,8 @@ function handles = driftcorrection(handles, listindices)
 
     % let's plot each peak
     for i=1:nom
-        plot(peakaxes{i},(handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind), sumdata(handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind, 1));
-        title(handles.molecules{listindices(i)}.name)
+        plot(peakaxes{i},(handles.molecules(listindices(i)).minind:handles.molecules(listindices(i)).maxind), sumdata(handles.molecules(listindices(i)).minind:handles.molecules(listindices(i)).maxind, 1));
+        title(handles.molecules(listindices(i)).name)
     end
     
     % calculate the shifts for each molecule
@@ -145,8 +145,8 @@ function handles = driftcorrection(handles, listindices)
         
         % plot it
         for i=1:nom
-            plot(peakaxes{i}, (handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind), sumdata(handles.molecules{listindices(i)}.minind:handles.molecules{listindices(i)}.maxind, current_write))
-            title(peakaxes{i}, handles.molecules{listindices(i)}.name)
+            plot(peakaxes{i}, (handles.molecules(listindices(i)).minind:handles.molecules(listindices(i)).maxind), sumdata(handles.molecules(listindices(i)).minind:handles.molecules(listindices(i)).maxind, current_write))
+            title(peakaxes{i}, handles.molecules(listindices(i)).name)
             
             % mark the current write
             try
@@ -201,10 +201,10 @@ function handles = driftcorrection(handles, listindices)
 
     function calcmolshift(molindex)
         % how broad is our molecule?
-        molwidth = handles.molecules{listindices(molindex)}.maxind - handles.molecules{listindices(molindex)}.minind;
+        molwidth = handles.molecules(listindices(molindex)).maxind - handles.molecules(listindices(molindex)).minind;
         
         % initialize waitbar
-        h = waitbar(0, ['Computing shift for each write for ', handles.molecules{listindices(molindex)}.name, '...']);
+        h = waitbar(0, ['Computing shift for each write for ', handles.molecules(listindices(molindex)).name, '...']);
         
         % go through every write
         for w=1:writes-1
@@ -212,7 +212,7 @@ function handles = driftcorrection(handles, listindices)
             
             % we "convolute" the signal with the signal of the next write
             for j=-molwidth:molwidth
-                dist = sumdata(handles.molecules{listindices(molindex)}.minind+j:handles.molecules{listindices(molindex)}.maxind+j, w+1) - sumdata(handles.molecules{listindices(molindex)}.minind:handles.molecules{listindices(molindex)}.maxind, w);
+                dist = sumdata(handles.molecules(listindices(molindex)).minind+j:handles.molecules(listindices(molindex)).maxind+j, w+1) - sumdata(handles.molecules(listindices(molindex)).minind:handles.molecules(listindices(molindex)).maxind, w);
                 dist = dist.^2;
                 values(j+molwidth+1) = sum(dist);
             end
@@ -263,13 +263,13 @@ function handles = driftcorrection(handles, listindices)
         % we need a list of centers of masses
         handles.coms = [];
         for i=1:nom
-            handles.coms = [handles.coms, handles.molecules{listindices(i)}.com];
+            handles.coms = [handles.coms, handles.molecules(listindices(i)).com];
         end
         
         % and a list of peak positions in the time domain
         handles.ppt = [];
         for i=1:nom
-            handles.ppt = [handles.ppt, handles.molecules{listindices(i)}.minind];
+            handles.ppt = [handles.ppt, handles.molecules(listindices(i)).minind];
         end
 
         % fit a 2nd order polynom to over the massrange for each write

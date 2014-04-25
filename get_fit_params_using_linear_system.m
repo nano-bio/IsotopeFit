@@ -9,7 +9,7 @@ M=zeros(length(massaxis),length(molecules));
 
 %fill matrix with isotopic pattern for every molecule
 for j=1:length(molecules)
-    M(:,j)=double(pattern(molecules{j},1,parameters(end-1),parameters(end),massaxis)');
+    M(:,j)=double(pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis)');
 end
 
 % left division gives vector of areas

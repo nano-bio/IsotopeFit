@@ -7,8 +7,8 @@ function out = findmassrange(massaxis,molecules,resolution,massoffset,searchrang
 com=calccomofmolecules(molecules);
 sigma=com/resolution*(1/(2*sqrt(2*log(2)))); %guess sigma by center of mass of first molecule
 
-minmass=molecules{1}.minmass+massoffset-searchrange*sigma;
-maxmass=molecules{end}.maxmass+massoffset+searchrange*sigma;
+minmass=molecules(1).minmass+massoffset-searchrange*sigma;
+maxmass=molecules(end).maxmass+massoffset+searchrange*sigma;
 
 minind=mass2ind(massaxis,minmass);
 maxind=mass2ind(massaxis,maxmass);

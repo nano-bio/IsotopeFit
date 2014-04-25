@@ -18,8 +18,8 @@ hwb=waitbar(0,'Loading molecule peakdata...');
 drawnow;
 l=length(moleculelist);
 for i=1:l
-    molecules_out{i}.peakdata=renorm(load([folder '\' moleculelist{i}]));
-    molecules_out{i}.name=moleculelist{i}(1:end-4);
+    molecules_out(i).peakdata=renorm(load([folder '\' moleculelist{i}]));
+    molecules_out(i).name=moleculelist{i}(1:end-4);
     if mod(i,10)==0,  waitbar(i/l); end;
 end
 

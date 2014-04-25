@@ -12,7 +12,7 @@ h = waitbar(0,'Please wait...');
 
 arealist=[];
 for i=1:l
-    arealist(i)=molecules{i}.area;
+    arealist(i)=molecules(i).area;
 end
 
 [~,ix]=sort(0-arealist); %start with highest molecule
@@ -38,19 +38,19 @@ for i=1:l
     
     k=1;
     for j=involved
-        if molecules{j}.area==0 %dirty workaround: when area=0, no fitting. dont know why!
+        if molecules(j).area==0 %dirty workaround: when area=0, no fitting. dont know why!
             parameters(k)=0.1;
         else
-            parameters(k)=molecules{j}.area;
+            parameters(k)=molecules(j).area;
         end
         k=k+1;
     end
     
-    parameters(nmolecules+1)=resolutionbycalibration(calibration,molecules{i}.com); %resolution
-    parameters(nmolecules+2)=massoffsetbycalibration(calibration,molecules{i}.com); %x-offset
+    parameters(nmolecules+1)=resolutionbycalibration(calibration,molecules(i).com); %resolution
+    parameters(nmolecules+2)=massoffsetbycalibration(calibration,molecules(i).com); %x-offset
     
-    %ind=findmassrange(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),10);
-    ind=findmassrange2(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),0.5);
+    ind=findmassrange(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),3);
+    %ind=findmassrange2(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),0.5);
     
     %is it necessary to cut out some datapoints?
     ndp=length(ind); %number of datapoints
@@ -78,8 +78,8 @@ for i=1:l
     
     k=1;
     for j=involved
-        molecules{j}.area=fitparam(k); %read out fitted areas for every molecule
-        molecules{j}.areaerror=stderr(k); %read out fitted areas for every molecule
+        molecules(j).area=fitparam(k); %read out fitted areas for every molecule
+        molecules(j).areaerror=stderr(k); %read out fitted areas for every molecule
         k=k+1;
     end
     

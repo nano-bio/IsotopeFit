@@ -6,11 +6,9 @@ out=false;
 rangeindex=-1;
 moleculeindex=-1;
 
-
-
 for i=1:length(ranges)
-    for j=1:length(ranges{i}.molecules)
-        if ranges{i}.molecules{j}.rootindex==rootindex
+    for j=1:length(ranges(i).molecules)
+        if ranges(i).molecules(j).rootindex==rootindex
             out=true;
             rangeindex=i;
             moleculeindex=j;

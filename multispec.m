@@ -7,7 +7,7 @@ function out = multispec(molecules,resolutionaxis,massoffsetaxis,massaxis)
 spec_calc=zeros(1,length(massaxis));
 
 for i=1:length(molecules)
-    spec_calc=spec_calc+pattern(molecules{i},molecules{i}.area,resolutionaxis,massoffsetaxis,massaxis);
+    spec_calc=spec_calc+pattern(molecules(i),molecules(i).area,resolutionaxis,massoffsetaxis,massaxis);
 end
 
 out=spec_calc;

@@ -332,7 +332,7 @@ handles=guidata(Parent);
 
 handles.peakdata = peakdata;
 handles.molecules = molecules;
-handles.ranges = {};
+handles.ranges = [];
 
 handles.settings=settings;
 
@@ -343,7 +343,7 @@ handles.calibration=calin;
 
 if ~isempty(handles.calibration.namelist)
     for i=1:length(handles.molecules)
-        if ismember(handles.molecules{i}.name,handles.calibration.namelist)
+        if ismember(handles.molecules(i).name,handles.calibration.namelist)
             handles.calibrationlist=[handles.calibrationlist i];
         end
     end
@@ -435,27 +435,27 @@ uiwait(Parent)
         
         handles=guidata(hObject);
         
-        for i=1:length(handles.ranges{rangeindex}.molecules)
-            [percent,ix]=max(handles.ranges{rangeindex}.molecules{i}.peakdata(:,2));
-            mass=handles.ranges{rangeindex}.molecules{i}.peakdata(ix,1);
+        for i=1:length(handles.ranges(rangeindex).molecules)
+            [percent,ix]=max(handles.ranges(rangeindex).molecules(i).peakdata(:,2));
+            mass=handles.ranges(rangeindex).molecules(i).peakdata(ix,1);
                        
-            sigma=mass/handles.ranges{rangeindex}.resolution; %guess sigma by center of mass of first molecule
+            sigma=mass/handles.ranges(rangeindex).resolution; %guess sigma by center of mass of first molecule
             
-            minmass=mass+handles.ranges{rangeindex}.massoffset-sigma;
-            maxmass=mass+handles.ranges{rangeindex}.massoffset+sigma;
+            minmass=mass+handles.ranges(rangeindex).massoffset-sigma;
+            maxmass=mass+handles.ranges(rangeindex).massoffset+sigma;
             
             minind=mass2ind(handles.peakdata(:,1)',minmass);
             maxind=mass2ind(handles.peakdata(:,1)',maxmass);
             
-            handles.ranges{rangeindex}.molecules{i}.area=max(0,sum(peakdata(minind:maxind,2).*diff(peakdata(minind:maxind+1,1)))/(percent*0.862)); %68.2% in [-sigma +sigma]
-            handles.molecules{handles.ranges{rangeindex}.molecules{i}.rootindex}.area=handles.ranges{rangeindex}.molecules{i}.area;
+            handles.ranges(rangeindex).molecules(i).area=max(0,sum(peakdata(minind:maxind,2).*diff(peakdata(minind:maxind+1,1)))/(percent*0.862)); %68.2% in [-sigma +sigma]
+            handles.molecules(handles.ranges(rangeindex).molecules(i).rootindex).area=handles.ranges(rangeindex).molecules(i).area;
         end
         
         guidata(hObject,handles);
         updatemolecules(handles.ranges(rangeindex));
         
-        writetopreviewedit(handles.ranges{rangeindex}.com,handles.ranges{rangeindex}.massoffset,...
-            handles.ranges{rangeindex}.resolution,handles.ranges{rangeindex}.molecules{moleculeindex}.area);
+        writetopreviewedit(handles.ranges(rangeindex).com,handles.ranges(rangeindex).massoffset,...
+            handles.ranges(rangeindex).resolution,handles.ranges(rangeindex).molecules(moleculeindex).area);
         
         [handles.calibration.comlist, handles.calibration.massoffsetlist, handles.calibration.resolutionlist]=ranges2list(handles.ranges);
         
@@ -482,9 +482,9 @@ uiwait(Parent)
     function updatemolecules(ranges)
         handles=guidata(Parent);
         for i=1:length(ranges)
-            for j=1:length(ranges{i}.molecules)
-            handles.molecules{ranges{i}.molecules{j}.rootindex}.area=ranges{i}.molecules{j}.area;
-            handles.molecules{ranges{i}.molecules{j}.rootindex}.areaerror=ranges{i}.molecules{j}.areaerror;
+            for j=1:length(ranges(i).molecules)
+            handles.molecules(ranges(i).molecules(j).rootindex).area=ranges(i).molecules(j).area;
+            handles.molecules(ranges(i).molecules(j).rootindex).areaerror=ranges(i).molecules(j).areaerror;
             end
         end
         guidata(Parent,handles);
@@ -497,6 +497,8 @@ uiwait(Parent)
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         switch get(hObject,'String')
             case 'Fit this'
+                handles.ranges(rangeindex)
+                fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0.5,0.5,'simplex')
                 handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0.5,0.5,'simplex');
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges(rangeindex));
@@ -506,8 +508,8 @@ uiwait(Parent)
                 updatemolecules(handles.ranges);
         end
         
-        writetopreviewedit(handles.ranges{rangeindex}.com,handles.ranges{rangeindex}.massoffset,...
-            handles.ranges{rangeindex}.resolution,handles.ranges{rangeindex}.molecules{moleculeindex}.area);
+        writetopreviewedit(handles.ranges(rangeindex).com,handles.ranges(rangeindex).massoffset,...
+            handles.ranges(rangeindex).resolution,handles.ranges(rangeindex).molecules(moleculeindex).area);
         
         [handles.calibration.comlist, handles.calibration.massoffsetlist, handles.calibration.resolutionlist]=ranges2list(handles.ranges);
         
@@ -588,7 +590,7 @@ uiwait(Parent)
         handles=guidata(Parent);
         rangeindex=get(ListRanges,'Value');
         moleculeindex=get(ListRelevantMolecules,'Value');
-        rootindex=handles.ranges{rangeindex}.molecules{moleculeindex}.rootindex;
+        rootindex=handles.ranges(rangeindex).molecules(moleculeindex).rootindex;
     end
 
     function updatecurrentmolecule(~, ~)      
@@ -596,14 +598,14 @@ uiwait(Parent)
 
         handles=guidata(Parent);
 
-        handles.ranges{rangeindex}.massoffset=str2double(get(e_massoffset,'String'));
-        handles.ranges{rangeindex}.resolution=str2double(get(e_resolution,'String'));
-        handles.molecules{rootindex}.area=str2double(get(e_area,'String'));
-        handles.ranges{rangeindex}.molecules{moleculeindex}.area=str2double(get(e_area,'String'));
+        handles.ranges(rangeindex).massoffset=str2double(get(e_massoffset,'String'));
+        handles.ranges(rangeindex).resolution=str2double(get(e_resolution,'String'));
+        handles.molecules(rootindex).area=str2double(get(e_area,'String'));
+        handles.ranges(rangeindex).molecules(moleculeindex).area=str2double(get(e_area,'String'));
         
         handles.ranges(rangeindex)=calccomofranges(handles.ranges(rangeindex));
         
-        set(e_com,'String',num2str(handles.ranges{rangeindex}.com));
+        set(e_com,'String',num2str(handles.ranges(rangeindex).com));
      
         [handles.calibration.comlist, handles.calibration.massoffsetlist, handles.calibration.resolutionlist]=ranges2list(handles.ranges);
         guidata(Parent,handles);
@@ -621,9 +623,9 @@ uiwait(Parent)
         resolutionlist = zeros(nor, 1);
         
         for i=1:length(ranges)
-            comlist(i)=ranges{i}.com;
-            massoffsetlist(i)=ranges{i}.massoffset;
-            resolutionlist(i)=ranges{i}.resolution;
+            comlist(i)=ranges(i).com;
+            massoffsetlist(i)=ranges(i).massoffset;
+            resolutionlist(i)=ranges(i).resolution;
         end
     end
 
@@ -631,8 +633,8 @@ uiwait(Parent)
         out={};
         k=1;
         for i=1:length(ranges)
-            for j=1:length(ranges{i}.molecules)
-                out{k}=ranges{i}.molecules{j}.name;
+            for j=1:length(ranges(i).molecules)
+                out{k}=ranges(i).molecules(j).name;
                 k=k+1;
             end
         end
@@ -703,7 +705,7 @@ uiwait(Parent)
         xlims = get(previewaxes, 'XLim');
         ylims = get(previewaxes, 'YLim');
         
-        com=handles.molecules{index}.com;
+        com=handles.molecules(index).com;
         
         [inrange, rangeindex, moleculeindex] = memberofrange(handles.ranges,index);
         
@@ -712,20 +714,12 @@ uiwait(Parent)
       
             [currentmassoffset,currentresolution]=parameterinterpolation(handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist,com);
             
-            %limits for calculation
-%             com=calccomofmolecules(handles.molecules(index));
-%             xmin=handles.molecules{index}.minmass;
-%             xmax=handles.molecules{index}.maxmass;
         else
             involvedmolecules=findinvolvedmolecules(handles.molecules,handles.calibrationlist,index,handles.settings.searchrange,handles.calibration);%search in calibrationlist
-            currentmassoffset=handles.ranges{rangeindex}.massoffset;
-            currentresolution=handles.ranges{rangeindex}.resolution;
-            
-            %limits for calculation
-%             com=calccomofmolecules(handles.molecules(involvedmolecules));
-%             xmin=handles.molecules{involvedmolecules(1)}.minmass;
-%             xmax=handles.molecules{involvedmolecules(end)}.maxmass;
-            
+            currentmassoffset=handles.ranges(rangeindex).massoffset;
+            currentresolution=handles.ranges(rangeindex).resolution;
+        
+
         end
         
         zoom=str2double(get(e_zoomfaktor,'String'));
@@ -750,7 +744,7 @@ uiwait(Parent)
         %calculate and plot sum spectrum of involved molecules if current
         %molecule is in calibrationlist
         if inrange
-            sumspectrum=multispec(handles.ranges{rangeindex}.molecules,...
+            sumspectrum=multispec(handles.ranges(rangeindex).molecules,...
                 currentresolution,...
                 currentmassoffset,...
                 calcmassaxis);
@@ -785,19 +779,19 @@ uiwait(Parent)
             case 'ListRelevantMolecules'
                 rangeindex=get(ListRanges,'Value');
                 moleculeindex=clickedindex;
-                index=handles.ranges{rangeindex}.molecules{clickedindex}.rootindex;
-                com=handles.ranges{rangeindex}.com;
+                index=handles.ranges(rangeindex).molecules(clickedindex).rootindex;
+                com=handles.ranges(rangeindex).com;
             case 'ListRanges'
                 rangeindex=clickedindex;
                 moleculeindex=1;
                 ranges2listbox(rangeindex,moleculeindex);
                 set(ListRelevantMolecules,'Value',1);
-                index=handles.ranges{clickedindex}.molecules{1}.rootindex;
-                com=handles.ranges{clickedindex}.com; 
+                index=handles.ranges(clickedindex).molecules(1).rootindex;
+                com=handles.ranges(clickedindex).com; 
             otherwise
                 [inrange, rangeindex, moleculeindex] = memberofrange(handles.ranges,clickedindex);
                 index=clickedindex;
-                com=handles.molecules{index}.com;
+                com=handles.molecules(index).com;
         end
         
         if ~inrange
@@ -808,16 +802,16 @@ uiwait(Parent)
         else
             previewpaneledit('on');
             %[~, rangeindex, ~] = memberofrange(handles.ranges,index);
-            currentmassoffset=handles.ranges{rangeindex}.massoffset;
-            currentresolution=handles.ranges{rangeindex}.resolution;
+            currentmassoffset=handles.ranges(rangeindex).massoffset;
+            currentresolution=handles.ranges(rangeindex).resolution;
             set(ListRanges,'Value',rangeindex);
-            molecules2listbox(ListRelevantMolecules,handles.ranges{rangeindex}.molecules);
+            molecules2listbox(ListRelevantMolecules,handles.ranges(rangeindex).molecules);
             set(ListRelevantMolecules,'Value',moleculeindex);
         end
                
         set(ListAllMolecules,'Value',index);
         
-        area=handles.molecules{index}.area;
+        area=handles.molecules(index).area;
         guidata(hObject,handles);
         
         writetopreviewedit(com,currentmassoffset,currentresolution,area)
@@ -877,7 +871,7 @@ uiwait(Parent)
         
         handles=guidata(hObject);
         
-        index=handles.ranges{get(ListRanges,'Value')}.molecules{get(ListRelevantMolecules,'Value')}.rootindex;
+        index=handles.ranges(get(ListRanges,'Value')).molecules(get(ListRelevantMolecules,'Value')).rootindex;
         
         handles.calibrationlist=handles.calibrationlist(handles.calibrationlist~=index);
         
@@ -886,7 +880,7 @@ uiwait(Parent)
             handles.ranges=addrangeparameters(handles.ranges,handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist);
             [handles.calibration.comlist, handles.calibration.massoffsetlist, handles.calibration.resolutionlist]=ranges2list(handles.ranges); 
         else
-            handles.ranges={};
+            handles.ranges=[];
         end
         guidata(hObject,handles);
         
@@ -914,7 +908,7 @@ uiwait(Parent)
             set(ListRanges,'String',temp);
             set(ListRanges,'Value',rangeindex);
             
-            molecules2listbox(ListRelevantMolecules,handles.ranges{rangeindex}.molecules);
+            molecules2listbox(ListRelevantMolecules,handles.ranges(rangeindex).molecules);
             
             set(ListRelevantMolecules,'Value',moleculeindex);
         else
@@ -967,7 +961,7 @@ uiwait(Parent)
     function autozoombutton(~, ~)
         clickedindex=get(ListRelevantMolecules,'Value');
         rangeindex=get(ListRanges,'Value');
-        index=handles.ranges{rangeindex}.molecules{clickedindex}.rootindex;
+        index=handles.ranges(rangeindex).molecules(clickedindex).rootindex;
         plotpreview(index, true);
     end
 end

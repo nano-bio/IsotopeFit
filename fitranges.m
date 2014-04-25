@@ -11,7 +11,7 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
     %check if there are too many molecules per range
     maxmolperrange=1;
     for i=1:l
-        maxmolperrange=max(length(ranges{i}.molecules),maxmolperrange);
+        maxmolperrange=max(length(ranges(i).molecules),maxmolperrange);
     end
 
     if maxmolperrange>10
@@ -28,9 +28,9 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
     end
 
     % this should give us a computational pool with a worker for each cpu
-    if matlabpool('size')==0 %check if pool is already open
-        parpool(feature('numcores'))
-    end
+%     if matlabpool('size')==0 %check if pool is already open
+%         parpool(feature('numcores'))
+%     end
 
     % we use a copy of the original ranges variable,
     % because parfor cannot access the original one! 
@@ -46,16 +46,16 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
     
     %parfor i=1:l
     for i=1:l %use this for patternsearch
-        nmolecules=length(ranges{i}.molecules);
+        nmolecules=length(ranges(i).molecules);
         
         %maximally used datapoints for fitting per molecule
         maxdatapoints=50*nmolecules;
         
         parameters=zeros(1,nmolecules+2);
-        fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges{i}.minmass,ranges{i}.maxmass,nmolecules);
+        fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges(i).minmass,ranges(i).maxmass,nmolecules);
 
-        %ind=findmassrange(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,10);
-        ind=findmassrange2(massaxis,ranges{i}.molecules,ranges{i}.resolution,ranges{i}.massoffset,1);
+        %ind=findmassrange(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,10);
+        ind=findmassrange2(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,1);
 
         %is it necessary to cut out some datapoints?
         ndp=length(ind); %number of datapoints
@@ -64,16 +64,16 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
         end
 
         for j=1:nmolecules
-            if ranges{i}.molecules{j}.area==0 %dirty workaround: when area=0, no fitting. dont know why!
+            if ranges(i).molecules(j).area==0 %dirty workaround: when area=0, no fitting. dont know why!
                 parameters(j)=0.1;
             else
-                parameters(j)=ranges{i}.molecules{j}.area;
+                parameters(j)=ranges(i).molecules(j).area;
             end
             parameters(j)=max(0,sum(peakdata(ind,2).*[0;diff(peakdata(ind,1))]));%integrate over peak to estimate area
         end
 
-        parameters(nmolecules+1)=ranges{i}.resolution; %resolution
-        parameters(nmolecules+2)=ranges{i}.massoffset; %x-offset
+        parameters(nmolecules+1)=ranges(i).resolution; %resolution
+        parameters(nmolecules+2)=ranges(i).massoffset; %x-offset
 
         drawnow;
 
@@ -83,25 +83,25 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
         
         switch fitting_method
             case 'linear_system'
-                [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
             case 'simplex'    
-                [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
             case 'genetic'
-                [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
             case 'pattern_search'
-                [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind),massaxis(ind),ranges{i}.molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
         end
        
         % write fitparameters to molecules structure
         for j=1:nmolecules
-            rangestemp{i}.molecules{j}.area=fitparam(j); %read out fitted areas for every molecule
-            rangestemp{i}.molecules{j}.areaerror=stderr(j); %read out fitted areas for every molecule
+            rangestemp(i).molecules(j).area=fitparam(j); %read out fitted areas for every molecule
+            rangestemp(i).molecules(j).areaerror=stderr(j); %read out fitted areas for every molecule
         end
 
-        rangestemp{i}.massoffset=fitparam(end);
-        rangestemp{i}.resolution=fitparam(end-1);
-        rangestemp{i}.massoffseterror=stderr(end);
-        rangestemp{i}.resolutionerror=stderr(end-1);
+        rangestemp(i).massoffset=fitparam(end);
+        rangestemp(i).resolution=fitparam(end-1);
+        rangestemp(i).massoffseterror=stderr(end);
+        rangestemp(i).resolutionerror=stderr(end-1);
         
         waitbar(i/l); %only possible for patternsearch
     end

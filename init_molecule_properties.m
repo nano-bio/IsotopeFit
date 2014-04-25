@@ -30,33 +30,33 @@ l=length(molecules_out);
 out_of_range_ix=[];
 
 for i = 1:l
-    masses=molecules_out{i}.peakdata(:,1)';
-    peaks=molecules_out{i}.peakdata(:,2)';
+    masses=molecules_out(i).peakdata(:,1)';
+    peaks=molecules_out(i).peakdata(:,2)';
         
     %masses=masses(find(peaks>=0));
     
-    molecules_out{i}.minmass=min(masses);
-    molecules_out{i}.maxmass=max(masses);
+    molecules_out(i).minmass=min(masses);
+    molecules_out(i).maxmass=max(masses);
     
-    if molecules_out{i}.minmass<peakdata(end,1) %molecule in range
-        molecules_out{i}.com=sum(masses.*peaks)/sum(peaks);
+    if molecules_out(i).minmass<peakdata(end,1) %molecule in range
+        molecules_out(i).com=sum(masses.*peaks)/sum(peaks);
         
-        molecules_out{i}.minind=mass2ind(massaxis,molecules_out{i}.minmass);
-        molecules_out{i}.maxind=mass2ind(massaxis,molecules_out{i}.maxmass);
+        molecules_out(i).minind=mass2ind(massaxis,molecules_out(i).minmass);
+        molecules_out(i).maxind=mass2ind(massaxis,molecules_out(i).maxmass);
         
         %Area guessing:
-        if (molecules_out{i}.maxind-molecules_out{i}.minind)<=1 %integration not possible
-            molecules_out{i}.area=0;
+        if (molecules_out(i).maxind-molecules_out(i).minind)<=1 %integration not possible
+            molecules_out(i).area=0;
         else
-            molecules_out{i}.area=guessarea(peakdata(molecules_out{i}.minind:molecules_out{i}.maxind-1,:));
+            molecules_out(i).area=guessarea(peakdata(molecules_out(i).minind:molecules_out(i).maxind-1,:));
         end
         
-        molecules_out{i}.areaerror=+inf;
+        molecules_out(i).areaerror=+inf;
         
-        minmasses(i)=molecules_out{i}.minmass;
+        minmasses(i)=molecules_out(i).minmass;
         %filter(minind:maxind)=1;
     else %molecule out of range
-        fprintf('Molecule %s out of range\n',molecules_out{i}.name);
+        fprintf('Molecule %s out of range\n',molecules_out(i).name);
         out_of_range_ix=[out_of_range_ix,i];
     end
     
@@ -72,11 +72,11 @@ fprintf('\n%i molecules out of massrange\n',length(out_of_range_ix));
 fprintf('%i molecules loadet\n',length(in_range_ix));
 
 %sort molecules with correlated startvalues by minind
-[minmasses,indices]=sort(minmasses);
+[~,indices]=sort(minmasses);
 molecules_out=molecules_out(indices);
 
 for i = 1:length(molecules_out)
-    molecules_out{i}.rootindex=i; %needet for molecule grouping
+    molecules_out(i).rootindex=i; %needed for molecule grouping
 end
 
 close(hwb);

@@ -30,7 +30,7 @@ if nargin<7
 end
 
 %initialize molecules structure
-data={};
+data=[];
 k=1;
 
 if exist(pathandfile)==2 %then append molecules to this file
@@ -107,8 +107,8 @@ for i=1:prod(system) %number of combinations=product of basis numbers in varible
             end
         end
         d(:,1)=d(:,1)/charge;
-        data.molecules{k}.peakdata=d;
-        data.molecules{k}.name=moleculename;
+        data.molecules(k).peakdata=d;
+        data.molecules(k).name=moleculename;
         data.namelist{k}=moleculename;
         k=k+1;
     end

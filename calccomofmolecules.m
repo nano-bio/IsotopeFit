@@ -5,17 +5,11 @@ function out = calccomofmolecules(molecules)
 areasum=0;
 comtemp=0;
 
-for j=1:length(molecules)
-    areasum=areasum+molecules{j}.area;
-    comtemp=comtemp+molecules{j}.com*molecules{j}.area;
-end
+areasum=sum([molecules.area]);
+comtemp=sum([molecules.com].*[molecules.area]);
 
 if areasum==0
-    comtemp=0;
-    for j=1:length(molecules)
-        comtemp=comtemp+molecules{j}.com;
-    end
-    out=comtemp/length(molecules);
+    out=sum([molecules.com])/length(molecules);
 else
     out=comtemp/areasum;
 end
