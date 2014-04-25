@@ -1,4 +1,4 @@
-function dcout = driftcorrection(handles, listindices)
+function handles = driftcorrection(handles, listindices)
     % ===== LAYOUT ===== %
 
     Parent = figure( ...
@@ -75,7 +75,21 @@ function dcout = driftcorrection(handles, listindices)
     end
     
     % load file
-    fn = handles.fileinfo.h5completepath;
+    try
+        fn = handles.fileinfo.h5completepath;
+    catch
+        choices = questdlg('No original h5-File is known. Do you want to select one?', 'Select file?', 'Yes', 'No', 'No');
+        switch choices
+            case 'Yes'
+                [filename, pathname, ~] = uigetfile({'*.h5','HDF5 data file (*.h5)';});
+                fn = fullfile(pathname,filename);
+                handles.fileinfo.h5completepath = fn;
+            case 'No'
+                dcout = handles.raw_peakdata(:,2);
+                delete(Parent);
+                return;
+        end
+    end
 
     % how big is our data?
     fileinfo = h5info(fn, '/FullSpectra/TofData');
@@ -317,10 +331,9 @@ function dcout = driftcorrection(handles, listindices)
         
         % we either return the uncorrected or the corrected spectrum
         if ok
-            dcout = corr_sum_spectrum;
-        else
-            dcout = signal;
+            handles.raw_peakdata(:,2) = corr_sum_spectrum;
         end
+
         close(Parent);
         
     end

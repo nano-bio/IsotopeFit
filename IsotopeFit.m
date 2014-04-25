@@ -65,6 +65,7 @@ e_searchstring=uicontrol(Parent,'Style','edit',...
     'String','N/A',...
     'Background','white',...
     'Enable','on',...
+    'Callback',@sortlistclick,...
     'Position',gridpos(64,64,30,32,1,7,0.01,0.01));         
          
 uicontrol(Parent,'style','pushbutton',...
@@ -513,9 +514,22 @@ init();
     
     function menudc(hObject,~)
         handles = guidata(Parent);
+        % use only selected molecules
         listindices = getrealselectedmolecules();
-        something = driftcorrection(handles, listindices);
+        
+        % show drift correction window and retrieve corrected values
+        handles = driftcorrection(handles, listindices);
+        
+        % background correction
+        handles.peakdata=subtractbg(handles.raw_peakdata,handles.bgcorrectiondata);
+        
+        % run calibration
+        handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
+        guidata(Parent,handles);
+        
         gui_status_update('drift_corrected', 1);
+        gui_status_update('calibrated', 1);
+        gui_status_update('bg_corrected', 1);
         gui_status_update('changed', 1);
     end
 
@@ -907,7 +921,7 @@ init();
     function save_file(hObject, ~, method)
         handles=guidata(Parent);
         
-        if strcmp(method,'saveas')||strcmp(handles.fileinfo.filename,'')
+        if (strcmp(method,'saveas')||strcmp(handles.fileinfo.filename,''))&&~strcmp(method,'autosave')
             [filename, pathname, ~] = uiputfile( ...
                 {'*.ifd','IsotopeFit data file (*.ifd)'
                 '*.*', 'All Files (*.*)'},...
