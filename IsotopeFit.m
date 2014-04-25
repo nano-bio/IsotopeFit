@@ -1010,7 +1010,16 @@ init();
             handles.status.moleculesfiltered = 1;
         else
             % it's empty. we just fill the Listbox with all molecules
+            
+            % first read out, what is currently selected
+            curr_ind = getrealselectedmolecules();
+            
+            % fill in new (all) values
             molecules2listbox(ListMolecules, handles.molecules);
+            
+            % select the previously selected molecule
+            set(ListMolecules, 'Value', curr_ind);
+
             handles.status.moleculesfiltered = 0;
         end
         

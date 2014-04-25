@@ -85,7 +85,6 @@ function handles = driftcorrection(handles, listindices)
                 fn = fullfile(pathname,filename);
                 handles.fileinfo.h5completepath = fn;
             case 'No'
-                dcout = handles.raw_peakdata(:,2);
                 delete(Parent);
                 return;
         end
@@ -131,8 +130,6 @@ function handles = driftcorrection(handles, listindices)
     
     % hit slidetimeaxis, so we plot everything
     slidetimeaxes('', '');
-    
-    dcout = 0;
     
     % ===== GUI FUNCTIONS ===== %
     
