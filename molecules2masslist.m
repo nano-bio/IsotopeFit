@@ -8,6 +8,5 @@ temp=[molecules{:}];
 minmasslist=[temp.minmass];
 maxmasslist=[temp.maxmass];
 
-
 end
 
