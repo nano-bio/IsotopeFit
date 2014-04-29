@@ -1003,6 +1003,8 @@ init();
         
         % check if our filtertext is empty
         if ~isempty(filtertext)
+           % set(ListMolecules, 'Value', 1);
+
             % filter
             cellArrayOfMatches = regexpi(listboxText,['(.*' filtertext '.*)']);
             arrayOfMatches = cellfun(@(x) ~isempty(x), cellArrayOfMatches);
