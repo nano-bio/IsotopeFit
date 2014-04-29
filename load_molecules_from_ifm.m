@@ -9,10 +9,13 @@ function molecules_out = load_molecules_from_ifm(file,peakdata)
 %out.minind(maxind)... minimum (maximum) index in spectrum data
 
 fprintf('Loading molecule peakdata... ');
+h = information_box('Load Molecules','Loading molecule data... please wait');
+drawnow;
 
 data=[]; %load needs a predefined variable
 load(file,'-mat');
 
+close(h);
 fprintf('done.\n')
 
 molecules_out = init_molecule_properties(convert_molecule_datatype(data.molecules),peakdata);
