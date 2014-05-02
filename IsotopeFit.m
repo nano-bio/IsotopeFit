@@ -615,8 +615,9 @@ init();
     function listseriesclick(hObject,~)
         handles=guidata(hObject);
 
-        ix=get(ListSeries,'Value');
-        
+        ixlist=get(ListSeries,'Value');
+        ix = ixlist(1);
+                
         j=1;
         for i=1:size(handles.seriesarea,1)
             if (handles.seriesarea(i,ix)~=0)||(handles.seriesareaerror(i,ix)~=0)
