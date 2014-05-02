@@ -77,6 +77,8 @@ uicontrol(Parent,'style','pushbutton',...
 ListSeries=uicontrol(Parent,'Style','Listbox',...
     'Units','normalized',...
     'Callback',@listseriesclick,...
+    'Max',3,...             % necessary to make it possible to select 
+    'Min',1,...             % more than 1 cluster series in list
     'Position',gridpos(64,64,1,30,1,10,0.01,0.01));
 
 % ===== TOOLBAR ON THE RIGHT ===== %
@@ -565,29 +567,44 @@ init();
     end
     
     function menuexportdataclick(hObject,~)
+        % this function exports ASCII data of area and areaerror of selected cluster series to .txt file
         handles=guidata(hObject);
 
-        searchstring=get(e_searchstring,'String');        
+        searchstring=get(e_searchstring,'String');
         [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring,handles.peakdata);
         guidata(hObject,handles);
         
+        % retrieve the name of the series to be exported
+        seriesid = get(ListSeries, 'Value');
+        seriesstring = get(ListSeries, 'String');
+        seriesname = seriesstring(seriesid);
+        
+        % create one string out of the list seriesname (for use in filename)
+        seriesname_string = '';
+        for i=1:length(seriesid)
+            seriesname_string = [seriesname_string '_' seriesname{i}];
+        end
+        
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) seriesname_string '.txt'];
+        
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
-            'Export data');
+            'Export data',...
+            filenamesuggestion);
         handles=guidata(Parent);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             fid=fopen(fullfile(pathname,filename),'w');
             
             fprintf(fid,'\t');
-            for i=1:length(serieslist)
+            for i=seriesid
                 fprintf(fid,'%s\t(error)\t',serieslist{i});
             end
             fprintf(fid,'\n');
             %size(handles.seriesarea,1)
             for i=1:size(handles.seriesarea,1)
                 fprintf(fid,'%i\t',i-1);
-                for j=1:size(handles.seriesarea,2)
+                for j=seriesid
                     fprintf(fid,'%e\t%e\t',handles.seriesarea(i,j),handles.seriesareaerror(i,j));
                 end
                 fprintf(fid,'\n');
