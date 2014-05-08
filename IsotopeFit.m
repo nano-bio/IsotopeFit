@@ -249,7 +249,7 @@ mdata = uimenu('Label','Export');
        mdatacs = uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
        mdatacv = uimenu(mdata,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
        mdatacms = uimenu(mdata,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
-       
+       mdatafms = uimenu(mdata,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
        
 mplay = uimenu('Label','Play');
     uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
@@ -299,7 +299,7 @@ init();
         
         handles.status.moleculesfiltered = 0;
         
-        handles.status.guistatusvector = [0 0 0 0 0 0];
+        handles.status.guistatusvector = [0 0 0 0 0 0 0];
 
         %initial calibration data
         handles.calibration=standardcalibration();
@@ -330,13 +330,14 @@ init();
             'calibrated',...
             'bg_corrected',...
             'drift_corrected',...
-            'changed'};
+            'changed',...
+            'fitted'};
         
         % list of gui elements that should be hidden/shown
-        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms'};
+        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms', 'mdatafms'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
-        guirequirements = {[1 0 0 0 0 0], [1 1 0 0 0 0], [1 0 0 0 0 0], [1 1 1 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 0 0 0 0 0], [1 1 1 0 0 0]};
+        guirequirements = {[1 0 0 0 0 0 0], [1 1 0 0 0 0 0], [1 0 0 0 0 0 0], [1 1 1 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 1 1 0 0 0 0], [1 1 1 0 0 0 1]};
         
         if nargin > 1
             % we want to update the status vector
@@ -387,7 +388,7 @@ init();
     end
 
     function menuexportmassspec(hObject,~)
-        %% Exports Peakdata + fitted curves of current plot to ascii file
+        %% Exports Peakdata of entire mass range to ascii file
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
             'Export Mass Spectrum');
@@ -402,6 +403,32 @@ init();
 
             %append data
             dlmwrite(fullfile(pathname,filename),handles.peakdata,'-append','delimiter','\t','precision','%e');
+        end
+    end
+
+    function menuexportfittedspec(hObject,~)
+        %% Exorts fitted spectrum of entire mass range to ascii file
+        handles=guidata(hObject);
+        startpathname = handles.fileinfo.pathname;
+        
+        [filename, pathname] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export data',...
+            startpathname);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            resolutionaxis=resolutionbycalibration(handles.calibration,handles.peakdata(:,1)');
+            % calculate fitted spectrum for all molecules
+            fitted_data=multispec(handles.molecules,resolutionaxis,0,handles.peakdata(:,1)')';
+        
+            % write data to ascii file
+            fid=fopen(fullfile(pathname,filename),'w');
+            % column designations
+            fprintf(fid,'Massaxis\tFitted Signal\n');
+            fclose(fid);
+            
+            % append data matrix to ascii file
+            dlmwrite(fullfile(pathname,filename),[handles.peakdata(:,1),fitted_data],'-append','delimiter','\t','precision','%e');
         end
     end
 
@@ -1249,6 +1276,9 @@ init();
                 save_file(hObject,eventdata,'autosave')
                 
                 handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,'linear_system');
+                
+                % set fitted in status update to 1 
+                gui_status_update('fitted', 1);
                 
                 % and we're done
                 delete('bkp.ifd')
