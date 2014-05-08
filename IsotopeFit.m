@@ -831,16 +831,24 @@ init();
     end
 
     function open_file(hObject, ~, fullpath)
+        
+        % make open file remember the path of previous file 
+        handles=guidata(Parent);
+        if isfield(handles.fileinfo,'pathname')
+            startpathname = handles.fileinfo.pathname;
+        else
+            startpathname = '';
+        end
+        
         % most likely this function will not retrieve filename or pathname
         % in this case we show a selection dialog.
-
         if ~exist('fullpath', 'var')
             [filename, pathname, filterindex] = uigetfile( ...
                 {'*.ifd','IsotopeFit data file (*.ifd)';...
                 '*.h5','HDF5 data file (*.h5)';...
                 '*.h5;*.ifd;*.txt','All files suitable';...
                 '*.*','ASCII data file (*.*)'},...
-                'Open IsotopeFit data file');
+                'Open IsotopeFit data file', startpathname);
         % if we indeed got a filename to load, we just set the filterindex
         % to 3 (= any file) and determine later what it is
         else
