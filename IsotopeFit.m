@@ -1021,8 +1021,6 @@ init();
         set(filenamedisplay, 'String', handles.fileinfo.filename)
     end
 
-
-
     function moleculelistclick(hObject,~)
         handles=guidata(Parent);
         
@@ -1428,20 +1426,24 @@ init();
         % get settings
         handles = guidata(Parent);
         
-        % is a file loaded?
-        if handles.status.guistatusvector(1) == 1
-            % has it changed?
-            if handles.status.guistatusvector(6) == 1
-                result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
-                switch result
-                    case 'Yes'
-                        save_file(Parent,'','save');
-                    case 'Cancel'
-                        return
-                    case 'No'
-                        ;
+        try
+            % is a file loaded?
+            if handles.status.guistatusvector(1) == 1
+                % has it changed?
+                if handles.status.guistatusvector(6) == 1
+                    result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
+                    switch result
+                        case 'Yes'
+                            save_file(Parent,'','save');
+                        case 'Cancel'
+                            return
+                        case 'No'
+                            ;
+                    end
                 end
             end
+        catch
+            msgbox('IsotopeFit was not initialized properly. Stopping without saving');
         end
         
         % finally close
