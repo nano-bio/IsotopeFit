@@ -48,14 +48,15 @@ delete(hTemp);
 
 % for backwards compatibility with the existing code, we map updateslider
 % to the function inside the dataviewer object
-dvhandle = dataviewer(Parent, gridpos(64,64,33,62,1,54,0.025,0.01), 50, 29, true);
+dvhandle = dataviewer(Parent, gridpos(64,64,33,62,1,54,0.025,0.01), 50, 29, true, @dataaxesclick);
 dataaxes = dvhandle.axes;
 updateslider = dvhandle.updateslider;
 
 % Area Axes
 
-tmp = dataviewer(Parent, gridpos(64,64,1,32,10,54,0.025,0.03), 50, 29, false);
+tmp = dataviewer(Parent, gridpos(64,64,1,32,10,54,0.025,0.03), 50, 29, false, @areaaxesclick);
 areaaxes = tmp.axes;
+areaaxesgetclickcoordinates = tmp.getclickcoordinates;
          
 % ===== TOOLBAR LEFT OF AREA AXES ===== %
 
@@ -658,13 +659,17 @@ init();
         
         %area(areaaxes,n,data+dataerror,data-dataerror,'Facecolor',[0.7,0.7,0.7],'Linestyle','none');
         
-        plot(areaaxes,n,data,'k--');
+        plot(areaaxes,n,data,'k--', 'HitTest', 'Off');
         hold on;
         
-        stem(areaaxes,n,data,'filled','+k'); 
+        stem(areaaxes,n,data,'filled','+k', 'HitTest', 'Off'); 
         
-        stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none');
-        stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none');
+        stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none', 'HitTest', 'Off');
+        stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none', 'HitTest', 'Off');
+        
+        % this property is lost everytime you plot something. why? you 
+        % know, because that's why.
+        set(areaaxes, 'ButtonDownFcn', @areaaxesclick)
         
         hold off;
         
@@ -1043,6 +1048,14 @@ init();
         set(resolutiondisplay, 'String', num2str(res));
     end
 
+    function areaaxesclick(hObject, eventdata)
+        [x, y] = areaaxesgetclickcoordinates(hObject)
+    end
+
+    function dataaxesclick(~, ~)
+        % intentionally does nothing
+    end
+        
     function filterListMolecules(~,~)
         handles=guidata(Parent);
         

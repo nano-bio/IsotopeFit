@@ -1,4 +1,4 @@
-function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderbool)
+function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderbool, callbackfcn)
     % This function draws a complete set of axes including buttons for view
     % adjustments around it. It expects 5 arguments:
     % parobj = the parent object where to drin in (e.g. Parent in most
@@ -9,6 +9,7 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
     % these GUI elements. Higher values mean slimmer buttons.
     % datasliderbool: true -> create a slider for the x-axis, false ->
     % create an autozoom button instead
+    % callbackfcn = function that handles callbacks from the axes
     subgridx = xfatness;
     subgridy = yfatness;
     
@@ -19,11 +20,13 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
     % outside this file. this is called object emulation.
 
     dataaxes.axes = axes('Parent',parobj,...
-        'ButtonDownFcn','disp(''axis callback'')',...
+        'ButtonDownFcn',callbackfcn,...
+        'NextPlot','replacechildren',...
         'Units','normalized',...
         'Position',alignelements(posext, 3, subgridx, 3, subgridy, 0.01, 0.02));
     
     dataaxes.updateslider = @updateslider;
+    dataaxes.getclickcoordinates = @getclickcoordinates;
     
     % ===== GUI ELEMENTS TO CHANGE VIEW IN DATA AXES ===== %
       
@@ -273,5 +276,20 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         nl = [com-vrhalf com+vrhalf];
         % jump by one view range
         set(dataaxes.axes, 'XLim', nl);
+    end
+
+    function [x, y]=getclickcoordinates(hObject)
+        % this function returns the coordinates of a click in terms of the
+        % axes units.
+        axesHandle  = get(hObject,'Parent');
+        
+        % this gives absolute coordinates within _the window_ -> we have to
+        % convert to axes-units
+        coordinates = get(axesHandle,'CurrentPoint');
+        areaaxespos = get(hObject, 'Position');
+        xlim = get(hObject, 'XLim');
+        ylim = get(hObject, 'YLim');
+        x = xlim(1) + (xlim(2)-xlim(1))/areaaxespos(3)*(coordinates(1)-areaaxespos(1));
+        y = ylim(1) + (ylim(2)-ylim(1))/areaaxespos(4)*(coordinates(2)-areaaxespos(2));
     end
 end
