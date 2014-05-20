@@ -285,8 +285,11 @@ uicontrol(CalibrationPanel,'Style','Text',...
     'Units','normalized',...
     'Position',gridpos(10,7,1,1,1,1,0.01,0.01));
 
+%Methodes for mass offset and resolution interpolation: add string and
+%program method in getcalibrationdata.m
+
 massmethode=uicontrol(CalibrationPanel,'style','popupmenu',...
-          'string',{'Flat', 'Polynomial', 'Spline', 'PChip'},...
+          'string',{'Flat', 'Polynomial', 'Spline', 'PChip', 'spaps'},...
           'Callback',@massmethodechange,...
           'Units','normalized',...
           'Position',gridpos(10,7,1,1,2,2,0.02,0.01));
@@ -306,7 +309,7 @@ uicontrol(CalibrationPanel,'Style','Text',...
     'Position',gridpos(10,7,1,1,5,5,0.01,0.01));
 
 resolutionmethode=uicontrol(CalibrationPanel,'style','popupmenu',...
-          'string',{'Flat','Polynomial', 'Spline', 'PChip'},...
+          'string',{'Flat','Polynomial', 'Spline', 'PChip', 'spaps'},...
           'Callback',@resolutionmethodechange,...
           'Units','normalized',...
           'Position',gridpos(10,7,1,1,6,6,0.02,0.01));
@@ -532,9 +535,10 @@ uiwait(Parent)
                     set(e_massoffsetorder,'String',num2str(nmassoffset));
                 end
                 handles.calibration.massoffsetparam=nmassoffset;                
-               
+            otherwise
+                handles.calibration.massoffsetparam=str2double(get(e_massoffsetorder,'String'));
         end
-        
+                
         massoffsety=getcalibrationdata(handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.massoffsetparam,handles.calibration.massoffsetmethode,massaxis);
         
         %resolution plot
@@ -550,6 +554,8 @@ uiwait(Parent)
                     set(e_resolutionorder,'String',num2str(nmassoffset));
                 end
                 handles.calibration.resolutionparam=nresolution;  
+            otherwise
+                handles.calibration.resolutionparam=str2double(get(e_resolutionorder,'String'));
         end
         
         resolutiony=getcalibrationdata(handles.calibration.comlist,handles.calibration.resolutionlist,handles.calibration.resolutionparam,handles.calibration.resolutionmethode,massaxis);

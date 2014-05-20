@@ -11,6 +11,8 @@ switch methode
         out=splinemod(x,y,axis);
     case 'PChip'
         out=pchipmod(x,y,axis);
+    case 'spaps'
+        out=fnval(spaps(x,y,exp(param)),axis);
 end
 
 
