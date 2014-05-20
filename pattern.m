@@ -11,6 +11,8 @@ peaksum=0;
 sigma=molecule.com./resolutionaxis*(1/(2*sqrt(2*log(2))));
 eta=1; %1... Gauss --- 0... Lorentz
 
+a=-30; %asymetric shift
+
  for i=1:size(molecule.peakdata,1)
 %     %resolution=polynomial(resolutionpolynom,molecule.peakdata(i,1));
 %     %massshift=polynomial(massshiftpolynom,molecule.peakdata(i,1));
@@ -26,8 +28,13 @@ eta=1; %1... Gauss --- 0... Lorentz
 %     %peaksum=peaksum+molecule.peakdata(i,2);
 %     
 %     eta=0.6; %1... Gauss --- 0... Lorentz
-     y=y+eta*area*molecule.peakdata(i,2)*(1./(sigma*sqrt(2*pi))).*exp(-(1/2)*((massaxis-massshiftaxis-molecule.peakdata(i,1))./sigma).^2); %Gauss
-     y=y+(1/pi)*(1-eta)*area*molecule.peakdata(i,2)*(sigma./(sigma.^2+(massaxis-massshiftaxis-molecule.peakdata(i,1)).^2)); %Lorentz
+     yp=eta*area*molecule.peakdata(i,2)*(1./(sigma*sqrt(2*pi))).*exp(-(1/2)*((massaxis-massshiftaxis-molecule.peakdata(i,1))./sigma).^2); %Gauss
+     yp=yp+(1/pi)*(1-eta)*area*molecule.peakdata(i,2)*(sigma./(sigma.^2+(massaxis-massshiftaxis-molecule.peakdata(i,1)).^2)); %Lorentz
+     
+     %asymetric variation
+%     yp=2*yp./(1+exp(a*(massaxis-massshiftaxis-molecule.peakdata(i,1)))); %Aaron L. Stancik, Eric B. Brauns: Vibrational Spectroscopy 47 (2008) 66–69
+     
+     y=y+yp;
  end
 %out=y/peaksum;
 out=y/sum(molecule.peakdata(:,2));
