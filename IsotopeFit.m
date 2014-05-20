@@ -844,7 +844,30 @@ init();
     function load_ascii(pathname,filename)
         init();
         handles=guidata(Parent);
-        handles.raw_peakdata = load(fullfile(pathname,filename));
+        % check if this is a file from tofdaq
+        fid = fopen(fullfile(pathname,filename));
+        teststring = textscan(fid, '%s', 3);
+        fclose(fid);
+        tofdaqfile = 0;
+        % FUCK MATLAB
+        anothervariable = teststring{1};
+        
+        % this is kind of a signature for tofdaq files
+        if strcmp(anothervariable{1}, 'mass') & strcmp(anothervariable{2}, 'spectrum') & strcmp(anothervariable{3}, '=============')
+            tofdaqfile = 1;
+        end
+        
+        % are we dealing with a tofdaqfile?
+        if tofdaqfile == 1
+            % yes, remove second column
+            tmpvar = dlmread(fullfile(pathname,filename), '\t', 13, 0);
+            handles.raw_peakdata = zeros(size(tmpvar, 1), 2);
+            handles.raw_peakdata(:, 1) = tmpvar(:, 1);
+            handles.raw_peakdata(:, 2) = tmpvar(:, 3);
+        else
+            % no, read normally
+            handles.raw_peakdata = load(fullfile(pathname,filename));
+        end
         
         handles.startind=1;
         handles.endind=size(handles.raw_peakdata,1);
