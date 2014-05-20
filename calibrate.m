@@ -434,22 +434,8 @@ uiwait(Parent)
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         
         handles=guidata(hObject);
-        
-        for i=1:length(handles.ranges(rangeindex).molecules)
-            [percent,ix]=max(handles.ranges(rangeindex).molecules(i).peakdata(:,2));
-            mass=handles.ranges(rangeindex).molecules(i).peakdata(ix,1);
-                       
-            sigma=mass/handles.ranges(rangeindex).resolution; %guess sigma by center of mass of first molecule
-            
-            minmass=mass+handles.ranges(rangeindex).massoffset-sigma;
-            maxmass=mass+handles.ranges(rangeindex).massoffset+sigma;
-            
-            minind=mass2ind(handles.peakdata(:,1)',minmass);
-            maxind=mass2ind(handles.peakdata(:,1)',maxmass);
-            
-            handles.ranges(rangeindex).molecules(i).area=max(0,sum(peakdata(minind:maxind,2).*diff(peakdata(minind:maxind+1,1)))/(percent*0.862)); %68.2% in [-sigma +sigma]
-            handles.molecules(handles.ranges(rangeindex).molecules(i).rootindex).area=handles.ranges(rangeindex).molecules(i).area;
-        end
+ 
+        handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0,0,'linear_system');
         
         guidata(hObject,handles);
         updatemolecules(handles.ranges(rangeindex));
@@ -497,8 +483,6 @@ uiwait(Parent)
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         switch get(hObject,'String')
             case 'Fit this'
-                handles.ranges(rangeindex)
-                fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0.5,0.5,'simplex')
                 handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0.5,0.5,'simplex');
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges(rangeindex));
