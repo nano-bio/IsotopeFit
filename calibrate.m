@@ -244,7 +244,7 @@ down3=uicontrol(PreviewPanel,'style','pushbutton',...
 
           
 uicontrol(PreviewPanel,'style','pushbutton',...
-          'string','Guess',...
+          'string','Area',...
           'Callback',@guessareaclick,...
           'Units','normalized',...
           'Position',gridpos(10,12,1,2,10,10,0.01,0.04)); 
@@ -911,12 +911,16 @@ uiwait(Parent)
         
         switch tag
             case 'massoffsetup'
+                [rootindex, ~, ~]=getcurrentindex();
+                sigma=sigmabycalibration(handles.calibration,handles.molecules(rootindex).com);
                 value=str2double(get(e_massoffset,'String'));
-                value=value+0.01;
+                value=value+0.1*sigma;
                 set(e_massoffset,'String',num2str(value));
             case 'massoffsetdown'
+                [rootindex, ~, ~]=getcurrentindex();
+                sigma=sigmabycalibration(handles.calibration,handles.molecules(rootindex).com);
                 value=str2double(get(e_massoffset,'String'));
-                value=value-0.01;
+                value=value-0.1*sigma;
                 set(e_massoffset,'String',num2str(value));
             case 'resolutionup'
                 value=str2double(get(e_resolution,'String'));
