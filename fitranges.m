@@ -86,6 +86,8 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
                 [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
             case 'simplex'    
                 [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
+            case 'simplex_lin_combi'    
+                [fitparam,stderr]=get_fit_params_using_simplex_lin_combi(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
             case 'genetic'
                 [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
             case 'pattern_search'
