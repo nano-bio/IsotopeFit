@@ -2,6 +2,15 @@ function [paramsout,errout] = get_fit_params_using_simplex_lin_combi(spec_measur
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
+% problem.objective=@(x) msd_without_areas(spec_measured,massaxis,molecules,x);
+% problem.x0=parameters(end-1:end);
+% problem.lb=lb(end-1:end);
+% problem.ub=ub(end-1:end);
+% problem.solver='fmincon';
+% problem.options = optimoptions('fmincon','GradObj','off');
+% 
+% sigmamu=fmincon(problem);
+
 sigmamu=fminsearchbnd(@(x) msd_without_areas(spec_measured,massaxis,molecules,x),parameters(end-1:end),...
     lb(end-1:end),ub(end-1:end),optimset('MaxFunEvals',5000,'MaxIter',5000));
 

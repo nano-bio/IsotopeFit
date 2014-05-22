@@ -245,6 +245,7 @@ mcal = uimenu('Label','Calibration');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
+       mconvcore=uimenu(mcal,'Label','Show convolution core of current view...','Callback',@menuconvcore,'Enable','on');
  
 mdata = uimenu('Label','Export');
        mdatacs = uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
@@ -310,6 +311,21 @@ init();
         gui_status_update();
     end
 
+    function menuconvcore(hObject,~)
+        handles=guidata(Parent);
+        limits= get(dataaxes, 'XLim');
+            
+        %find molecules that are in current view
+        moleculelist=molecules_in_massrange_with_sigma(handles.molecules,limits(1),limits(2),handles.calibration,handles.settings.searchrange);
+        
+        minind=mass2ind(handles.peakdata(:,1)',limits(1));
+        maxind=mass2ind(handles.peakdata(:,1)',limits(2));
+        
+        show_convolution_core(handles.peakdata(minind:maxind,:),handles.molecules(moleculelist));
+        
+        guidata(Parent,handles);
+    end
+
     function gui_status_update(statusvariable, value)
         % This function updates the availability of GUI elements according
         % certain states of the evaluation. E.g. a mass spec can only be
@@ -335,10 +351,22 @@ init();
             'fitted'};
         
         % list of gui elements that should be hidden/shown
-        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms', 'mdatafms'};
+        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms', 'mdatafms','mconvcore'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
-        guirequirements = {[1 0 0 0 0 0 0], [1 1 0 0 0 0 0], [1 0 0 0 0 0 0], [1 1 1 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 0 0 0 0 0 0], [1 1 1 0 0 0 0], [1 1 1 0 0 0 1]};
+        guirequirements = {[1 0 0 0 0 0 0],...
+                           [1 1 0 0 0 0 0],...
+                           [1 0 0 0 0 0 0],...
+                           [1 1 1 0 0 0 0],...
+                           [1 0 0 0 0 0 0],...
+                           [1 0 0 0 0 0 0],...
+                           [1 0 0 0 0 0 0],...
+                           [1 0 0 0 0 0 0],...
+                           [1 0 0 0 0 0 0],...
+                           [1 0 0 0 0 0 0],...
+                           [1 1 1 0 0 0 0],...
+                           [1 1 1 0 0 0 1],...
+                           [1 1 1 1 0 0 0]};
         
         if nargin > 1
             % we want to update the status vector
