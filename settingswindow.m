@@ -90,13 +90,20 @@ function settings = settingswindow(hObject, ~, action)
                 ; % nothing happening here - comment or empty line
             else
                 % split it up at the equal sign
-                [var, val] = strtok(line, ' = ');
-
+                [var, valstr] = strtok(line, ' = ');
                 % get rid of trailing or leading whitespaces. remove equal sign
                 % from value
                 var = strtrim(var);
-                val = strtrim(strrep(val, ' = ', ''));
-
+                valstr = strtrim(strrep(valstr, ' = ', ''));
+                
+                % convert valstr to number, if possible
+                valnum=str2num(valstr);
+                if isempty(valnum) %input is a string
+                    val=valstr;
+                else
+                    val=valnum;
+                end
+                
                 % update struct
                 if strfind(var, '.')
                     % second level: settings.a.b
