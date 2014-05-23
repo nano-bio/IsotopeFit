@@ -72,6 +72,8 @@ for i=1:l
             [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
         case 'simplex'
             [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+        case 'simplex_lin_combi'    
+            [fitparam,stderr]=get_fit_params_using_simplex_lin_combi(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
         case 'genetic'
             [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
         case 'pattern_search'

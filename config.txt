@@ -2,3 +2,5 @@ minpeakwidth  =  0.1
 deltaresolution  =  0
 deltamass  =  0.01
 searchrange  =  3
+fittingmethod_main  =  linear_system
+fittingmethod_cal  =  simplex_lin_combi
