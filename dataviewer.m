@@ -297,6 +297,6 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         coordinates=get(hObject,'CurrentPoint');
         x=coordinates(1,1);
         y=coordinates(1,2);
-        mouseside=get(gcf,'SelectionType')
+        mouseside=get(gcf,'SelectionType');
     end
 end

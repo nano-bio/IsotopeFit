@@ -722,7 +722,7 @@ uiwait(Parent)
         ylims = get(previewaxes, 'YLim');
         
         com=handles.molecules(index).com;
-        
+
         [inrange, rangeindex, moleculeindex] = memberofrange(handles.ranges,index);
         
         if ~inrange %molecule not in calibrationlist
@@ -772,11 +772,11 @@ uiwait(Parent)
         
         %plot lines for mousecalibration
         if ~isempty(handles.status.from_x_coordinate)
-            plot([handles.status.from_x_coordinate,handles.status.from_x_coordinate],ylims,'g--','HitTest','off');
+            plot([handles.status.from_x_coordinate,handles.status.from_x_coordinate],ylims,'r--','HitTest','off');
         end
         
         if ~isempty(handles.status.to_x_coordinate)
-            plot([handles.status.to_x_coordinate,handles.status.to_x_coordinate],ylims,'b--','HitTest','off');
+            plot([handles.status.to_x_coordinate,handles.status.to_x_coordinate],ylims,'k--','Color',[0.5 0.5 0.5],'HitTest','off');
         end
         
         hold(previewaxes,'off');

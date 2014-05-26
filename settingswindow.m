@@ -149,14 +149,22 @@ function settings = settingswindow(hObject, ~, action)
             fprintf(fh, '%s\r\n', strjoin(writeout));
             
             % update struct
+            val=[];
+            valnum=str2num(field);
+            if isempty(valnum) %field is a string
+                val=field;
+            else
+                val=valnum;
+            end
+                
             if strfind(labelstr, '.')
                 % second level: settings.a.b
                 [flevel, slevel] = strtok(labelstr, '.');
                 slevel = strrep(slevel, '.', '');
-                handles.settings.(flevel).(slevel) = field;
+                handles.settings.(flevel).(slevel) = val;
             else
                 % just first level: settings.a
-                handles.settings.(labelstr) = field;
+                handles.settings.(labelstr) = val;
             end
         end
         
