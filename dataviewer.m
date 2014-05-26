@@ -278,18 +278,25 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         set(dataaxes.axes, 'XLim', nl);
     end
 
-    function [x, y]=getclickcoordinates(hObject)
+    function [x, y,mouseside]=getclickcoordinates(hObject)
         % this function returns the coordinates of a click in terms of the
         % axes units.
-        axesHandle  = get(hObject,'Parent');
+%         axesHandle  = get(hObject,'Parent');
         
         % this gives absolute coordinates within _the window_ -> we have to
         % convert to axes-units
-        coordinates = get(axesHandle,'CurrentPoint');
-        areaaxespos = get(hObject, 'Position');
-        xlim = get(hObject, 'XLim');
-        ylim = get(hObject, 'YLim');
-        x = xlim(1) + (xlim(2)-xlim(1))/areaaxespos(3)*(coordinates(1)-areaaxespos(1));
-        y = ylim(1) + (ylim(2)-ylim(1))/areaaxespos(4)*(coordinates(2)-areaaxespos(2));
+               
+%         coordinates = get(axesHandle,'CurrentPoint')
+%         areaaxespos = get(hObject, 'Position');
+%         xlim = get(hObject, 'XLim');
+%         ylim = get(hObject, 'YLim');
+%         x = xlim(1) + (xlim(2)-xlim(1))/areaaxespos(3)*(coordinates(1)-areaaxespos(1));
+%         y = ylim(1) + (ylim(2)-ylim(1))/areaaxespos(4)*(coordinates(2)-areaaxespos(2));
+
+        % Strange: but this seems to work:
+        coordinates=get(hObject,'CurrentPoint');
+        x=coordinates(1,1);
+        y=coordinates(1,2);
+        mouseside=get(gcf,'SelectionType')
     end
 end

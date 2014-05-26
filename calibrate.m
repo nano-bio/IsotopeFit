@@ -113,11 +113,8 @@ uicontrol(SelectionPanel,'style','pushbutton',...
 
 %Preview Panel
 
-previewaxes = axes('Parent',PreviewPanel,...
-             'ActivePositionProperty','OuterPosition',...
-             'ButtonDownFcn','disp(''axis callback'')',...
-             'Units','normalized',...
-             'Position',gridpos(20,20,4,20,1,15,0.03,0.07)); 
+preview_dataviewer = dataviewer(PreviewPanel, gridpos(20,20,4,20,1,15,0.03,0.07), 50, 29, false, @previewclick);
+previewaxes = preview_dataviewer.axes;
 
 uicontrol(PreviewPanel,'Style','Text',...
     'String','Zoomfaktor',...
@@ -339,6 +336,10 @@ handles.ranges = [];
 
 handles.settings=settings;
 
+%including masscalibration by mousclick
+handles.status.from_x_coordinate=[];
+handles.status.to_x_coordinate=[];
+
 handles.calibrationlist=[]; 
 
 % Init. calibration structure
@@ -379,6 +380,31 @@ calout.namelist=ranges2namelist(handles.ranges);
 uiwait(Parent)
 
 %################### INTERNAL FUNCTIONS
+
+    function previewclick(hObject,~)
+        [x,y,mouseside]=preview_dataviewer.getclickcoordinates(hObject);
+          
+        handles=guidata(hObject);       
+        switch mouseside
+            case 'normal' %left button clicked
+                handles.status.to_x_coordinate=x;
+            case 'alt' %right button clicked
+                handles.status.from_x_coordinate=x;
+        end
+        
+        if ~isempty(handles.status.to_x_coordinate)&&~isempty(handles.status.from_x_coordinate)
+            %perform masscorrection
+            cmo=str2double(get(e_massoffset,'String')); %current mass offset
+            set(e_massoffset,'String',num2str(cmo+handles.status.to_x_coordinate-handles.status.from_x_coordinate));
+
+            handles.status.to_x_coordinate=[];
+            handles.status.from_x_coordinate=[];
+        end
+        guidata(hObject,handles);
+        
+        updatecurrentmolecule();
+        
+    end
 
     function donecalib(hObject,~)
         
@@ -726,7 +752,7 @@ uiwait(Parent)
                 calcmassaxis); 
             
                 %plotting data
-        plot(previewaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5]);
+        plot(previewaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5],'HitTest','off');
         hold(previewaxes,'on');
         
    
@@ -739,23 +765,37 @@ uiwait(Parent)
                 currentmassoffset,...
                 calcmassaxis);
         
-            plot(previewaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2); 
+            plot(previewaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2,'HitTest','off'); 
         end
         
-        plot(previewaxes,calcmassaxis,calcsignal,'Color','red');
+        plot(previewaxes,calcmassaxis,calcsignal,'Color','red','HitTest','off');
+        
+        %plot lines for mousecalibration
+        if ~isempty(handles.status.from_x_coordinate)
+            plot([handles.status.from_x_coordinate,handles.status.from_x_coordinate],ylims,'g--','HitTest','off');
+        end
+        
+        if ~isempty(handles.status.to_x_coordinate)
+            plot([handles.status.to_x_coordinate,handles.status.to_x_coordinate],ylims,'b--','HitTest','off');
+        end
         
         hold(previewaxes,'off');
         
         % write back zoom status in case it is still visible
-        if (~isempty(molecules_in_massrange(handles.molecules(index), xlims(1), xlims(2))) && autozoom == false)
+
+        if (~isempty(molecules_in_massrange_with_sigma(handles.molecules(index), xlims(1)-currentmassoffset, xlims(2)-currentmassoffset,handles.calibration,handles.settings.searchrange)) && autozoom == false)
             set(previewaxes, 'XLim', xlims);
             set(previewaxes, 'YLim', ylims);
         else
             set(previewaxes, 'XLim', [calcmassaxis(1),calcmassaxis(end)]);
+            handles.status.from_x_coordinate=[];
+            handles.status.to_x_coordinate=[];
         end
         
+                
         %ylim(previewaxes,[0,max(max(handles.molecules{index}.peakdata(:,2)),max(handles.peakdata(handles.molecules{index}.minind:handles.molecules{index}.maxind,2)))]);
         
+        set(previewaxes,'ButtonDownFcn',@previewclick);
         guidata(Parent,handles);
     end
 
