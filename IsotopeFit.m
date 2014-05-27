@@ -245,17 +245,19 @@ mcal = uimenu('Label','Calibration');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
-       mconvcore=uimenu(mcal,'Label','Show convolution core of current view...','Callback',@menuconvcore,'Enable','on');
- 
-mdata = uimenu('Label','Export');
-       mdatacs = uimenu(mdata,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
-       mdatacv = uimenu(mdata,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
-       mdatacms = uimenu(mdata,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
-       mdatafms = uimenu(mdata,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
-       
-mplay = uimenu('Label','Play');
-    uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
-    uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
+           
+mdata = uimenu('Label','Data');
+       mexport = uimenu(mdata,'Label','Export','Enable','on');
+               mdatacs = uimenu(mexport,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
+               mdatacv = uimenu(mexport,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
+               mdatacms = uimenu(mexport,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
+               mdatafms = uimenu(mexport,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
+       mconvcore=uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
+               mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
+               mconvcore_map=uimenu(mconvcore,'Label','Map...','Callback',@menuconvcoremap,'Enable','on');      
+       mplay = uimenu(mdata,'Label','Play','Separator','on');
+               uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
+               uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
        
 %%       
 % ===== END OF LAYOUT ===== %     
@@ -320,8 +322,16 @@ init();
         
         minind=mass2ind(handles.peakdata(:,1)',limits(1));
         maxind=mass2ind(handles.peakdata(:,1)',limits(2));
-        
+                        
         show_convolution_core(handles.peakdata(minind:maxind,:),handles.molecules(moleculelist));
+        
+        guidata(Parent,handles);
+    end
+
+    function menuconvcoremap(hObject,~)
+        handles=guidata(Parent);
+        
+        show_convolution_core_map(handles.peakdata,handles.molecules);
         
         guidata(Parent,handles);
     end
