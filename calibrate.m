@@ -356,8 +356,9 @@ if ~isempty(handles.calibration.namelist)
     handles.ranges=addrangeparameters(handles.ranges,handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist);
     guidata(Parent,handles);
     ranges2listbox(1,1);
+    %update calibrationplots
+    updatepolynomials(Parent,0);
 end
-
 
 set(massmethode,'Value',getnameidx(get(massmethode,'String'),handles.calibration.massoffsetmethode));
 set(e_massoffsetorder,'String',num2str(handles.calibration.massoffsetparam));
@@ -370,8 +371,7 @@ guidata(Parent,handles);
 %load moleculelist
 molecules2listbox(ListAllMolecules,handles.molecules);
 
-%update calibrationplots
-updatepolynomials(Parent,0);
+
 
 calout=handles.calibration;
 moleculesout=handles.molecules;
@@ -552,6 +552,7 @@ uiwait(Parent)
         switch(handles.calibration.massoffsetmethode)
             case 'Flat'
                 handles.calibration.massoffsetparam=mean(handles.calibration.massoffsetlist);
+                handles.calibration.massoffsetparam
             case 'Polynomial'
                 nmassoffset=str2double(get(e_massoffsetorder,'String'));
                 
