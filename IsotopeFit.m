@@ -595,6 +595,7 @@ init();
         handles = gui_status_update('drift_corrected', 1, handles);
         handles = gui_status_update('calibrated', 1, handles);
         handles = gui_status_update('bg_corrected', 1, handles);
+        handles = gui_status_update('fitted', 0, handles);
         handles = gui_status_update('changed', 1, handles);
     end
 
@@ -831,6 +832,7 @@ init();
 
         guidata(Parent,handles);
         handles = gui_status_update('bg_corrected', 1, handles);
+        handles = gui_status_update('fitted', 0, handles);
         handles = gui_status_update('changed', 1, handles);
     end
 
@@ -846,6 +848,7 @@ init();
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
         guidata(Parent,handles);
         handles = gui_status_update('calibrated', 1, handles);
+        handles = gui_status_update('fitted', 0, handles);
         handles = gui_status_update('changed', 1, handles);
     end
 
@@ -1030,9 +1033,9 @@ init();
                 case 4 %ASCII
                     load_ascii(pathname,filename);
             end
-            
-            handles = gui_status_update('file_loaded', 1, handles);
             handles=guidata(Parent);
+            handles = gui_status_update('file_loaded', 1, handles);
+            
             plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2));
             
             %write filename to visible display:
