@@ -308,7 +308,7 @@ init();
         
         guidata(Parent,handles);
         
-        gui_status_update();
+        handles = gui_status_update();
     end
 
     function menuconvcore(hObject,~)
@@ -326,20 +326,24 @@ init();
         guidata(Parent,handles);
     end
 
-    function gui_status_update(statusvariable, value)
+    function handles = gui_status_update(statusvariable, value, handles)
         % This function updates the availability of GUI elements according
         % certain states of the evaluation. E.g. a mass spec can only be
         % calibrated if molecules have been loaded. It either takes no
         % argument and then updates all GUI elements according to the
-        % status vector handles.status.guistatusvector or it takes two
+        % status vector handles.status.guistatusvector or it takes 3
         % arguments:
         % statusvariable -> state to be changed
         % value -> value (0|1) for the given state
+        % handles -> handles structure to be changed
         % for a list of possible statusvariables, see the variable 
         % statusvectortemplate
         
-        % load handles with status vector
-        handles=guidata(Parent);
+        % ============== IMPORTANT COMMENT ===============
+        % When you add fields to statusvector, dont forget to change the
+        % length of guistatusvector initialization in init() and
+        % open_file() functions!!
+        % ========== END OF IMPORTANT COMMENT ============
         
         % possible status elements
         statusvectortemplate = {'file_loaded',...
@@ -374,6 +378,9 @@ init();
             % which element in the vector do we want to change?
             vecind = strmatch(statusvariable, statusvectortemplate);
             handles.status.guistatusvector(vecind) = value;
+        else
+            % load handles structure from parent
+            handles = guidata(Parent);
         end
         
         % in this case no update, just a call to update all elements
@@ -585,10 +592,10 @@ init();
         handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
         guidata(Parent,handles);
         
-        gui_status_update('drift_corrected', 1);
-        gui_status_update('calibrated', 1);
-        gui_status_update('bg_corrected', 1);
-        gui_status_update('changed', 1);
+        handles = gui_status_update('drift_corrected', 1, handles);
+        handles = gui_status_update('calibrated', 1, handles);
+        handles = gui_status_update('bg_corrected', 1, handles);
+        handles = gui_status_update('changed', 1, handles);
     end
 
     function labbookimport(hObject,~)
@@ -731,8 +738,8 @@ init();
             molecules2listbox(ListMolecules,handles.molecules);
         end
         
-        gui_status_update('molecules_loaded', 1);
-        gui_status_update('changed', 1);
+        handles = gui_status_update('molecules_loaded', 1, handles);
+        handles = gui_status_update('changed', 1, handles);
     end
 
     function menuloadmoleculesifd(hObject,~)
@@ -752,8 +759,8 @@ init();
             molecules2listbox(ListMolecules,handles.molecules);
         end
         
-        gui_status_update('molecules_loaded', 1);
-        gui_status_update('changed', 1);
+        handles = gui_status_update('molecules_loaded', 1, handles);
+        handles = gui_status_update('changed', 1, handles);
     end
 
     function menuloadmoleculesifm(hObject,~)
@@ -770,8 +777,8 @@ init();
             molecules2listbox(ListMolecules,handles.molecules);
         end
 
-        gui_status_update('molecules_loaded', 1);
-        gui_status_update('changed', 1);
+        handles = gui_status_update('molecules_loaded', 1, handles);
+        handles = gui_status_update('changed', 1, handles);
     end
 
     function menuloadcalibration(hObject,~)
@@ -807,9 +814,9 @@ init();
             molecules2listbox(ListMolecules,handles.molecules);
         end
         
-        gui_status_update('molecules_loaded', 1);
-        gui_status_update('calibrated', 1);
-        gui_status_update('changed', 1);
+        handles = gui_status_update('molecules_loaded', 1, handles);
+        handles = gui_status_update('calibrated', 1, handles);
+        handles = gui_status_update('changed', 1, handles);
     end
 
     function menubgcorrection(hObject,~)
@@ -823,8 +830,8 @@ init();
         handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
 
         guidata(Parent,handles);
-        gui_status_update('bg_corrected', 1);
-        gui_status_update('changed', 1);
+        handles = gui_status_update('bg_corrected', 1, handles);
+        handles = gui_status_update('changed', 1, handles);
     end
 
     function menucalibration(hObject,~)
@@ -838,8 +845,8 @@ init();
         
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
         guidata(Parent,handles);
-        gui_status_update('calibrated', 1);
-        gui_status_update('changed', 1);
+        handles = gui_status_update('calibrated', 1, handles);
+        handles = gui_status_update('changed', 1, handles);
     end
 
     function load_h5(pathname,filename)
@@ -864,9 +871,11 @@ init();
         
         guidata(Parent,handles);
         
-        gui_status_update('file_loaded', 1);
-        gui_status_update('calibrated', 0);
-        gui_status_update('molecules_loaded', 0);
+        % this is maybe not needed anymore
+        % but make assurance double sure!
+        handles = gui_status_update('file_loaded', 1, handles);
+        handles = gui_status_update('calibrated', 0, handles);
+        handles = gui_status_update('molecules_loaded', 0, handles);
     end
 
     function load_ascii(pathname,filename)
@@ -908,9 +917,11 @@ init();
         
         guidata(Parent,handles);
         
-        gui_status_update('file_loaded', 1);
-        gui_status_update('calibrated', 0);
-        gui_status_update('molecules_loaded', 0);
+        % this is maybe not needed anymore
+        % but make assurance double sure!
+        handles = gui_status_update('file_loaded', 1, handles);
+        handles = gui_status_update('calibrated', 0, handles);
+        handles = gui_status_update('molecules_loaded', 0, handles);
     end
 
     function open_file(hObject, ~, fullpath)
@@ -992,22 +1003,35 @@ init();
                     handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
                     handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
                     
+                    % File info                    
                     handles.fileinfo.filename=filename;
                     handles.fileinfo.originalfilename=filename(1:end-4);
                     handles.fileinfo.pathname=pathname;
+                    
+                    % Status vector
+                    if ~isfield(data,'guistatusvector')
+                        fprintf('Old File. No gui status vector found. Setting default value...');
+                        handles.status.guistatusvector = [1 1 1 1 0 0 1]; %see gui_status_update for details
+                        fprintf(' done\n');
+                    elseif length(data.guistatusvector)~=length(handles.status.guistatusvector)
+                        fprintf('Old File. Wrong status vector length. Setting default value...');
+                        handles.status.guistatusvector = [1 1 1 1 0 0 1]; %see gui_status_update for details
+                        fprintf(' done\n');
+                    else
+                        handles.status.guistatusvector = data.guistatusvector;
+                    end
                     
                     guidata(Parent,handles);
                     
                     molecules2listbox(ListMolecules,handles.molecules);
                     
-                    gui_status_update('file_loaded', 1);
-                    gui_status_update('calibrated', 1);
-                    gui_status_update('molecules_loaded', 1);
                 case 2 %h5
                     load_h5(pathname,filename);
                 case 4 %ASCII
                     load_ascii(pathname,filename);
             end
+            
+            handles = gui_status_update('file_loaded', 1, handles);
             handles=guidata(Parent);
             plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2));
             
@@ -1057,6 +1081,8 @@ init();
             data.calibration=handles.calibration;
             data.bgcorrectiondata=handles.bgcorrectiondata;
             
+            data.guistatusvector=handles.status.guistatusvector;
+            
             save(fullfile(pathname,filename),'data');
             
             % if we autosaved, we don't want that temporary filename to be
@@ -1067,9 +1093,8 @@ init();
                 
                 % also belongs in here: if we didn't autosave, we want our
                 % status to be "unchanged"
-                gui_status_update('changed', 0);
+                handles = gui_status_update('changed', 0, handles);
             end
-            
             guidata(Parent,handles);
          end
          
@@ -1340,7 +1365,7 @@ init();
                 handles.molecules=fitwithcalibration(handles.molecules,peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
                 
                 % set fitted in status update to 1 
-                gui_status_update('fitted', 1);
+                handles = gui_status_update('fitted', 1, handles);
                 
                 % and we're done
                 delete('bkp.ifd')
@@ -1353,7 +1378,7 @@ init();
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
         end
         
-        gui_status_update('changed', 1);
+        handles = gui_status_update('changed', 1, handles);
         
         guidata(hObject,handles);
         
