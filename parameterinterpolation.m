@@ -7,12 +7,15 @@ if isempty(comlist)
     massoffset=0;
     resolution=3000;
 else
-    if (com>=comlist(1)-0.1)&&(com<=comlist(end)+0.1)
+    if (com<=comlist(1)-0.1)
+        massoffset=massoffsetlist(1);
+        resolution=resolutionlist(1);
+    elseif (com>=comlist(end)+0.1)
+        massoffset=massoffsetlist(end);
+        resolution=resolutionlist(end);
+    else
         massoffset=pchipmod(comlist,massoffsetlist,com);
         resolution=pchipmod(comlist,resolutionlist,com);
-    else
-        massoffset=mean(massoffsetlist);
-        resolution=mean(resolutionlist);
     end
 end
 
