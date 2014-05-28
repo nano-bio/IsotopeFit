@@ -116,18 +116,18 @@ uicontrol(SelectionPanel,'style','pushbutton',...
 preview_dataviewer = dataviewer(PreviewPanel, gridpos(20,20,4,20,1,15,0.03,0.07), 50, 29, false, @previewclick);
 previewaxes = preview_dataviewer.axes;
 
-uicontrol(PreviewPanel,'Style','Text',...
-    'String','Zoomfaktor',...
-    'Units','normalized',...
-    'Position',gridpos(20,20,1,2,1,2,0.01,0.01));        
-         
-e_zoomfaktor = uicontrol(PreviewPanel,'Style','edit',...
-    'Tag','e_zoomfaktor',...
-    'Units','normalized',...,...
-    'String','30',...
-    'Background','white',...
-    'Enable','on',...
-    'Position',gridpos(20,20,1,2,3,3,0.01,0.01));
+% uicontrol(PreviewPanel,'Style','Text',...
+%     'String','Zoomfaktor',...
+%     'Units','normalized',...
+%     'Position',gridpos(20,20,1,2,1,2,0.01,0.01));        
+%          
+% e_zoomfaktor = uicontrol(PreviewPanel,'Style','edit',...
+%     'Tag','e_zoomfaktor',...
+%     'Units','normalized',...,...
+%     'String','30',...
+%     'Background','white',...
+%     'Enable','on',...
+%     'Position',gridpos(20,20,1,2,3,3,0.01,0.01));
 
 % autozoom in preview panel
 uicontrol(PreviewPanel,'style','pushbutton',...
@@ -135,7 +135,13 @@ uicontrol(PreviewPanel,'style','pushbutton',...
           'Callback',@autozoombutton,...
           'Units','normalized',...
           'Position',gridpos(20,20,1,2,4,6,0.01,0.01)); 
-         
+
+uicontrol(PreviewPanel,'style','pushbutton',...
+          'string','Refresh',...
+          'Callback',@autozoombutton,...
+          'Units','normalized',...
+          'Position',gridpos(20,20,1,2,1,3,0.01,0.01)); 
+      
 uicontrol(PreviewPanel,'Style','Text',...
     'String','Masscenter',...
     'Units','normalized',...
@@ -717,84 +723,106 @@ uiwait(Parent)
 
     function plotpreview(index, autozoom)
         handles=guidata(Parent);
-                
+        
+        previewsearchrange=30; %no need to add this to settings module?
+        
         % in case we want to preserve the zoom status
         xlims = get(previewaxes, 'XLim');
         ylims = get(previewaxes, 'YLim');
         
+        % center of mass of current molecule
         com=handles.molecules(index).com;
-
+        
+        % look, if clicked molecule belongs to calibration molecules
         [inrange, rangeindex, moleculeindex] = memberofrange(handles.ranges,index);
         
-        if ~inrange %molecule not in calibrationlist
-            involvedmolecules=index;
-      
-            [currentmassoffset,currentresolution]=parameterinterpolation(handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist,com);
-            
-        else
-            involvedmolecules=findinvolvedmolecules(handles.molecules,handles.calibrationlist,index,handles.settings.searchrange,handles.calibration);%search in calibrationlist
-            currentmassoffset=handles.ranges(rangeindex).massoffset;
-            currentresolution=handles.ranges(rangeindex).resolution;
-        
-
-        end
-        
-        zoom=str2double(get(e_zoomfaktor,'String'));
-        
-        %calculate massreange with respect to resolution
-        ind=findmassrange(handles.peakdata(:,1)',handles.molecules(involvedmolecules),currentresolution,currentmassoffset,zoom);
-                
-        %calculate single molecule and sum of molecules in this massrange
-        calcmassaxis=handles.peakdata(ind,1)';
-        %calcsignal=pattern(handles.molecules{index},area,currentresolution,currentmassoffset,calcmassaxis);
-        calcsignal=multispec(handles.molecules(index),...
-                currentresolution,...
-                currentmassoffset,...
-                calcmassaxis); 
-            
-                %plotting data
-        plot(previewaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5],'HitTest','off');
-        hold(previewaxes,'on');
-        
-   
-        
-        %calculate and plot sum spectrum of involved molecules if current
-        %molecule is in calibrationlist
         if inrange
-            sumspectrum=multispec(handles.ranges(rangeindex).molecules,...
-                currentresolution,...
-                currentmassoffset,...
-                calcmassaxis);
-        
-            plot(previewaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2,'HitTest','off'); 
-        end
-        
-        plot(previewaxes,calcmassaxis,calcsignal,'Color','red','HitTest','off');
-        
-        %plot lines for mousecalibration
-        if ~isempty(handles.status.from_x_coordinate)
-            plot([handles.status.from_x_coordinate,handles.status.from_x_coordinate],ylims,'r--','HitTest','off');
-        end
-        
-        if ~isempty(handles.status.to_x_coordinate)
-            plot([handles.status.to_x_coordinate,handles.status.to_x_coordinate],ylims,'k--','Color',[0.5 0.5 0.5],'HitTest','off');
-        end
-        
-        hold(previewaxes,'off');
-        
-        % write back zoom status in case it is still visible
-
-        if (~isempty(molecules_in_massrange_with_sigma(handles.molecules(index), xlims(1)-currentmassoffset, xlims(2)-currentmassoffset,handles.calibration,handles.settings.searchrange)) && autozoom == false)
-            set(previewaxes, 'XLim', xlims);
-            set(previewaxes, 'YLim', ylims);
+            currentresolution=handles.ranges(rangeindex).resolution;
+            currentmassoffset=handles.ranges(rangeindex).massoffset;
         else
-            set(previewaxes, 'XLim', [calcmassaxis(1),calcmassaxis(end)]);
+            %current resolution and mass offset
+            currentresolution=resolutionbycalibration(handles.calibration,com);
+            currentmassoffset=massoffsetbycalibration(handles.calibration,com);
+        end
+        
+        changezoom=(isempty(molecules_in_massrange_with_sigma(handles.molecules(index), xlims(1)-currentmassoffset, xlims(2)-currentmassoffset,handles.calibration,previewsearchrange))...
+                || autozoom == true);
+        
+        if changezoom
+            sigma=com/currentresolution*(1/(2*sqrt(2*log(2)))); %sigma definition for gauss
+            if inrange
+                xlims(1)=handles.ranges(rangeindex).molecules(1).minmass+currentmassoffset-sigma*previewsearchrange;
+                xlims(2)=handles.ranges(rangeindex).molecules(end).maxmass+currentmassoffset+sigma*previewsearchrange;
+            else
+                xlims(1)=handles.molecules(index).minmass+currentmassoffset-sigma*previewsearchrange;
+                xlims(2)=handles.molecules(index).maxmass+currentmassoffset+sigma*previewsearchrange;
+            end
             handles.status.from_x_coordinate=[];
             handles.status.to_x_coordinate=[];
         end
         
+        if ~inrange %molecule not in calibrationlist -> user clicked on left molecules list
+            searchlist=sort([handles.calibrationlist,index]);
+        else
+            searchlist=handles.calibrationlist;
+        end
+        
+        ix=molecules_in_massrange_with_sigma(molecules(searchlist),xlims(1)-currentmassoffset,xlims(2)-currentmassoffset,handles.calibration,handles.settings.searchrange);
+            involvedmolecules=searchlist(ix);
+      
+        % find massrange to plot
+        ind=mass2ind(handles.peakdata(:,1)',xlims(1)):mass2ind(handles.peakdata(:,1)',xlims(2));
                 
-        %ylim(previewaxes,[0,max(max(handles.molecules{index}.peakdata(:,2)),max(handles.peakdata(handles.molecules{index}.minind:handles.molecules{index}.maxind,2)))]);
+        % calculate single molecule and sum of molecules in this massrange
+        calcmassaxis=handles.peakdata(ind,1)';
+            
+        % plotting data
+        plot(previewaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5],'HitTest','off');
+        hold(previewaxes,'on');
+
+        % if molecule belongs to calibration -> plot range molecules too
+        if inrange
+            rangesignal=multispec(handles.ranges(rangeindex).molecules,...
+            currentresolution,...
+            currentmassoffset,...
+            calcmassaxis);
+            
+            plot(previewaxes,calcmassaxis,rangesignal,'Color','green','Linewidth',2,'HitTest','off');
+        end
+        
+        % calculate and plot sum spectrum of involved molecules
+        sumspectrum=multispec(handles.molecules(involvedmolecules),...
+            currentresolution,...
+            currentmassoffset,...
+            calcmassaxis);
+        plot(previewaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2,'HitTest','off');
+        
+        % single molecule
+        calcsignal=multispec(handles.molecules(index),...
+                currentresolution,...
+                currentmassoffset,...
+                calcmassaxis); 
+        plot(previewaxes,calcmassaxis,calcsignal,'Color','red','HitTest','off');
+        
+        %plot lines for mousecalibration
+        if ~isempty(handles.status.from_x_coordinate)
+            plot(previewaxes,[handles.status.from_x_coordinate,handles.status.from_x_coordinate],ylims,'r--','HitTest','off');
+        end
+        
+        if ~isempty(handles.status.to_x_coordinate)
+            plot(previewaxes,[handles.status.to_x_coordinate,handles.status.to_x_coordinate],ylims,'k--','Color',[0.5 0.5 0.5],'HitTest','off');
+        end
+        
+        hold(previewaxes,'off');
+        
+        % set zoom status.
+        set(previewaxes, 'XLim',xlims);
+        
+        % automatic y-zoom by matlab, when zoom changed
+        % otherwise set previous ylims
+        if ~changezoom
+            set(previewaxes, 'YLim',ylims);
+        end
         
         set(previewaxes,'ButtonDownFcn',@previewclick);
         guidata(Parent,handles);
@@ -993,10 +1021,11 @@ uiwait(Parent)
         
     end 
 
-    function autozoombutton(~, ~)
+    function autozoombutton(hObject, ~)
+        az=strcmp(get(hObject,'String'),'Autozoom');
         clickedindex=get(ListRelevantMolecules,'Value');
         rangeindex=get(ListRanges,'Value');
         index=handles.ranges(rangeindex).molecules(clickedindex).rootindex;
-        plotpreview(index, true);
+        plotpreview(index, az);
     end
 end
