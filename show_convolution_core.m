@@ -66,29 +66,16 @@ uicontrol(Parent,'style','pushbutton',...
 % % Abspeichern der Struktur 
 % guidata(Parent,handles); 
 
-molecule_stems=zeros(size(peakdata,1),1);
-for i=1:length(molecules)
-    for j=1:size(molecules(i).peakdata,1)
-        ind=mass2ind(peakdata(:,1)',molecules(i).peakdata(j,1));
-        if (ind>1)&&(ind<size(peakdata,1))
-            molecule_stems(ind)=molecule_stems(ind)+molecules(i).area*molecules(i).peakdata(j,2);
-        end
-    end
-end
-
-%stem(axis1,molecule_stems);
-
 handles=guidata(Parent);
 handles.peakdata=double(peakdata);
 
-handles.K=double(ifftshift(ifft(fft(handles.peakdata(:,2))./fft(molecule_stems))));
+molecule_stems=create_molecule_stems(molecules,peakdata(:,1)');
+[handles.K,x]=get_convolution_core(peakdata,molecule_stems);
 
-x=double((((0:size(peakdata,1)-1)'/(size(peakdata,1)-1))-(0.5))*2*(peakdata(end,1)-peakdata(1,1)));
+minfitind=mass2ind(x,-100);
+maxfitind=mass2ind(x,100);
 
-minfitind=mass2ind(x,-5);
-maxfitind=mass2ind(x,5);
-
-f = fit(x(minfitind:maxfitind),handles.K(minfitind:maxfitind),'gauss2');
+f = fit(x(minfitind:maxfitind),handles.K(minfitind:maxfitind),'gauss3');
 
 hold on
 cla(axis1);
@@ -114,7 +101,7 @@ drawnow;
         handles=guidata(Parent);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-           dlmwrite(fullfile(pathname,filename),handles.peakdata,'delimiter','\t','precision','%e');
+           dlmwrite(fullfile(pathname,filename),[x,handles.K],'delimiter','\t','precision','%e');
         end
     end
 

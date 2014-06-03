@@ -79,15 +79,15 @@ steps=str2double(answer{1});
 window=str2double(answer{2}); %has to be even!
 center_bins=str2double(answer{3}); %extract this number of bins around the center of conv. core
 
-h=information_box(dlg_title,'Please wait...');
+%h=information_box(dlg_title,'Please wait...');
 molecule_stems=create_molecule_stems(molecules,peakdata(:,1)');
-close(h);
+%close(h);
 
 left_offset=window/2+1;
 right_offset=size(peakdata,1)-window/2;
 
 coremap=zeros(center_bins,steps);
-h=waitbar(0,'Busy...');
+h=waitbar(0,'Calculating core map...');
 for i=1:steps
     center_bin=round((i-1)*(right_offset-left_offset)/(steps-1)+left_offset);
     ix1=center_bin-window/2;
@@ -95,7 +95,7 @@ for i=1:steps
 
     K=get_convolution_core(peakdata(ix1:ix2,:),molecule_stems(ix1:ix2));
     K=K(round((length(K)-center_bins)/2):round((length(K)-center_bins)/2)+center_bins-1);
-    coremap(:,i)=K/max(K);
+    coremap(:,i)=(K-min(K))/(max(K)-min(K));
     waitbar(i/steps);
 end
 close(h);
@@ -106,10 +106,13 @@ close(h);
 hold on
 cla(axis1);
 %imagesc(coremap,'Parent',axis1);
-%contour(coremap);
+%contour(xmesh,ymesh,coremap); %very slow and ugly!!
 %plot(axis1,K)
 h=pcolor(xmesh,ymesh,coremap);
-shading interp;
+%shading interp;
+shading flat;
+colormap('hot');
+set(axis1,'xlim',[peakdata(left_offset,1),peakdata(right_offset,1)]);
 %set(h,'edgecolor','none');
 
 
