@@ -541,9 +541,6 @@ uiwait(Parent)
         if ~get(chk_resolution,'Value') %do not fit resolution
             deltares=0;
         end
-        
-        deltares
-        deltam
                
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         switch get(hObject,'String')
