@@ -44,6 +44,8 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
     
     fprintf('Start fitting %i ranges using %s\n',l, fitting_method);
     
+    searchrange=3;
+    
     %parfor i=1:l
     for i=1:l %use this for patternsearch
         nmolecules=length(ranges(i).molecules);
@@ -55,7 +57,7 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
         fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges(i).minmass,ranges(i).maxmass,nmolecules);
 
         %ind=findmassrange(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,10);
-        ind=findmassrange2(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,1);
+        ind=findmassrange2(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,searchrange);
 
         %is it necessary to cut out some datapoints?
         ndp=length(ind); %number of datapoints
