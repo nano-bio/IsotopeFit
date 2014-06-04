@@ -1294,8 +1294,18 @@ init();
     function out=subtractmassoffset(peakdata,calibration)
         out=peakdata;
         mo=massoffsetbycalibration(calibration,peakdata(:,1));
-
-        out(:,1)=out(:,1)-mo;
+        % maybe you think, that this would do the job:
+        % out(:,1)=out(:,1)-mo;
+        % BUT THINK ABOUT:
+        % you have to calculate the mass offset for the position of the
+        % SHIFTED spectrum. This requires the calculation of the INVERSE:
+        % mass_old = mass_new + mo(mass_new)
+        %          = A * mass_new 
+        %                    with A = eye*[(mass_new+mo(mass_new))./mass_new]
+        % mass_new = inv(A) * mass_old
+        % A is diagonal -> yeah, you simply have to perform a pointwise
+        % division:
+        out(:,1)=out(:,1).*(out(:,1)./(out(:,1)+mo));
     end
     
     function [areaout,areaerrorout,sortlist]=sortmolecules(molecules,searchstring,peakdata)
