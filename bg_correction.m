@@ -73,7 +73,7 @@ e_endmass=uicontrol(Parent,'Style','edit',...
          
 % for backwards compatibility with the existing code, we map updateslider
 % to the function inside the dataviewer object
-gridpos(layoutlines,layoutrows,4,28,1,layoutrows,0.025,0.01)
+gridpos(layoutlines,layoutrows,4,28,1,layoutrows,0.025,0.01);
 dvhandle = dataviewer(Parent, gridpos(layoutlines,layoutrows,4,28,1,layoutrows,0.025,0.01), 50, 40, false, []);
 axis1 = dvhandle.axes;
 updateslider = dvhandle.updateslider;
@@ -222,6 +222,8 @@ end
 handles.status.logscale = 0;
 handles.status.overview = 0;
 handles.status.lastlims = [[0 0] [0 0]];
+
+guidata(Parent,handles);
 
 function plotoverview(hObject, ~)
     % get settings
