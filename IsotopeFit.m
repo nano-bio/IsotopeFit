@@ -773,6 +773,13 @@ init();
             molecules2listbox(ListMolecules,handles.molecules);
         end
         
+        % check if massrange (handles.peakdata) of new spec is larger than
+        % massrange of spec that we load the data from (data.peakdata)
+        % --> need to re-load molecules for entire massrange
+        if data.raw_peakdata(end,1)<handles.peakdata(end,1)
+            msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+        end
+        
         handles = gui_status_update('molecules_loaded', 1, handles);
         handles = gui_status_update('changed', 1, handles);
     end
@@ -815,6 +822,14 @@ init();
             
             % Molecules (that are in massrange)
             handles.molecules=remove_out_of_range_molec(data.molecules, handles.peakdata);
+            
+            % check if massrange (handles.peakdata) of new spec is larger than
+            % massrange of spec that we load the data from (data.peakdata)
+            % --> need to re-load molecules for entire massrange
+            if data.raw_peakdata(end,1)<handles.peakdata(end,1)
+                msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+            end
+            
             
             %Calibration data
             handles.calibration=data.calibration;
