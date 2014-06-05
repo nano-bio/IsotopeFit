@@ -762,9 +762,12 @@ init();
         if ~(isequal(filename,0) || isequal(pathname,0))
             data={}; %load needs a predefined variable
             load(fullfile(pathname,filename),'-mat');
+            
+            % need to check if any of the molecules are out of range and
+            % remove them
+            handles.molecules = remove_out_of_range_molec(data.molecules, handles.peakdata);
 
-            handles.molecules=convert_molecule_datatype(data.molecules);
-                       
+            
             guidata(Parent,handles);
             
             molecules2listbox(ListMolecules,handles.molecules);
@@ -810,7 +813,8 @@ init();
                 handles.bgcorrectiondata.bgy=[];
             end
             
-            handles.molecules=convert_molecule_datatype(data.molecules);
+            % Molecules (that are in massrange)
+            handles.molecules=remove_out_of_range_molec(data.molecules, handles.peakdata);
             
             %Calibration data
             handles.calibration=data.calibration;

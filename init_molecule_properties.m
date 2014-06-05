@@ -69,7 +69,7 @@ minmasses=minmasses(in_range_ix);
 molecules_out=molecules_out(in_range_ix);
 
 fprintf('\n%i molecules out of massrange\n',length(out_of_range_ix));
-fprintf('%i molecules loadet\n',length(in_range_ix));
+fprintf('%i molecules loaded\n',length(in_range_ix));
 
 %sort molecules with correlated startvalues by minind
 [~,indices]=sort(minmasses);
