@@ -1160,7 +1160,7 @@ init();
             set(ListMolecules, 'Value', 1);
 
             % filter
-            cellArrayOfMatches = regexpi(listboxText,['(.*' filtertext '.*)']);
+            cellArrayOfMatches = strfind(listboxText,filtertext);
             arrayOfMatches = cellfun(@(x) ~isempty(x), cellArrayOfMatches);
 
             % create new listbox text
