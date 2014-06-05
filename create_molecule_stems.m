@@ -4,6 +4,7 @@ function out = create_molecule_stems(molecules,massaxis)
 % molecules
 
 out=zeros(1,length(massaxis));
+h=waitbar(0,'Converting molecule structure...');
 for i=1:length(molecules)
     for j=1:size(molecules(i).peakdata,1)
         ind=mass2ind(massaxis,molecules(i).peakdata(j,1));
@@ -11,8 +12,9 @@ for i=1:length(molecules)
             out(ind)=out(ind)+molecules(i).area*molecules(i).peakdata(j,2);
         end
     end
+    if mod(i,10)==0,waitbar(i/length(molecules));end;
 end
-
+close(h);
 
 end
 

@@ -32,8 +32,8 @@ for i=1:l
     resolution=resolutionbycalibration(calibration,molecules(i).com); %resolution
     massoffset=massoffsetbycalibration(calibration,molecules(i).com); %x-offset
     
-    ind=findmassrange(massaxis,molecules(i),resolution,massoffset,searchrange);
-    %ind=findmassrange2(massaxis,molecules(i),parameters(nmolecules+1),parameters(nmolecules+2),0.5);
+    %ind=findmassrange(massaxis,molecules(i),resolution,massoffset,searchrange);
+    ind=findmassrange2(massaxis,molecules(i),resolution,massoffset,searchrange);
     involved=molecules_in_massrange_with_sigma(molecules(i:l),massaxis(ind(1)),massaxis(ind(end)),calibration,searchrange)'+(i-1);
     
     %maximally used datapoints for fitting per molecule
