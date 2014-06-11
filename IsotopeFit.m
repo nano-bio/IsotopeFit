@@ -774,7 +774,7 @@ init();
         end
         
         % check if massrange (handles.peakdata) of new spec is larger than
-        % massrange of spec that we load the data from (data.peakdata)
+        % massrange of spec that we load the data from (data.raw_peakdata)
         % --> need to re-load molecules for entire massrange
         if data.raw_peakdata(end,1)<handles.peakdata(end,1)
             msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
@@ -824,7 +824,7 @@ init();
             handles.molecules=remove_out_of_range_molec(data.molecules, handles.peakdata);
             
             % check if massrange (handles.peakdata) of new spec is larger than
-            % massrange of spec that we load the data from (data.peakdata)
+            % massrange of spec that we load the data from (data.raw_peakdata)
             % --> need to re-load molecules for entire massrange
             if data.raw_peakdata(end,1)<handles.peakdata(end,1)
                 msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
@@ -935,7 +935,7 @@ init();
             handles.raw_peakdata(:, 2) = tmpvar(:, 3);
         else
             % no, read normally
-            handles.raw_peakdata = load(fullfile(pathname,filename));
+            handles.raw_peakdata = dlmread(fullfile(pathname,filename), '\t', 2, 0);
         end
         
         handles.startind=1;
