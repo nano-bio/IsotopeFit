@@ -25,7 +25,7 @@ if nargin==6
     alternativenames=clusterlist;
 end
 
-if nargin<7
+if nargin<8
     charge=1;    
 end
 
