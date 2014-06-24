@@ -868,6 +868,8 @@ init();
     function menucalibration(hObject,~)
         handles=guidata(Parent);
         
+        handles.molecules
+        
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
@@ -935,6 +937,7 @@ init();
             handles.raw_peakdata(:, 2) = tmpvar(:, 3);
         else
             % no, read normally
+            % handles.raw_peakdata = load(fullfile(pathname,filename));
             handles.raw_peakdata = dlmread(fullfile(pathname,filename), '\t', 2, 0);
         end
         
@@ -1190,8 +1193,13 @@ init();
         else
             % it's empty. we just fill the Listbox with all molecules
             
-            % first read out, what is currently selected
-            curr_ind = getrealselectedmolecules();
+            % check first if ListMolecules is empty
+            if ~isempty(get(ListMolecules, 'String'))
+                % first read out, what is currently selected
+                curr_ind = getrealselectedmolecules();
+            else
+                curr_ind = 1;
+            end
             
             % fill in new (all) values
             molecules2listbox(ListMolecules, handles.molecules);
