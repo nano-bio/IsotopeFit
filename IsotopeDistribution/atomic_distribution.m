@@ -2,7 +2,7 @@ function out = atomic_distribution(element,n,minmassdistance,th)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
- d=renorm(load(['Atoms\' element '.txt'])); %load isotope table
+ d=renorm(load(['Atoms' filesep element '.txt'])); %load isotope table
  
 % d(:,2)=d(:,2)/(sum(d(:,2)));
  d_end=d;

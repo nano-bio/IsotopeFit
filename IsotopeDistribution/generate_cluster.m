@@ -13,7 +13,7 @@ function out = generate_cluster(folder,clusterlist,nlist,minmassdistance,th,alte
 %   charge: possibility to handle multiply charged ions
 
 
-folder=['molecules\',folder];
+folder=['molecules',filesep,folder];
 
 if ~(exist(folder)==7)
     mkdir(folder);
@@ -76,7 +76,7 @@ for i=1:prod(system) %number of combinations=product of basis numbers in varible
      if ~strcmp(filename,'')
          %multiply charged ions: divide masses by charge
          d(:,1)=d(:,1)/charge;
-         dlmwrite([folder '\' filename '.txt'],d,'delimiter','\t','precision','%e');
+         dlmwrite([folder filesep filename '.txt'],d,'delimiter','\t','precision','%e');
      end
 end
 

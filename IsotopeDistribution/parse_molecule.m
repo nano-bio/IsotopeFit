@@ -3,7 +3,7 @@ function out = parse_molecule(string,minmassdistance,th)
 %   Detailed explanation goes here
 
 startind=1;
-files=dir('atoms\');
+files=dir('atoms');
 
 i=1;
 

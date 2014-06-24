@@ -9,9 +9,9 @@ file='molecules';
 % DONT CARE ABOUT THE FOLLOWING LINES
 % -------------------------------------------------------
 % If file exists, delete it and generate a new one
-if exist(['molecules\',folder,'\',file,'.ifm'])==2
+if exist(['molecules',filesep,folder,filesep,file,'.ifm'])==2
     fprintf('Old File removed.\n');
-    delete(['molecules\',folder,'\',file,'.ifm']);
+    delete(['molecules',filesep,folder,filesep,file,'.ifm']);
 end
 % -------------------------------------------------------
 % CARE AGAIN
