@@ -367,6 +367,12 @@ handles.calibrationlist=[];
 % Init. calibration structure
 handles.calibration=calin;
 
+% need to set fitting param (massoffsetorder, resolutionorder) before updating
+% calibrationplots otherwise old values of e_massoffsetoreder and e_resolutionorder
+% are overwritten by 0
+set(e_massoffsetorder,'String',num2str(handles.calibration.massoffsetparam));
+set(e_resolutionorder,'String',num2str(handles.calibration.resolutionparam));
+
 if ~isempty(handles.calibration.namelist)
     for i=1:length(handles.molecules)
         if ismember(handles.molecules(i).name,handles.calibration.namelist)
@@ -585,7 +591,6 @@ uiwait(Parent)
         switch(handles.calibration.massoffsetmethode)
             case 'Flat'
                 handles.calibration.massoffsetparam=mean(handles.calibration.massoffsetlist);
-                handles.calibration.massoffsetparam
             case 'Polynomial'
                 nmassoffset=str2double(get(e_massoffsetorder,'String'));
                 
@@ -611,7 +616,7 @@ uiwait(Parent)
                 if nresolution>=length(handles.calibration.comlist) %polynomial with this order not possible
                     msgbox('polynomial order too high!');
                     nresolution=length(handles.calibration.comlist)-1;
-                    set(e_resolutionorder,'String',num2str(nmassoffset));
+                    set(e_resolutionorder,'String',num2str(nmresolution));
                 end
                 handles.calibration.resolutionparam=nresolution;  
             otherwise
