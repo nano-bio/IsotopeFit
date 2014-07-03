@@ -588,10 +588,10 @@ uiwait(Parent)
         %massoffset plot
               
         
-        switch(handles.calibration.massoffsetmethode)
-            case 'Flat'
+        switch(lower(handles.calibration.massoffsetmethode))
+            case 'flat'
                 handles.calibration.massoffsetparam=mean(handles.calibration.massoffsetlist);
-            case 'Polynomial'
+            case 'polynomial'
                 nmassoffset=str2double(get(e_massoffsetorder,'String'));
                 
                 if nmassoffset>=length(handles.calibration.comlist) %polynomial with this order not possible
@@ -599,7 +599,9 @@ uiwait(Parent)
                     nmassoffset=length(handles.calibration.comlist)-1;
                     set(e_massoffsetorder,'String',num2str(nmassoffset));
                 end
-                handles.calibration.massoffsetparam=nmassoffset;                
+                handles.calibration.massoffsetparam=nmassoffset;
+            case {'spline' 'pchip'}
+                handles.calibration.massoffsetparam = 0;
             otherwise
                 handles.calibration.massoffsetparam=str2double(get(e_massoffsetorder,'String'));
         end
@@ -607,18 +609,20 @@ uiwait(Parent)
         massoffsety=getcalibrationdata(handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.massoffsetparam,handles.calibration.massoffsetmethode,massaxis);
         
         %resolution plot
-        switch(handles.calibration.resolutionmethode)
-            case 'Flat'
+        switch(lower(handles.calibration.resolutionmethode))
+            case 'flat'
                 handles.calibration.resolutionparam=mean(handles.calibration.resolutionlist);
-            case 'Polynomial'
+            case 'polynomial'
                 nresolution=str2double(get(e_resolutionorder,'String'));
                 
                 if nresolution>=length(handles.calibration.comlist) %polynomial with this order not possible
                     msgbox('polynomial order too high!');
                     nresolution=length(handles.calibration.comlist)-1;
-                    set(e_resolutionorder,'String',num2str(nmresolution));
+                    set(e_resolutionorder,'String',num2str(nresolution));
                 end
-                handles.calibration.resolutionparam=nresolution;  
+                handles.calibration.resolutionparam=nresolution;
+            case {'spline' 'pchip'}
+                handles.calibration.massoffsetparam = 0;
             otherwise
                 handles.calibration.resolutionparam=str2double(get(e_resolutionorder,'String'));
         end
