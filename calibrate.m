@@ -776,9 +776,8 @@ uiwait(Parent)
             currentresolution=handles.ranges(rangeindex).resolution;
             currentmassoffset=handles.ranges(rangeindex).massoffset;
         else
-            %current resolution and mass offset
-            currentresolution=resolutionbycalibration(handles.calibration,com);
-            currentmassoffset=massoffsetbycalibration(handles.calibration,com);
+            %current resolution and mass offset from interpolation
+            [currentmassoffset, currentresolution] = parameterinterpolation(handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist,com);
         end
         
         changezoom=(isempty(molecules_in_massrange_with_sigma(handles.molecules(index), xlims(1)-currentmassoffset, xlims(2)-currentmassoffset,handles.calibration,previewsearchrange))...
