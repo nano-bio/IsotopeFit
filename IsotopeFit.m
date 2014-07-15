@@ -485,14 +485,18 @@ init();
 
     function menuexportcurrentview(hObject,~)
         %% Exports Peakdata + fitted curves of current plot to ascii file
+        handles = guidata(hObject);
+        limits = get(dataaxes, 'XLim');
+        lowmass = num2str(round(limits(1)));
+        highmass = num2str(round(limits(2)));
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_mass_' lowmass '_' highmass '.txt'];
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
-            'Export data');
+            'Export data',...
+            filenamesuggestion);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             fid=fopen(fullfile(pathname,filename),'w');
-            handles=guidata(hObject);
-            limits= get(dataaxes, 'XLim');
             
             %find molecules that are in current view
             moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2));
