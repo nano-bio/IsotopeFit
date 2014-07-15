@@ -435,12 +435,16 @@ init();
 
     function menuexportmassspec(hObject,~)
         %% Exports Peakdata of entire mass range to ascii file
+        handles=guidata(hObject);
+        
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_calib_spec.txt'];
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
-            'Export Mass Spectrum');
+            'Export Mass Spectrum',...
+            filenamesuggestion);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-            handles=guidata(hObject);
+            % handles=guidata(hObject);
            
             %write title line
             fid=fopen(fullfile(pathname,filename),'w');
@@ -455,17 +459,18 @@ init();
     function menuexportfittedspec(hObject,~)
         %% Exorts fitted spectrum of entire mass range to ascii file
         handles=guidata(hObject);
-        startpathname = handles.fileinfo.pathname;
+        %startpathname = handles.fileinfo.pathname;
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_fitted_spec.txt'];
         
         [filename, pathname] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
             'Export data',...
-            startpathname);
+            filenamesuggestion);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             resolutionaxis=resolutionbycalibration(handles.calibration,handles.peakdata(:,1)');
             % calculate fitted spectrum for all molecules
-            fitted_data=multispec(handles.molecules,resolutionaxis,0,handles.peakdata(:,1)')';
+            fitted_data=multispec(handles.molecules,resolutionaxis,0,handles.peakdata(:,1)',1)';
         
             % write data to ascii file
             fid=fopen(fullfile(pathname,filename),'w');
@@ -480,14 +485,18 @@ init();
 
     function menuexportcurrentview(hObject,~)
         %% Exports Peakdata + fitted curves of current plot to ascii file
+        handles = guidata(hObject);
+        limits = get(dataaxes, 'XLim');
+        lowmass = num2str(round(limits(1)));
+        highmass = num2str(round(limits(2)));
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_mass_' lowmass '_' highmass '.txt'];
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
-            'Export data');
+            'Export data',...
+            filenamesuggestion);
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             fid=fopen(fullfile(pathname,filename),'w');
-            handles=guidata(hObject);
-            limits= get(dataaxes, 'XLim');
             
             %find molecules that are in current view
             moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2));
@@ -867,8 +876,6 @@ init();
 
     function menucalibration(hObject,~)
         handles=guidata(Parent);
-        
-        handles.molecules
         
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
