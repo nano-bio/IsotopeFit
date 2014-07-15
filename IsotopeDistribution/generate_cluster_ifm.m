@@ -12,14 +12,21 @@ function out = generate_cluster_ifm(folder,filename,clusterlist,nlist,minmassdis
 %       molecule formulas
 %   charge: possibility to handle multiply charged ions
 
-
-folder=['molecules',filesep,folder];
-pathandfile=[folder,filesep,filename,'.ifm'];
-
-if ~(exist(folder)==7)
-    mkdir(folder);
-    fprintf('Folder %s generated\n',folder);
+if ~isempty(folder)
+    %standard location in molecules/folder/file
+    folder=['molecules',filesep,folder];
+    if ~(exist(folder)==7)
+        mkdir(folder);
+        fprintf('Folder %s generated\n',folder);
+    end
+    if ~strcmpi(filename(end-3:end),'.ifm')
+        filename=[filename,'.ifm'];
+    end
+    pathandfile=[folder,filesep,filename,'.ifm'];
+else
+    pathandfile=filename;
 end
+
 
 if nargin==6
     alternativenames=clusterlist;
