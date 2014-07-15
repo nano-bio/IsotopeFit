@@ -24,6 +24,7 @@ if ~isempty(folder)
     end
     pathandfile=[folder,filesep,filename,'.ifm'];
 else
+    %full path to file provided
     pathandfile=filename;
 end
 
