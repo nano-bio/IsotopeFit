@@ -780,14 +780,17 @@ uiwait(Parent)
             [currentmassoffset, currentresolution] = parameterinterpolation(handles.calibration.comlist,handles.calibration.massoffsetlist,handles.calibration.resolutionlist,com);
         end
         
+        % check if molecule is already in showed mass range (chagezoom is
+        % true if selected molecule is not in the displayed massrange)
         changezoom=(isempty(molecules_in_massrange_with_sigma(handles.molecules(index), xlims(1)-currentmassoffset, xlims(2)-currentmassoffset,handles.calibration,previewsearchrange))...
                 || autozoom == true);
         
+        % only if changezoom == 1 --> showed massrange has to be changed
         if changezoom
             sigma=com/currentresolution*(1/(2*sqrt(2*log(2)))); %sigma definition for gauss
             if inrange
                 xlims(1)=handles.ranges(rangeindex).molecules(1).minmass+currentmassoffset-sigma*previewsearchrange;
-                xlims(2)=handles.ranges(rangeindex).molecules(end).maxmass+currentmassoffset+sigma*previewsearchrange;
+                xlims(2)=max([handles.ranges(rangeindex).molecules.maxmass])+currentmassoffset+sigma*previewsearchrange;
             else
                 xlims(1)=handles.molecules(index).minmass+currentmassoffset-sigma*previewsearchrange;
                 xlims(2)=handles.molecules(index).maxmass+currentmassoffset+sigma*previewsearchrange;
