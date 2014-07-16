@@ -1,6 +1,7 @@
 function out=molecules_in_massrange_with_sigma(molecules,minmass,maxmass,calibration,searchrange)
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+%molecules_in_massrange_with_sigma checks if a molecule is in a certain
+%massrange
+%   gives back a list of molecules that are in the specfied massrange (=searchrange)
 
 [minmasses, maxmasses]=molecules2masslist_with_sigma(molecules,calibration,searchrange);
 
