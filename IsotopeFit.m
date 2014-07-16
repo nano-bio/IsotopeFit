@@ -284,6 +284,11 @@ init();
         handles.peakdata=[];
         handles.raw_peakdata=[];
         
+        % Variables for Cluster series
+        handles.seriesarea = [];
+        handles.seriesareaerror = [];
+        handles.seriesindex = [];
+        
         %fileinfo standard values
         handles.fileinfo.originalfilename='';
         handles.fileinfo.filename='';
@@ -656,7 +661,7 @@ init();
         handles=guidata(hObject);
 
         searchstring=get(e_searchstring,'String');
-        [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring,handles.peakdata);
+        [handles.seriesarea,handles.seriesareaerror,handles.seriesindex,serieslist]=sortmolecules(handles.molecules,searchstring,handles.peakdata);
         guidata(hObject,handles);
         
         % retrieve the name of the series to be exported
@@ -742,7 +747,7 @@ init();
         handles=guidata(hObject);
         
         searchstring=get(e_searchstring,'String');        
-        [handles.seriesarea,handles.seriesareaerror,serieslist]=sortmolecules(handles.molecules,searchstring,handles.peakdata);
+        [handles.seriesarea,handles.seriesareaerror,handles.seriesindex,serieslist]=sortmolecules(handles.molecules,searchstring,handles.peakdata);
         guidata(hObject,handles);
         
         set(ListSeries,'Value',1);
@@ -1208,17 +1213,48 @@ init();
         
         % plot the molecule
         plotmolecule(index);
-        
-        % set the displays
-        % note this is not the nominal mass
-        set(comdisplay, 'String', num2str(handles.molecules(index).com));
-        set(areadisplay, 'String', num2str(handles.molecules(index).area));
-        res = resolutionbycalibration(handles.calibration,handles.molecules(index).com);
-        set(resolutiondisplay, 'String', num2str(res));
-    end
+     end
 
     function areaaxesclick(hObject, eventdata)
-        [x, y] = areaaxesgetclickcoordinates(hObject)
+        % Reads out click coordinates and finds the corresponding molecule.
+        handles=guidata(Parent);
+
+        [x, y] = areaaxesgetclickcoordinates(hObject);
+        
+        ix1=round(x)+1; % n: row index
+        ix2=get(ListSeries,'Value'); % column index
+        
+        if ~isempty(handles.seriesindex)
+            % check if indices are in range (user can click everywhere!!)
+            if (ix1>=1)&&(ix1<=size(handles.seriesindex,1))&&...
+               (ix2>=1)&&(ix2<=size(handles.seriesindex,2))
+                % check if molecule exists
+                if handles.seriesindex(ix1,ix2)~=0
+                    % FOUND! YEAH!
+                    mol_ix=handles.seriesindex(ix1,ix2);
+                    
+                    plotmolecule(mol_ix);
+                    
+                    % select molecule in listbox
+                    list_ix=mol_ix;
+                    if handles.status.moleculesfiltered == 1
+                        namelist=get(ListMolecules,'String');
+                        list_ix=find(ismember(namelist,handles.molecules(mol_ix).name));
+                    end
+                    
+                    if ~isempty(list_ix) %can be empty, when filter is applied!
+                       set(ListMolecules,'Value',list_ix);
+                    else
+                       %reset filter
+                       set(ListFilter,'string','');
+                       filterListMolecules([],[]);
+                       set(ListMolecules,'Value',mol_ix);
+                    end
+                   
+                end
+            end
+        end
+        
     end
 
     function dataaxesclick(~, ~)
@@ -1361,6 +1397,13 @@ init();
         % Update the slider bar accordingly:
         updateslider;
         
+        % set the displays
+        % note this is not the nominal mass
+        set(comdisplay, 'String', num2str(handles.molecules(index).com));
+        set(areadisplay, 'String', num2str(handles.molecules(index).area));
+        res = resolutionbycalibration(handles.calibration,handles.molecules(index).com);
+        set(resolutiondisplay, 'String', num2str(res));
+        
         guidata(Parent,handles);
     end
 
@@ -1393,7 +1436,7 @@ init();
         out(:,1)=out(:,1).*(out(:,1)./(out(:,1)+mo));
     end
     
-    function [areaout,areaerrorout,sortlist]=sortmolecules(molecules,searchstring,peakdata)
+    function [areaout,areaerrorout,indexout,sortlist]=sortmolecules(molecules,searchstring,peakdata)
         searchstring=['[' searchstring ']'];
         
         attached={};
@@ -1440,6 +1483,7 @@ init();
      
             areaout(lineix,rowix)=molecules(i).area/b;
             areaerrorout(lineix,rowix)=molecules(i).areaerror/b;
+            indexout(lineix,rowix)=i; %save index to molecule
         end
         for i=1:length(attached)
             sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
