@@ -113,8 +113,8 @@ uicontrol(Parent,'style','pushbutton',...
     'Position',gridpos(64,64,16,18,61,64,0.01,0.01));
 
 uicontrol(Parent,'style','pushbutton',...
-    'string','Add Molecules',...
-    'Callback','',...
+    'string','Remove selected molecules',...
+    'Callback',@remove_molecules,...
     'Units','normalized',...
     'Position',gridpos(64,64,13,16,53,64,0.01,0.01));
       
@@ -304,7 +304,9 @@ init();
         handles.status.moleculesfiltered = 0;
         
         handles.status.guistatusvector = [0 0 0 0 0 0 0];
-
+        
+        handles.status.rootindexchanged = 0;
+        
         %initial calibration data
         handles.calibration=standardcalibration();
         
@@ -877,6 +879,18 @@ init();
     function menucalibration(hObject,~)
         handles=guidata(Parent);
         
+        if handles.status.rootindexchanged
+            %restore rootindex
+            h=waitbar(0,'Restoring root-index');
+            for i=1:length(handles.molecules)
+                handles.molecules(i).rootindex=i;
+                waitbar(i/length(handles.molecules));
+            end
+            close(h);
+            handles.status.rootindexchanged = 0;
+            guidata(Parent,handles);
+        end
+        
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
@@ -1112,7 +1126,19 @@ init();
         
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-            
+            %when molecules are deleted from list, we need to rewrite the
+            %molecules rootindex. rootindex is needed for calibration.
+            if handles.status.rootindexchanged
+                %restore rootindex
+                h=waitbar(0,'Restoring root-index');
+                for i=1:length(handles.molecules)
+                    handles.molecules(i).rootindex=i;
+                    waitbar(i/length(handles.molecules));
+                end
+                close(h);
+                handles.status.rootindexchanged = 0;
+                guidata(Parent,handles);
+            end
             
             data.raw_peakdata=handles.raw_peakdata;
             data.startind=handles.startind;
@@ -1143,7 +1169,32 @@ init();
         %write filename to visible display:
         set(filenamedisplay, 'String', handles.fileinfo.filename)
     end
-
+    
+    function remove_molecules(hObject, ~)
+        handles = guidata(Parent);
+        index = getrealselectedmolecules();
+        keep_idx = setdiff(1:length(handles.molecules),index);
+        
+        %delete molecules
+        handles.molecules=handles.molecules(keep_idx);
+        
+        handles.status.rootindexchanged = 1;
+        handles.status.moleculesfiltered = 0;
+        guidata(Parent,handles);
+                      
+        % update listbox
+        molecules2listbox(ListMolecules, handles.molecules);
+        
+        % listbox selection
+        if index(1)>length(keep_idx)
+            set(ListMolecules, 'Value',length(keep_idx));
+        else
+            set(ListMolecules, 'Value',index(1));
+        end
+        
+        guidata(Parent,handles);
+    end
+    
     function moleculelistclick(hObject,~)
         handles=guidata(Parent);
         
