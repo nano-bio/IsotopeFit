@@ -72,6 +72,12 @@ handles.peakdata=double(peakdata);
 molecule_stems=create_molecule_stems(molecules,peakdata(:,1)');
 [handles.K,x]=get_convolution_core(peakdata,molecule_stems);
 
+filter=cos_filter(1,-60,70,100,x)';
+
+size(handles.K)
+size(filter)
+filtered_K=handles.K.*filter;
+
 minfitind=mass2ind(x,-100);
 maxfitind=mass2ind(x,100);
 
@@ -81,6 +87,8 @@ hold on
 cla(axis1);
 plot(axis1,x,handles.K,'color',[0.5 0.5 0.5]);
 plot(axis1,x,feval(f,x),'k--','linewidth',2);
+plot(axis1,x,filter,'g-');
+plot(axis1,x,filtered_K,'b-');
 
 guidata(Parent,handles);
 
