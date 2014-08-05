@@ -255,6 +255,7 @@ mdata = uimenu('Label','Data');
        mconvcore=uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
                mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
                mconvcore_map=uimenu(mconvcore,'Label','Map...','Callback',@menuconvcoremap,'Enable','on');      
+       mratio=uimenu(mdata,'Label','Calculate ratio of 2 compounds...','Enable','on','Callback',@menuratio);
        mplay = uimenu(mdata,'Label','Play','Separator','on');
                uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
                uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
@@ -320,6 +321,75 @@ init();
         handles = gui_status_update();
     end
 
+    function menuratio(hObject,~)
+        handles=guidata(Parent);
+        
+        %input dialog
+        prompt = {'First compound:','Second compound:','Upper mass limit:'};
+        dlg_title = 'Ratio of compounds';
+        num_lines = 1;
+        def = {'','','inf'};
+        answer = inputdlg(prompt,dlg_title,num_lines,def);
+        
+        comp1=['[' answer{1} ']'];
+        comp2=['[' answer{2} ']'];
+        if strcmp(answer{3},'inf')
+            max_mass=handles.peakdata(end,1);
+        else
+            max_mass=str2double(answer{3});
+        end
+        
+        
+        i=1;
+        F1=0; %fraction of compound 1
+        F2=0; %fraction of compound 2
+        
+        h=waitbar(0,'Busy...');
+        for i=1:length(handles.molecules)
+            %find positions of comp1 and comp2 in molecule name
+            molname=[handles.molecules(i).name,'['];
+            a1=get_number_in_molname(molname,comp1);
+            a2=get_number_in_molname(molname,comp2);
+            
+            if a1+a2>0
+                F1=F1+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a1/(a1+a2);
+                F2=F2+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a2/(a1+a2);
+            end
+            waitbar(handles.molecules(i).maxmass/max_mass);
+                       
+            if handles.molecules(i).maxmass>max_mass %then terminate execution
+                break
+            end
+        end
+        close(h);
+        msgbox(sprintf('%s: %f\n%s: %f\n%s/%s: %f',comp1,F1,comp2,F2,comp1,comp2,F1/F2),'Ratio');
+    end
+
+    function out=get_number_in_molname(molname,comp)
+        % finds clusternumber n in a given molecule name
+        % i.e. molname=[C60][CO2]5
+        %      comp=[CO2]
+        % ==>  out=5
+        
+        pos=strfind(molname,comp);
+        
+        if ~isempty(pos)
+            k=pos(1)+length(comp);
+            temp='';
+            while molname(k)~='[';
+                temp=[temp,molname(k)];
+                k=k+1;
+            end
+            if isempty(temp)
+                out=1;
+            else
+                out=str2num(temp);
+            end
+        else
+            out=0;
+        end
+    end
+        
     function menuconvcore(hObject,~)
         handles=guidata(Parent);
         limits= get(dataaxes, 'XLim');
@@ -372,7 +442,7 @@ init();
             'fitted'};
         
         % list of gui elements that should be hidden/shown
-        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms', 'mdatafms','mconvcore'};
+        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms', 'mdatafms','mconvcore','mratio'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
         guirequirements = {[1 0 0 0 0 0 0],...
@@ -387,7 +457,8 @@ init();
                            [1 0 0 0 0 0 0],...
                            [1 1 1 0 0 0 0],...
                            [1 1 1 0 0 0 1],...
-                           [1 1 1 1 0 0 0]};
+                           [1 1 1 1 0 0 0],...
+                           [1 1 1 1 0 0 1]};
         
         if nargin > 1
             % we want to update the status vector
