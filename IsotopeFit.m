@@ -325,10 +325,10 @@ init();
         handles=guidata(Parent);
         
         %input dialog
-        prompt = {'First compound:','Second compound:','Upper mass limit:'};
+        prompt = {'First compound:','Second compound:','Upper mass limit:','Parent (optional):'};
         dlg_title = 'Ratio of compounds';
         num_lines = 1;
-        def = {'','','inf'};
+        def = {'','','inf',''};
         answer = inputdlg(prompt,dlg_title,num_lines,def);
         
         comp1=['[' answer{1} ']'];
@@ -346,23 +346,39 @@ init();
         
         h=waitbar(0,'Busy...');
         for i=1:length(handles.molecules)
-            %find positions of comp1 and comp2 in molecule name
-            molname=[handles.molecules(i).name,'['];
-            a1=get_number_in_molname(molname,comp1);
-            a2=get_number_in_molname(molname,comp2);
+            % in case a parent molecule is chosen, only use molecules that
+            % include parent for calculation
+            if ~isempty(strfind(handles.molecules(i).name,answer{4})) || isempty(answer{4})
+                %find positions of comp1 and comp2 in molecule name
+                molname=[handles.molecules(i).name,'['];
+                a1=get_number_in_molname(molname,comp1);
+                a2=get_number_in_molname(molname,comp2);
             
-            if a1+a2>0
-                F1=F1+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a1/(a1+a2);
-                F2=F2+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a2/(a1+a2);
-            end
-            waitbar(handles.molecules(i).maxmass/max_mass);
-                       
-            if handles.molecules(i).maxmass>max_mass %then terminate execution
-                break
+                % scruffy solution to calculate O2 ratio when only O is in
+                % spectrum (can only be used in special cases; line above
+                % needs to be commented)
+%                 if strcmp(answer{2},'O2')
+%                     comp2 = '[O]';
+%                     a2_temp=get_number_in_molname(molname,comp2);
+%                     a2=floor(a2_temp/2);
+%                 else
+%                     a2=get_number_in_molname(molname,comp2);
+%                 end
+            
+                if a1+a2>0
+                    F1=F1+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a1/(a1+a2);
+                    F2=F2+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a2/(a1+a2);
+                end
+                waitbar(handles.molecules(i).maxmass/max_mass);
+                
+                if handles.molecules(i).maxmass>max_mass %then terminate execution
+                    break
+                end
             end
         end
         close(h);
-        msgbox(sprintf('%s: %f\n%s: %f\n%s/%s: %f',comp1,F1,comp2,F2,comp1,comp2,F1/F2),'Ratio');
+        %msgbox(sprintf('%s: %f\n%s: %f\n%s/%s: %f',comp1,F1,comp2,F2,comp1,comp2,F1/F2),'Ratio');
+        msgbox(sprintf('%s: %f\n%s: %f\n%s/%s: %f',comp1,F1,['[' answer{2} ']'],F2,comp1,['[' answer{2} ']'],F1/F2),'Ratio');
     end
 
     function out=get_number_in_molname(molname,comp)
