@@ -22,7 +22,8 @@ if ~isempty(folder)
     if ~strcmpi(filename(end-3:end),'.ifm')
         filename=[filename,'.ifm'];
     end
-    pathandfile=[folder,filesep,filename,'.ifm'];
+    pathandfile=[folder,filesep,filename];
+    %pathandfile=[folder,filesep,filename,'.ifm'];
 else
     %full path to file provided
     pathandfile=filename;
