@@ -88,7 +88,13 @@ drawnow;
             
         mid = handles.f{1, 1}(get(ListEntries,'Value'));
         % this gives us the size in bytes the file should eventually have
-        size_expected = str2double(urlread(['http://138.232.72.25/clustof/export/', num2str(mid), '/size']));
+        try
+            size_expected = str2double(urlread(['http://138.232.72.25/clustof/export/', num2str(mid), '/size']));
+        catch error
+            'Could not determine filesize... Proceeding'
+            size_expected = 0;
+        end
+        
         orig_filename = urlread(['http://138.232.72.25/clustof/export/', num2str(mid), '/filename']);
         dlurl = ['http://138.232.72.25/clustof/export/', num2str(mid)];
         
