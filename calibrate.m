@@ -435,27 +435,24 @@ uiwait(Parent)
     end
 
     function donecalib(hObject,~)
+        % this parameter determines whether we continue after the checks
+        goahead = 1;
         
-    % check if fitted resolution is negative for any mass (can be the case
-    % for high masses when using polynomial fit)
+        % check if fitted resolution is negative for any mass (can be the case
+        % for high masses when using polynomial fit)
         res = resolutionbycalibration(handles.calibration, peakdata(:,1));
         offset = massoffsetbycalibration(handles.calibration, peakdata(:,1));
         offsetdiff = diff(peakdata(:,1))-diff(offset);
+
         if sum(res<0) > 0
             choise = questdlg(sprintf('Resolution gets negative for high masses. This could lead to problems in the fitting procedure. \n Please, change method or add calibration molecules. \n Do you want to continue without changing your settings?'),...
                 'Negative Resolution',...
                 'Yes', 'No', 'No');
             switch choise
                 case 'Yes'
-                    calout=handles.calibration;
-                    calout.namelist=ranges2namelist(handles.ranges);
-                    moleculesout=handles.molecules;
-
-                    drawnow;
-                    uiresume(gcbf);
-                    close(Parent);
-        
-                %case 'No'
+                    goahead = 1;
+                case 'No'
+                    goahead = 0;
             end
         % check if gradient of mass offset is not steeper than gradient of
         % original mass axis in order to keep monotonicity of calibrated
@@ -466,17 +463,13 @@ uiwait(Parent)
                 'Yes', 'No', 'No');
             switch choise
                 case 'Yes'
-                    calout=handles.calibration;
-                    calout.namelist=ranges2namelist(handles.ranges);
-                    moleculesout=handles.molecules;
-
-                    drawnow;
-                    uiresume(gcbf);
-                    close(Parent);
-        
-                %case 'No'
+                    goahead = 1;
+                case 'No'
+                    goahead = 0;
             end
-        else
+        end
+        
+        if goahead == 1
             calout=handles.calibration;
             calout.namelist=ranges2namelist(handles.ranges);
             moleculesout=handles.molecules;
