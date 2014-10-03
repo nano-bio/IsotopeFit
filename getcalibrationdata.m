@@ -1,6 +1,8 @@
 function out= getcalibrationdata(x,y,param,methode,axis)
 %UNTITLED5 Summary of this function goes here
 %   Detailed explanation goes here
+ws = warning('off','all');  % Turn off warning
+
 switch lower(methode)
     case 'flat'
         out=ones(size(axis,1),size(axis,2))*param;
@@ -14,7 +16,7 @@ switch lower(methode)
     case 'spaps'
         out=fnval(spaps(x,y,exp(param)),axis);
 end
-
+warning(ws)  % Turn warning back on.
 
 end
 

@@ -16,12 +16,27 @@ end
 %A=M\spec_measured';
 [A,~,residual] = lsqnonneg(M,double(spec_measured)');
 
-paramsout=parameters;
-paramsout(1:end-2)=A';
+% estimate errors using residuals
+% see http://en.wikipedia.org/wiki/Studentized_residual: Internal and external studentization
+
+% m=length(A);
+% n=length(spec_measured);
+% %Ahat=(M'*M)\(M'*double(spec_measured)');
+% Ahat=lsqnonneg((M'*M),(M'*double(spec_measured)'));
+% 
+% s2=norm(A-Ahat)^2/(n-m);
+% covar=s2*inv(M'*M);
+% sqrt(covar)
+% error_est=sqrt(diag(covar))'
+% 
+ paramsout=parameters;
+ paramsout(1:end-2)=A';
+
+error_est=get_fitting_errors(spec_measured,massaxis,molecules,parameters,1)';
 
 %errors are residuals of variables. doesn't provide errors for resolution
 %and massoffset
-errout=[residual',NaN,NaN];
+errout=[error_est,NaN,NaN];
 
 end
 

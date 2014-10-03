@@ -251,6 +251,7 @@ mdata = uimenu('Label','Data');
                mdatacs = uimenu(mexport,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
                mdatacv = uimenu(mexport,'Label','Current View...','Callback',@menuexportcurrentview,'Enable','on');
                mdatacms = uimenu(mexport,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
+               mdatasmooth = uimenu(mexport,'Label','Smooth Mass Spectrum...','Callback',@menuexportsmoothmassspec,'Enable','on');
                mdatafms = uimenu(mexport,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
        mconvcore=uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
                mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
@@ -259,6 +260,8 @@ mdata = uimenu('Label','Data');
        mplay = uimenu(mdata,'Label','Play','Separator','on');
                uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
                uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
+       mpaper = uimenu(mdata,'Label','Paper','Separator','on');
+               uimenu(mpaper,'Label','Noise analysis','Callback',@menunoiseanalysis,'Enable','on');
        
 %%       
 % ===== END OF LAYOUT ===== %     
@@ -527,6 +530,46 @@ init();
                     double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
     end
 
+    function menuexportsmoothmassspec(hObject,~)
+        %% Exports Peakdata of entire mass range to ascii file
+        handles=guidata(hObject);
+        
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_smooth_spec.txt'];
+        [filename, pathname, filterindex] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export Smooth Mass Spectrum',...
+            filenamesuggestion);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            % handles=guidata(hObject);
+           
+            %write title line
+            fid=fopen(fullfile(pathname,filename),'w');
+            fprintf(fid,'Mass (Dalton)\tSignal (a.u.)\n');
+            fclose(fid);
+            
+            %apply gaussian smoothing by pointwise cross correlation with a
+            %gaussian peak (resolution dependent)
+            smooth_data=zeros(size(handles.peakdata(:,1)));
+            tic
+            sigma=sigmabycalibration(handles.calibration,handles.peakdata(:,1));
+            for i=1:length(smooth_data)
+                if mod(i,1000)==0
+                    i/length(smooth_data)
+                end
+                current_mass=handles.peakdata(i,1);
+                minind=mass2ind(handles.peakdata(:,1)',current_mass-3*sigma(i));
+                maxind=mass2ind(handles.peakdata(:,1)',current_mass+3*sigma(i));
+                smooth_data(i)=sum(handles.peakdata(minind:maxind,2).*normpdf(handles.peakdata(minind:maxind,1),current_mass,sigma(i)/2));
+            end
+            toc
+            %append data
+            fprintf('dlmwrite. please wait...');
+            dlmwrite(fullfile(pathname,filename),[handles.peakdata(:,1),smooth_data],'-append','delimiter','\t','precision','%e');
+            fprintf(' done.\n');
+        end
+    end
+
     function menuexportmassspec(hObject,~)
         %% Exports Peakdata of entire mass range to ascii file
         handles=guidata(hObject);
@@ -627,6 +670,55 @@ init();
         % the last parameter doesn't really matter, as long it isn't 'read'
         % because that doesn't show the window
         handles.settings = settingswindow(hObject, eventdata, 'show');
+        guidata(Parent,handles);
+    end    
+
+    function menunoiseanalysis(hObject, eventdata)
+        % adds noise to (generated) data and recalculates areas
+        % saves evaluation for every noise-level to file
+        % used for noise analysis/evaluation quality rating
+        handles=guidata(hObject);
+        
+        %input dialog
+        prompt = {'Min Noise Level (% of highest peak):','Max Noise Level (% of highest peak):','Number of Evaluations:','Filename:'};
+        dlg_title = 'Noise Analysis';
+        num_lines = 1;
+        def = {'0','100','100','noise_analysis.txt'};
+        answer = inputdlg(prompt,dlg_title,num_lines,def);
+        
+        nmin=str2double(answer{1});
+        nmax=str2double(answer{2});
+        
+        nsteps=str2double(answer{3});
+        
+        fname=answer{4};
+        
+        deltar=handles.settings.deltaresolution/100;
+        deltam=handles.settings.deltamass;
+        
+        
+        
+        for i=1:nsteps
+            % add noise
+            fprintf('Step %i/%i\n',i,nsteps);
+            
+            r=rand(size(handles.peakdata,1),1);
+            r=(r-0.5)*2/100*max(handles.peakdata(:,2)); % renorm to [-1 1]*max_signal intervall/100
+            r=smooth(r,5); % smoothing -> use "sinc" noise instead of white noise as an approximation for gaussian noise
+        
+            noisy_peakdata=handles.peakdata;
+            noisy_peakdata(:,2)=handles.peakdata(:,2)+r*(nmax-nmin)/(nsteps-1)*(i-1)+nmin;
+            
+            molecules_temp=fitwithcalibration(handles.molecules,noisy_peakdata,handles.calibration,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
+                
+            out_data(i,1)=(nmax-nmin)/(nsteps-1)*(i-1)+nmin; %noise level
+            for j=1:length(molecules_temp);
+                out_data(i,j+1)=molecules_temp(j).area;
+            end
+        end
+        
+        dlmwrite(fname,out_data,'delimiter','\t','precision','%e');
+        fprintf('Data written to %s\n',fname);
         guidata(Parent,handles);
     end
 
@@ -1508,7 +1600,8 @@ init();
 
     function out=subtractmassoffset(peakdata,calibration)
         out=peakdata;
-        mo=massoffsetbycalibration(calibration,peakdata(:,1));
+        xaxis=min(peakdata(:,1)):0.01:max(peakdata(:,1));
+        mo=massoffsetbycalibration(calibration,xaxis);
         % maybe you think, that this would do the job:
         % out(:,1)=out(:,1)-mo;
         % BUT THINK ABOUT:
@@ -1520,7 +1613,17 @@ init();
         % mass_new = inv(A) * mass_old
         % A is diagonal -> yeah, you simply have to perform a pointwise
         % division:
-        out(:,1)=out(:,1).*(out(:,1)./(out(:,1)+mo));
+        
+        %out(:,1)=out(:,1).*(out(:,1)./(out(:,1)+mo));
+        
+        yaxis=xaxis+mo;
+        out(:,1)=interp1(yaxis,xaxis,peakdata(:,1));
+        
+%         for i=1:size(out,1);
+%             ind=mass2ind(peakdata(:,1),peakdata(i,1)+mo(i));
+%             out(i,2)=peakdata(ind,2);
+%             if ~mod(i,1000), i, end
+%         end
     end
     
     function [areaout,areaerrorout,indexout,sortlist]=sortmolecules(molecules,searchstring,peakdata)
@@ -1566,8 +1669,9 @@ init();
 %           b=(molecules(i).maxmass-molecules(i).minmass)/npins; %mean pin-distance
            
 %           dividion by sqrt(m):
-            b=sqrt(molecules(i).com);
-     
+            %b=sqrt(molecules(i).com);
+            b=1;
+            
             areaout(lineix,rowix)=molecules(i).area/b;
             areaerrorout(lineix,rowix)=molecules(i).areaerror/b;
             indexout(lineix,rowix)=i; %save index to molecule
