@@ -242,8 +242,9 @@ mmolecules = uimenu('Label','Molecules','Enable','off');
        
 mcal = uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
-       mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off');
-       mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on');
+       mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off','Separator','on');
+       mpd2raw=uimenu(mcal,'Label','Write peakdata to raw peakdata...','Callback',@menupeakdata2raw,'Enable','on');
+       mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on','Separator','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
            
 mdata = uimenu('Label','Data');
@@ -1053,12 +1054,28 @@ init();
         % run calibration again, because it is lost, when the background
         % correction is applied
         handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
-
+        
         guidata(Parent,handles);
         handles = gui_status_update('bg_corrected', 1, handles);
         handles = gui_status_update('fitted', 0, handles);
         handles = gui_status_update('changed', 1, handles);
     end
+
+
+    function menupeakdata2raw(hObject,~)
+        handles=guidata(Parent);
+        
+        handles.raw_peakdata=handles.peakdata;
+        
+        %set bgcorrection and calibration to zero
+        handles.bgcorrectiondata.bgy=zeros(size(handles.bgcorrectiondata.bgy));
+        handles.calibration.massoffsetlist=zeros(size(handles.calibration.massoffsetlist));
+        
+        guidata(Parent,handles);
+        
+        msgbox('Done.');
+    end
+
 
     function menucalibration(hObject,~)
         handles=guidata(Parent);
@@ -1602,6 +1619,8 @@ init();
         out=peakdata;
         xaxis=min(peakdata(:,1)):0.01:max(peakdata(:,1));
         mo=massoffsetbycalibration(calibration,xaxis);
+        %mo=massoffsetbycalibration(calibration,peakdata(:,1));
+        
         % maybe you think, that this would do the job:
         % out(:,1)=out(:,1)-mo;
         % BUT THINK ABOUT:
@@ -1615,10 +1634,9 @@ init();
         % division:
         
         %out(:,1)=out(:,1).*(out(:,1)./(out(:,1)+mo));
-        
         yaxis=xaxis+mo;
-        out(:,1)=interp1(yaxis,xaxis,peakdata(:,1));
-        
+        out(:,1)=interp1(yaxis,xaxis,peakdata(:,1),'pchip','extrap');
+
 %         for i=1:size(out,1);
 %             ind=mass2ind(peakdata(:,1),peakdata(i,1)+mo(i));
 %             out(i,2)=peakdata(ind,2);
