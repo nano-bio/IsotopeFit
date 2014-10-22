@@ -1596,10 +1596,18 @@ init();
     function plotmolecule(index)
         handles=guidata(Parent);
         
-        % find min and max index of mass range that should be plotted i.e.
-        % certain range (30 sigma) around the selected molecules
-        ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules(index).com),0,30);
+        limits=get(dataaxes,'xlim');
         
+        if (handles.molecules(index).minmass<limits(1))|(handles.molecules(index).maxmass>limits(2))
+            % molecule is outside of view. reset zoom
+            % find min and max index of mass range that should be plotted i.e.
+            % certain range (30 sigma) around the selected molecules
+            ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules(index).com),0,30);
+        else
+            %molecule is inside view.
+            ind = mass2ind(handles.peakdata(:,1),limits(1)):mass2ind(handles.peakdata(:,1),limits(2));
+        end
+            
         % corresponding mass values of axis
         calcmassaxis=handles.peakdata(ind,1)';
         
@@ -1616,7 +1624,10 @@ init();
         hold(dataaxes,'on');
         
         % plot fitted data for all peaks that are displayed (need to find out which molecules are involved in this range)
+                
         limits = [calcmassaxis(1) calcmassaxis(end)];
+        
+        
         involvedmolecules=molecules_in_massrange(handles.molecules, limits(1), limits(2));
         
         % calculated fitted spec for all involved molecules
@@ -1643,7 +1654,7 @@ init();
         %Zoom data
         %[~,i]=max(handles.molecules(index).peakdata(:,2));
  %       calcmassaxis
-        xlim(dataaxes,[calcmassaxis(1),calcmassaxis(end)]);  
+        xlim(dataaxes,[limits(1),limits(2)]);  
         %ylim(previewaxes,[0,max(max(handles.molecules(index).peakdata(:,2)),max(handles.peakdata(handles.molecules(index).minind:handles.molecules(index).maxind,2)))]);
 
         % Update the slider bar accordingly:
