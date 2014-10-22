@@ -244,6 +244,7 @@ mcal = uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
        mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off','Separator','on');
        mpd2raw=uimenu(mcal,'Label','Write peakdata to raw peakdata...','Callback',@menupeakdata2raw,'Enable','on');
+       mpdsmoothmass=uimenu(mcal,'Label','Smooth massaxis...','Callback',@menusmoothmassaxis,'Enable','on');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on','Separator','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
            
@@ -543,27 +544,55 @@ init();
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             % handles=guidata(hObject);
-           
+            
+            
+%             %apply gaussian smoothing by pointwise cross correlation with a
+%             %gaussian peak (resolution dependent)
+%             smooth_data=zeros(size(handles.peakdata(:,1)));
+%             tic
+%             sigma=sigmabycalibration(handles.calibration,handles.peakdata(:,1));
+%             for i=1:length(smooth_data)
+%                 if mod(i,1000)==0
+%                     i/length(smooth_data)
+%                 end
+%                 current_mass=handles.peakdata(i,1);
+%                 minind=mass2ind(handles.peakdata(:,1)',current_mass-3*sigma(i));
+%                 maxind=mass2ind(handles.peakdata(:,1)',current_mass+3*sigma(i));
+%                 smooth_data(i)=sum(handles.peakdata(minind:maxind,2).*normpdf(handles.peakdata(minind:maxind,1),current_mass,sigma(i)/2));
+%             end
+%             toc
+            
+            %           smoothing via fourier transform
+            %shiftsearch=(handles.peakdata(:,1)-(handles.peakdata(1,1)+handles.peakdata(end,1))/2);
+            
+            %input dialog
+            prompt = {'Sigma (Time bins):'};
+            dlg_title = 'Gaussian Smoothing';
+            num_lines = 1;
+            def = {'5'};
+            answer = inputdlg(prompt,dlg_title,num_lines,def);
+
+            shiftsearch=[0:(size(handles.peakdata,1)-1)]-size(handles.peakdata,1)/2;
+            
+            tic
+            gausspeak=normpdf(shiftsearch,0,str2double(answer{1}));
+            
+            %    data=10*getdata(werte,peaks,height,0);
+            %    data2=10*getdata(werte,peaks,height,shift);
+             
+            smooth_data=ifftshift(ifft(fft(handles.peakdata(end:-1:1,2)).*fft(gausspeak')));
+            smooth_data=smooth_data(end:-1:1);
+            plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2),'color',[0.7,0.7,0.7]);
+            hold on;
+            plot(dataaxes,handles.peakdata(:,1),smooth_data,'k-');
+            hold off;
+            toc
+            
             %write title line
             fid=fopen(fullfile(pathname,filename),'w');
             fprintf(fid,'Mass (Dalton)\tSignal (a.u.)\n');
             fclose(fid);
-            
-            %apply gaussian smoothing by pointwise cross correlation with a
-            %gaussian peak (resolution dependent)
-            smooth_data=zeros(size(handles.peakdata(:,1)));
-            tic
-            sigma=sigmabycalibration(handles.calibration,handles.peakdata(:,1));
-            for i=1:length(smooth_data)
-                if mod(i,1000)==0
-                    i/length(smooth_data)
-                end
-                current_mass=handles.peakdata(i,1);
-                minind=mass2ind(handles.peakdata(:,1)',current_mass-3*sigma(i));
-                maxind=mass2ind(handles.peakdata(:,1)',current_mass+3*sigma(i));
-                smooth_data(i)=sum(handles.peakdata(minind:maxind,2).*normpdf(handles.peakdata(minind:maxind,1),current_mass,sigma(i)/2));
-            end
-            toc
+                      
             %append data
             fprintf('dlmwrite. please wait...');
             dlmwrite(fullfile(pathname,filename),[handles.peakdata(:,1),smooth_data],'-append','delimiter','\t','precision','%e');
@@ -1061,6 +1090,33 @@ init();
         handles = gui_status_update('changed', 1, handles);
     end
 
+     function menusmoothmassaxis(hObject,~)
+        %needed to solve problems with noisy massaxis
+        handles=guidata(Parent);
+        
+        indaxis=1:size(handles.raw_peakdata,1);
+        
+        %find a polynom that fits the massaxis       
+        p=polyfit(indaxis,handles.raw_peakdata(:,1)',2);
+
+        smoothmass=p(3)+p(2)*indaxis+p(1)*indaxis.^2;
+        
+        %crop the data -> start from minimum
+        [~,minind]=min(smoothmass);
+                
+        handles.raw_peakdata=handles.raw_peakdata(minind+1:end,:);
+        handles.raw_peakdata(:,1)=smoothmass(minind+1:end)';
+        
+        handles.peakdata=handles.raw_peakdata;
+        
+        %reset crop values
+        handles.startind=1;
+        handles.endind=size(handles.peakdata,1);
+        
+        guidata(Parent,handles);
+        
+        msgbox('Done.');
+     end
 
     function menupeakdata2raw(hObject,~)
         handles=guidata(Parent);
@@ -1096,7 +1152,7 @@ init();
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
         [handles.calibration,handles.molecules]= calibrate(peakdata,handles.molecules,handles.calibration,handles.settings);
-            
+            handles.calibration.resolutionparam
         
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
         guidata(Parent,handles);
@@ -1637,11 +1693,13 @@ init();
         yaxis=xaxis+mo;
         out(:,1)=interp1(yaxis,xaxis,peakdata(:,1),'pchip','extrap');
 
-%         for i=1:size(out,1);
+%          for i=1:size(out,1);
 %             ind=mass2ind(peakdata(:,1),peakdata(i,1)+mo(i));
 %             out(i,2)=peakdata(ind,2);
-%             if ~mod(i,1000), i, end
-%         end
+%             if ~mod(i,1000)
+%                 fprintf('%i/%i\n',i,size(out,1)) 
+%             end
+%          end
     end
     
     function [areaout,areaerrorout,indexout,sortlist]=sortmolecules(molecules,searchstring,peakdata)
