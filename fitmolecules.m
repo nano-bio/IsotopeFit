@@ -33,8 +33,12 @@ for i=1:l
     massoffset=massoffsetbycalibration(calibration,molecules(i).com); %x-offset
     
     %ind=findmassrange(massaxis,molecules(i),resolution,massoffset,searchrange);
-    ind=findmassrange2(massaxis,molecules(i),resolution,massoffset,searchrange);
-    involved=molecules_in_massrange_with_sigma(molecules(i:l),massaxis(ind(1)),massaxis(ind(end)),calibration,searchrange)'+(i-1);
+    
+    % ============= FIX THIS LATER : ==================
+    %set searchrange to settings.searchrange
+    involved=molecules_in_massrange_with_sigma(molecules(i:l),molecules(i).minmass,molecules(i).maxmass,calibration,searchrange)'+(i-1);
+    ind=findmassrange2(massaxis,molecules(involved),resolution,massoffset,3);
+    
     
     %maximally used datapoints for fitting per molecule
     maxdatapoints=50*length(involved);
@@ -81,7 +85,8 @@ for i=1:l
     end
     
     %update calculated spec
-    spec_calc=spec_calc+multispecparameters(massaxis,molecules(i),fitparam([1,end-1,end]));
+    ind=findmassrange(massaxis,molecules(i),resolution,massoffset,10);
+    spec_calc(ind)=spec_calc(ind)+multispecparameters(massaxis(ind),molecules(i),fitparam([1,end-1,end]));
     
     k=1;
     for j=involved
