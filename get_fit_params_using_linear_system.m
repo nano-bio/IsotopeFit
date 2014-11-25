@@ -5,6 +5,7 @@ function [paramsout,errout] = get_fit_params_using_linear_system(spec_measured,m
 % Pre-allocate space for Matrix:
 % lines:number of datapoints,
 % columns: number of molecules
+
 M=zeros(length(massaxis),length(molecules));
 
 %fill matrix with isotopic pattern for every molecule
@@ -32,11 +33,20 @@ end
  paramsout=parameters;
  paramsout(1:end-2)=A';
 
-error_est=get_fitting_errors(spec_measured,massaxis,molecules,parameters,1)';
+%errout=get_fitting_errors(spec_measured,massaxis,molecules,paramsout,1)'
 
 %errors are residuals of variables. doesn't provide errors for resolution
 %and massoffset
-errout=[error_est,NaN,NaN];
+%errout=[error_est,NaN,NaN];
+
+errout=1.96*diag(sqrt(inv(M'*M)*sum(((M*A)'-spec_measured).^2)/(length(spec_measured-length(A)))));
+
+% 
+% for i=1:length(molecules)
+%     fprintf('Molecule: %s\t\tArea: %f +- %f\n',molecules(i).name,molecules(i).area,molecules(i).areaerror);
+% end
+
+%errout=NaN(size(paramsout));
 
 end
 

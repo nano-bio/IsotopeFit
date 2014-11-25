@@ -262,8 +262,10 @@ mdata = uimenu('Label','Data');
        mplay = uimenu(mdata,'Label','Play','Separator','on');
                uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
                uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
-       mpaper = uimenu(mdata,'Label','Paper','Separator','on');
-               uimenu(mpaper,'Label','Noise analysis','Callback',@menunoiseanalysis,'Enable','on');
+       merrors = uimenu(mdata,'Label','Errors and Noise','Separator','on');
+               uimenu(merrors,'Label','Noise analysis','Callback',@menunoiseanalysis,'Enable','on');
+               uimenu(merrors,'Label','Error analysis','Callback',@menuerroranalysis,'Enable','on');
+               %uimenu(mdata,'Label','All Errors','Separator','on','Callback',@geterrors,'Enable','on');
        
 %%       
 % ===== END OF LAYOUT ===== %     
@@ -680,7 +682,7 @@ init();
             fprintf(fid,'Massaxis\tOrig. Signal\tFitted Signal');
             
             %read out molecule data and write names to first line
-            for i=moleculelist
+            for i=moleculelist'
                 %calculate fitted data for every molecule:
                 fitted_data(:,k)=multispec(handles.molecules(i),resolutionaxis,0,massaxis)';
                 k=k+1;
@@ -703,6 +705,83 @@ init();
         guidata(Parent,handles);
     end    
 
+    function menuerroranalysis(hObject, eventdata)
+        handles=guidata(hObject);
+        
+        moleculeindex=getrealselectedmolecules();
+        moleculeindex=moleculeindex(1);
+        
+        involved=molecules_in_massrange_with_sigma(handles.molecules,handles.molecules(moleculeindex).minmass,handles.molecules(moleculeindex).maxmass,handles.calibration,handles.settings.searchrange);
+        
+        massind=findmassrange2(handles.peakdata(:,1),handles.molecules(involved),resolutionbycalibration(handles.calibration,handles.molecules(moleculeindex).com),0,handles.settings.searchrange*3);
+        
+        massaxis=handles.peakdata(massind,1)';
+        spec_measured=handles.peakdata(massind,2)';
+               
+        
+        testareas=handles.molecules(moleculeindex).area+((-9:0.2:9)*(1+handles.molecules(moleculeindex).area/10));
+        testmsd=zeros(size(testareas));
+        
+        handles.molecules(involved).name
+        
+        for i=1:length(testareas)
+            [testmsd(i),spec]=msd_area_variation(spec_measured,massaxis,handles.molecules(setdiff(involved,moleculeindex)),handles.molecules(moleculeindex),testareas(i),handles.calibration);
+            %plot(massaxis,multispecparameters(massaxis,handles.molecules(moleculeindex),[testareas(i),resolutionbycalibration(handles.calibration,handles.molecules(moleculeindex).com),0]),massaxis,spec);
+            %drawnow
+            fprintf('%i/%i\tMSD: %f\tArea: %f\n ',i,length(testareas),testmsd(i),testareas(i));
+        end
+                
+        calcspec=multispec(handles.molecules(involved),resolutionbycalibration(handles.calibration,massaxis),0,massaxis);
+        
+        stdabw=sqrt(sum((calcspec-spec_measured).^2));
+                
+%        error=get_fitting_error2(spec_measured,massaxis,handles.molecules(moleculeindex),handles.molecules(setdiff(involved,moleculeindex)),handles.calibration);
+        
+        [minmsd,minind]=min(testmsd);
+                
+        areainterp=testareas(1):(testareas(minind)-testareas(1))/1000:testareas(minind);
+        testmsdinterp=spline(testareas,testmsd,areainterp);
+        
+        [~,ind]=min(abs(testmsdinterp-minmsd*1.1));
+        leftarea=areainterp(ind);
+        
+        areainterp=testareas(minind):(testareas(end)-testareas(minind))/1000:testareas(end);
+        testmsdinterp=spline(testareas,testmsd,areainterp);
+        
+        [~,ind]=min(abs(testmsdinterp-minmsd*1.1));
+        rightarea=areainterp(ind);
+        
+        fprintf('Lower error: %f\n',leftarea);
+        fprintf('Upper error: %f\n',rightarea);
+        
+        hold(areaaxes,'off');
+        plot(areaaxes,testareas,testmsd,testareas,repmat(minmsd*1.05,1,length(testareas)))
+        
+%         
+%         hold(areaaxes,'on');
+% %        plot(areaaxes,testareas,repmat(errlevel_low,size(testareas)),testareas,repmat(errlevel_high,size(testareas)))
+%         plot(areaaxes,testarea,testmsd,'ro');
+%         ind=round(length(testareas)/2);
+%         plot(areaaxes,testareas(1:ind),sqrt((testareas(1:ind)-testarea(2)).^2*s1+testmsd(2)^2),'r-');
+%         plot(areaaxes,testareas(ind:end),sqrt((testareas(ind:end)-testarea(2)).^2*s2+testmsd(2)^2),'r-');
+%         hold(areaaxes,'off');
+%         
+%         fprintf('\n 2nd Order Polynom Approximation: \n\n')
+%         fprintf('Lower error: %f\n',testarea(2)-(0.1*testmsd(2))/sqrt(s1));
+%         fprintf('Upper error: %f\n',testarea(2)+(0.1*testmsd(2))/sqrt(s2));
+%         
+%         
+         [~,speclow]=msd_area_variation(spec_measured,massaxis,handles.molecules(setdiff(involved,moleculeindex)),handles.molecules(moleculeindex),leftarea,handles.calibration);
+         [~,spechigh]=msd_area_variation(spec_measured,massaxis,handles.molecules(setdiff(involved,moleculeindex)),handles.molecules(moleculeindex),rightarea,handles.calibration);
+%         
+         hold(dataaxes,'on');
+         plot(dataaxes,massaxis,speclow,'b--');
+         plot(dataaxes,massaxis,spechigh,'g--');
+         hold(dataaxes,'off');
+        
+        guidata(Parent,handles);
+    end
+
     function menunoiseanalysis(hObject, eventdata)
         % adds noise to (generated) data and recalculates areas
         % saves evaluation for every noise-level to file
@@ -710,10 +789,10 @@ init();
         handles=guidata(hObject);
         
         %input dialog
-        prompt = {'Min Noise Level (% of highest peak):','Max Noise Level (% of highest peak):','Number of Evaluations:','Filename:'};
+        prompt = {'log(min Area):','log(max Area):','Number of Evaluations:','Filename:'};
         dlg_title = 'Noise Analysis';
         num_lines = 1;
-        def = {'0','100','100','noise_analysis.txt'};
+        def = {'1','3','1000','noise_analysis.txt'};
         answer = inputdlg(prompt,dlg_title,num_lines,def);
         
         nmin=str2double(answer{1});
@@ -725,25 +804,20 @@ init();
         
         deltar=handles.settings.deltaresolution/100;
         deltam=handles.settings.deltamass;
-        
-        
-        
+                       
         for i=1:nsteps
             % add noise
             fprintf('Step %i/%i\n',i,nsteps);
-            
-            r=rand(size(handles.peakdata,1),1);
-            r=(r-0.5)*2/100*max(handles.peakdata(:,2)); % renorm to [-1 1]*max_signal intervall/100
-            r=smooth(r,5); % smoothing -> use "sinc" noise instead of white noise as an approximation for gaussian noise
-        
+                        
             noisy_peakdata=handles.peakdata;
-            noisy_peakdata(:,2)=handles.peakdata(:,2)+r*(nmax-nmin)/(nsteps-1)*(i-1)+nmin;
+            noisy_peakdata(:,2)=poissrnd(handles.peakdata(:,2)*10^((nmax-nmin)/(nsteps-1)*(i-1)+nmin));
             
             molecules_temp=fitwithcalibration(handles.molecules,noisy_peakdata,handles.calibration,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
                 
-            out_data(i,1)=(nmax-nmin)/(nsteps-1)*(i-1)+nmin; %noise level
+            out_data(i,1)=10^((nmax-nmin)/(nsteps-1)*(i-1)+nmin); %noise level
             for j=1:length(molecules_temp);
-                out_data(i,j+1)=molecules_temp(j).area;
+                out_data(i,j*2)=molecules_temp(j).area/out_data(i,1);
+                out_data(i,j*2+1)=molecules_temp(j).areaerror/out_data(i,1);
             end
         end
         
@@ -919,22 +993,23 @@ init();
                 
         j=1;
         for i=1:size(handles.seriesarea,1)
-            if (handles.seriesarea(i,ix)~=0)||(handles.seriesareaerror(i,ix)~=0)
+            %if (handles.seriesarea(i,ix)~=0)||(handles.seriesareaerror(i,ix)~=0)
                 n(j)=i-1;
                 data(j)=handles.seriesarea(i,ix);
-                dataerror(j)=handles.seriesareaerror(i,ix);
+                dataerror(j)=handles.seriesareaerror(i,ix,:);
                 j=j+1;
-            end
+            %end
         end
         
         
         %area(areaaxes,n,data+dataerror,data-dataerror,'Facecolor',[0.7,0.7,0.7],'Linestyle','none');
-        
+        hold off;
         plot(areaaxes,n,data,'k--', 'HitTest', 'Off');
         hold on;
         
         stem(areaaxes,n,data,'filled','+k', 'HitTest', 'Off'); 
-        
+        size(dataerror)
+        size(data)
         stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none', 'HitTest', 'Off');
         stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none', 'HitTest', 'Off');
         
@@ -1757,16 +1832,51 @@ init();
            
 %           dividion by sqrt(m):
             %b=sqrt(molecules(i).com);
-            b=1;
+            
+            %Area under peak
+            %b=1;
+            
+            %Total number of counts:
+            b=(molecules(i).minmass-molecules(i).maxmass)/...
+              (molecules(i).minind-molecules(i).maxind);
+              
             
             areaout(lineix,rowix)=molecules(i).area/b;
-            areaerrorout(lineix,rowix)=molecules(i).areaerror/b;
+            %areaerrorout(lineix,rowix)=sqrt(molecules(i).area/b);
+            areaerrorout(lineix,rowix,:)=molecules(i).areaerror/b;
             indexout(lineix,rowix)=i; %save index to molecule
         end
         for i=1:length(attached)
             sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
         end
     end
+
+%     function geterrors(hObject,~)
+%         handles=guidata(hObject);
+%         massoffset=0;
+%         
+%         h=waitbar(0,'Busy...');
+%         l=length(handles.molecules);
+%         
+%         %for i=1:l
+%         i=78
+%         
+%             fprintf('Molecule %i/%i: %s\n',i,l,handles.molecules(i).name);
+%             resolution=resolutionbycalibration(handles.calibration,handles.molecules(i).com); %resolution
+%             
+%             involved=molecules_in_massrange_with_sigma(handles.molecules,handles.peakdata(handles.molecules(i).minind,1),handles.peakdata(handles.molecules(i).maxind,1),handles.calibration,handles.settings.searchrange)';
+%                         
+%             ind=findmassrange2(handles.peakdata(:,1)',handles.molecules(involved),resolution,massoffset,3);%handles.settings.searchrange);
+%                         
+%             handles.molecules(i).areaerror=get_fitting_error(handles.peakdata(ind,2)',handles.peakdata(ind,1)',handles.molecules(i),handles.molecules(setdiff(involved,i)),handles.calibration);
+%             handles.molecules(i).areaerror
+%             handles.molecules(i).area
+%             
+%             guidata(hObject,handles);
+%             waitbar(i/l);
+%         %end
+%         close(h);
+%     end
 
     function fitbuttonclick(hObject,eventdata)
         handles=guidata(hObject);

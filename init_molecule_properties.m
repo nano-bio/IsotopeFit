@@ -51,7 +51,7 @@ for i = 1:l
             molecules_out(i).area=guessarea(peakdata(molecules_out(i).minind:molecules_out(i).maxind-1,:));
         end
         
-        molecules_out(i).areaerror=+inf;
+        molecules_out(i).areaerror=NaN;
         
         minmasses(i)=molecules_out(i).minmass;
         %filter(minind:maxind)=1;
