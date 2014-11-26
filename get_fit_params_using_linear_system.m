@@ -40,7 +40,8 @@ end
 %errout=[error_est,NaN,NaN];
 
 errout=1.96*diag(sqrt(inv(M'*M)*sum(((M*A)'-spec_measured).^2)/(length(spec_measured-length(A)))));
-
+errout(end+1)=0; %resolution
+errout(end+2)=0; %mass offset
 % 
 % for i=1:length(molecules)
 %     fprintf('Molecule: %s\t\tArea: %f +- %f\n',molecules(i).name,molecules(i).area,molecules(i).areaerror);
