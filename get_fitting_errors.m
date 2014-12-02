@@ -2,6 +2,8 @@ function errout = get_fitting_errors(spec_measured,massaxis,molecules,parameters
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
+errout=zeros(1,length(molecules)+2);
+
 dof=length(massaxis)-2;
 %sdrq = (msd(spec_measured(inderr),massaxis(inderr),molecules,parameters))/dof;
 

@@ -17,7 +17,7 @@ sigmamu=fminsearchbnd(@(x) msd_without_areas(spec_measured,massaxis,molecules,x)
 paramin=[zeros(1,length(molecules)),sigmamu];
 [paramsout,~] = get_fit_params_using_linear_system(spec_measured,massaxis,molecules,paramin,lb,ub);
 
-errout=get_fitting_errors(spec_measured,massaxis,molecules,paramsout,0.5);
-
+%errout=get_fitting_errors(spec_measured,massaxis,molecules,paramsout,0.5);
+errout=NaN(1,length(molecules)+2);
 end
 
