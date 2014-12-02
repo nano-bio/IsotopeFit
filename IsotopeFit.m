@@ -247,7 +247,8 @@ mcal = uimenu('Label','Calibration');
        mpdsmoothmass=uimenu(mcal,'Label','Smooth massaxis...','Callback',@menusmoothmassaxis,'Enable','on');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on','Separator','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
-           
+       msavecalib=uimenu(mcal,'Label','Save Calibration to File...','Callback',@menusavecal,'Enable','on', 'Separator', 'on');
+       
 mdata = uimenu('Label','Data');
        mexport = uimenu(mdata,'Label','Export','Enable','on');
                mdatacs = uimenu(mexport,'Label','Cluster Series...','Callback',@menuexportdataclick,'Enable','on');
@@ -984,6 +985,38 @@ init();
             end
         end
     end
+
+
+
+
+
+function menusavecal(hObject,~)
+        % this function exports the calibration points to an ASCII file
+        handles=guidata(hObject);
+
+        %get data poits for massoffset from mass calibration
+        comlist = handles.calibration.comlist;
+        massoffsetlist = handles.calibration.massoffsetlist;
+        
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_massoffset_data.txt'];
+        
+        [filename, pathname, filterindex] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export data',...
+            filenamesuggestion);
+        handles=guidata(Parent);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            
+            dlmwrite(fullfile(pathname, filename), [comlist, massoffsetlist], 'Delimiter', '\t', 'Precision', '%e');
+                        
+        end
+    end
+
+
+
+
+
 
     function listseriesclick(hObject,~)
         handles=guidata(hObject);
