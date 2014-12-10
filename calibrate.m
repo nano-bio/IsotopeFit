@@ -416,7 +416,7 @@ uiwait(Parent)
         if strcmp(eventdata.Key, 'rightarrow')
             % we want to add a molecule
             addtolist(source,eventdata)
-        else strcmp(eventdata.Key, 'rightarrow')
+        else strcmp(eventdata.Key, 'leftarrow')
             % we want to remove a molecule
             removefromlist(source,eventdata)
         end
