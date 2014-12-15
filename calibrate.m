@@ -415,10 +415,16 @@ uiwait(Parent)
         % this functions handles keyboard inputs
         if strcmp(eventdata.Key, 'rightarrow')
             % we want to add a molecule
-            addtolist(source,eventdata)
-        else strcmp(eventdata.Key, 'leftarrow')
+            addtolist(source,eventdata);
+        elseif strcmp(eventdata.Key, 'leftarrow')
             % we want to remove a molecule
-            removefromlist(source,eventdata)
+            remove = questdlg('Do you want to remove this molecule?', 'Remove Molecule',...
+                'Yes', 'No', 'Yes');
+            
+            switch remove
+                case 'Yes'
+                    removefromlist(source,eventdata);
+            end
         end
     end
 
@@ -746,7 +752,7 @@ uiwait(Parent)
             % if available
             hold(massoffsetaxes, 'on');
             try
-                delete(handles.mowriteindication)
+                delete(handles.mowriteindication);
             end
             handles.mowriteindication = stem(massoffsetaxes, com, mos,'g');
             hold(massoffsetaxes, 'off');
@@ -917,7 +923,7 @@ uiwait(Parent)
         area=handles.molecules(index).area;
         guidata(hObject,handles);
         
-        writetopreviewedit(com,currentmassoffset,currentresolution,area)
+        writetopreviewedit(com,currentmassoffset,currentresolution,area);
         plotpreview(index, false);
         
         % in the very end we update the resolution and mass offset axes.
