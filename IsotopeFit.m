@@ -1870,8 +1870,11 @@ function menusavecal(hObject,~)
             %b=1;
             
             %Total number of counts:
-            b=(molecules(i).minmass-molecules(i).maxmass)/...
-              (molecules(i).minind-molecules(i).maxind);
+            minind=max(1,molecules(i).minind-10);
+            maxind=min(size(peakdata,1),molecules(i).maxind+10);
+            
+            b=(peakdata(minind,1)-peakdata(maxind,1))/...
+              (minind-maxind);
               
             
             areaout(lineix,rowix)=molecules(i).area/b;
