@@ -1041,8 +1041,6 @@ function menusavecal(hObject,~)
         hold on;
         
         stem(areaaxes,n,data,'filled','+k', 'HitTest', 'Off'); 
-        size(dataerror)
-        size(data)
         stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none', 'HitTest', 'Off');
         stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none', 'HitTest', 'Off');
         
@@ -1260,7 +1258,7 @@ function menusavecal(hObject,~)
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
         [handles.calibration,handles.molecules]= calibrate(peakdata,handles.molecules,handles.calibration,handles.settings);
-            handles.calibration.resolutionparam
+
         
         handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
         guidata(Parent,handles);
@@ -1821,10 +1819,12 @@ function menusavecal(hObject,~)
 %          end
     end
     
-    function [areaout,areaerrorout,indexout,sortlist]=sortmolecules(molecules,searchstring,peakdata)
+    function [areaout_sorted,areaerrorout_sorted,indexout_sorted,sortlist]=sortmolecules(molecules,searchstring,peakdata)
         searchstring=['[' searchstring ']'];
         
         attached={};
+        t_start = tic;
+        show_waitbar = 0;
         for i=1:length(molecules)
             name=[molecules(i).name '['];
             %find lineindex
@@ -1854,6 +1854,8 @@ function menusavecal(hObject,~)
             else
                 rowix=ix;
             end
+            %sort serieslist alphabetically
+            [attached_sorted,ix_attached] = sort(attached);
             %We need to correct the area to get the number of ions detected
             %in this massrange. This can be approx. done by dividing the
             %area by the mean pin-distance. the smaller the msq of delta m,
@@ -1881,9 +1883,25 @@ function menusavecal(hObject,~)
             %areaerrorout(lineix,rowix)=sqrt(molecules(i).area/b);
             areaerrorout(lineix,rowix,:)=molecules(i).areaerror/b;
             indexout(lineix,rowix)=i; %save index to molecule
+            
+            %sort other outputs according to serieslist
+            areaout_sorted = areaout(:,ix_attached);
+            areaerrorout_sorted =areaerrorout(:,ix_attached);
+            indexout_sorted = indexout(:,ix_attached);
+            
+            if toc(t_start) > 0.5 & show_waitbar == 0
+                show_waitbar = 1;
+                h= waitbar(0, 'Please wait...');
+            end
+            if show_waitbar==1
+                waitbar(i/length(molecules));
+            end
         end
         for i=1:length(attached)
-            sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
+            sortlist{i}=[searchstring 'n' attached_sorted{i}(1:end-1)];
+        end
+        if show_waitbar==1
+            close(h);
         end
     end
 
