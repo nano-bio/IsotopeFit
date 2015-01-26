@@ -4,6 +4,6 @@ function out=approx_p(distribution,th)
 
 ix=distribution(:,2)>=th*max(distribution(:,2));
 
-out=renorm(distribution(ix,:));
+out=distribution(ix,:);
 end
 

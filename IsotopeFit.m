@@ -197,7 +197,7 @@ filenamedisplay = uicontrol(Parent,'Style','Text',...
     'Units','normalized',...
     'String','No file loaded',...
     'HorizontalAlignment','left',...
-    'Position',gridpos(64,64,62,64,8,50,0.01,0.01));
+    'Position',gridpos(64,64,62,64,8,30,0.01,0.01));
 
 % This copies the filename to the clipboard (for searching in the
 % labbook etc.
@@ -207,7 +207,15 @@ uicontrol(Parent,'style','pushbutton',...
           'Callback',@copyfntoclipboard,...
           'Units','normalized',...
           'TooltipString','Click to copy the filename to the clipboard',...
-          'Position',gridpos(64,32,62,64,25,26,0.01,0.01));
+          'Position',gridpos(64,64,62,64,31,34,0.01,0.01));
+      
+
+% Button to refresh plot window
+uicontrol(Parent,'style','pushbutton',...
+          'string','Refresh View',...
+          'Callback',@(s,e) plotmolecule(0),...
+          'Units','normalized',...
+          'Position',gridpos(64,64,62,64,47,52,0.01,0.01));
       
 % Plot overview
       
@@ -1701,20 +1709,21 @@ function menusavecal(hObject,~)
         end
     end
 
+
     function plotmolecule(index)
         handles=guidata(Parent);
         
         limits=get(dataaxes,'xlim');
         
-        if (handles.molecules(index).minmass<limits(1))|(handles.molecules(index).maxmass>limits(2))
-            % molecule is outside of view. reset zoom
-            % find min and max index of mass range that should be plotted i.e.
-            % certain range (30 sigma) around the selected molecules
+         if index~=0
+            % "Normal" mode: zoom to clicked molecule
             ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules(index).com),0,30);
-        else
-            %molecule is inside view.
+         else
+            % Refresh view: plot molecules of actual massrange
             ind = mass2ind(handles.peakdata(:,1),limits(1)):mass2ind(handles.peakdata(:,1),limits(2));
-        end
+            index = getrealselectedmolecules();
+            index = index(1); %in case if there is more than one m. selected
+         end
             
         % corresponding mass values of axis
         calcmassaxis=handles.peakdata(ind,1)';
