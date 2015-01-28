@@ -69,7 +69,7 @@ e_searchstring=uicontrol(Parent,'Style','edit',...
     'Callback',@sortlistclick,...
     'Position',gridpos(64,64,30,32,1,7,0.01,0.01));         
          
-uicontrol(Parent,'style','pushbutton',...
+b_sortlist = uicontrol(Parent,'style','pushbutton',...
           'string','Sort List',...
           'Callback',@sortlistclick,...
           'Units','normalized',...
@@ -211,7 +211,7 @@ uicontrol(Parent,'style','pushbutton',...
       
 
 % Button to refresh plot window
-uicontrol(Parent,'style','pushbutton',...
+b_refresh = uicontrol(Parent,'style','pushbutton',...
           'string','Refresh View',...
           'Callback',@(s,e) plotmolecule(0),...
           'Units','normalized',...
@@ -255,7 +255,7 @@ mcal = uimenu('Label','Calibration');
        mpdsmoothmass=uimenu(mcal,'Label','Smooth massaxis...','Callback',@menusmoothmassaxis,'Enable','on');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on','Separator','on');
        mcaldc=uimenu(mcal,'Label','Drift correction...','Callback',@menudc,'Enable','on');
-       msavecalib=uimenu(mcal,'Label','Save Calibration to File...','Callback',@menusavecal,'Enable','on', 'Separator', 'on');
+       mcalsave=uimenu(mcal,'Label','Save Calibration to File...','Callback',@menusavecal,'Enable','on', 'Separator', 'on');
        
 mdata = uimenu('Label','Data');
        mexport = uimenu(mdata,'Label','Export','Enable','on');
@@ -264,13 +264,13 @@ mdata = uimenu('Label','Data');
                mdatacms = uimenu(mexport,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
                mdatasmooth = uimenu(mexport,'Label','Smooth Mass Spectrum...','Callback',@menuexportsmoothmassspec,'Enable','on');
                mdatafms = uimenu(mexport,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
-       mconvcore=uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
+       mconvcore = uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
                mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
                mconvcore_map=uimenu(mconvcore,'Label','Map...','Callback',@menuconvcoremap,'Enable','on');      
-       mratio=uimenu(mdata,'Label','Calculate ratio of 2 compounds...','Enable','on','Callback',@menuratio);
+       mratio = uimenu(mdata,'Label','Calculate ratio of 2 compounds...','Enable','on','Callback',@menuratio);
        mplay = uimenu(mdata,'Label','Play','Separator','on');
-               uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
-               uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
+               mplayorig = uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
+               mplayfit = uimenu(mplay,'Label','Fitted Data','Callback',@menuplay,'Enable','on');
        merrors = uimenu(mdata,'Label','Errors and Noise','Separator','on');
                uimenu(merrors,'Label','Noise analysis','Callback',@menunoiseanalysis,'Enable','on');
                uimenu(merrors,'Label','Error analysis','Callback',@menuerroranalysis,'Enable','on');
@@ -325,7 +325,7 @@ init();
         
         handles.status.moleculesfiltered = 0;
         
-        handles.status.guistatusvector = [0 0 0 0 0 0 0];
+        handles.status.guistatusvector = [0 0 0 0 0 0 0 0];
         
         handles.status.rootindexchanged = 0;
         
@@ -480,26 +480,36 @@ init();
             'bg_corrected',...
             'drift_corrected',...
             'changed',...
-            'fitted'};
+            'fitted',...
+            'cs_selected'};
         
         % list of gui elements that should be hidden/shown
-        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mmolecules', 'mcal', 'msave', 'msaveas', 'mplay', 'mdata', 'mdatacms', 'mdatafms','mconvcore','mratio'};
+        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mmolecules', 'mcal', 'mcalsave', 'msave', 'msaveas',...
+                       'mplay', 'mplayfit', 'mdata', 'mdatacs', 'mdatacms', 'mdatafms','mconvcore','mratio', 'merrors', 'b_sortlist',...
+                       'b_refresh'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
-        guirequirements = {[1 0 0 0 0 0 0],...
-                           [1 1 0 0 0 0 0],...
-                           [1 0 0 0 0 0 0],...
-                           [1 1 1 0 0 0 0],...
-                           [1 0 0 0 0 0 0],...
-                           [1 0 0 0 0 0 0],...
-                           [1 0 0 0 0 0 0],...
-                           [1 0 0 0 0 0 0],...
-                           [1 0 0 0 0 0 0],...
-                           [1 0 0 0 0 0 0],...
-                           [1 1 1 0 0 0 0],...
-                           [1 1 1 0 0 0 1],...
-                           [1 1 1 1 0 0 0],...
-                           [1 1 1 1 0 0 1]};
+        guirequirements = {[1 0 0 0 0 0 0 0],...   % mcalbgc
+                           [1 1 0 0 0 0 0 0],...   % mcalcal
+                           [1 0 0 0 0 0 0 0],...   % mloadcal
+                           [1 1 1 0 0 0 0 0],...   % mcaldc
+                           [1 1 1 0 0 0 0 0],...   % mpd2raw
+                           [1 0 0 0 0 0 0 0],...   % mmolecules
+                           [1 0 0 0 0 0 0 0],...   % mcal
+                           [1 1 1 0 0 0 0 0],...   % mcalsave
+                           [1 0 0 0 0 0 0 0],...   % msave
+                           [1 0 0 0 0 0 0 0],...   % msaveas
+                           [1 0 0 0 0 0 0 0],...   % mplay
+                           [1 1 1 0 0 0 1 0],...   % mplayfit
+                           [1 0 0 0 0 0 0 0],...   % mdata
+                           [1 1 1 0 0 0 1 1],...   % mdatacs
+                           [1 1 1 0 0 0 0 0],...   % mdatacms
+                           [1 1 1 0 0 0 1 0],...   % mdatafms
+                           [1 1 1 0 0 0 1 0],...   % mconvcore
+                           [1 1 1 0 0 0 1 0],...   % mratio
+                           [1 1 1 0 0 0 0 0],...   % merrors
+                           [1 1 1 0 0 0 1 0],...   % b_sortlist
+                           [1 1 1 0 0 0 1 0]};     % b_refresh    
         
         if nargin > 1
             % we want to update the status vector
@@ -1068,7 +1078,7 @@ function menusavecal(hObject,~)
         hold off;
         
        % imagesc(log(handles.seriesarea)');
-
+        handles = gui_status_update('cs_selected', 1, handles);
         guidata(hObject,handles);
         
 %        set(ListSeries,'String',serieslist);
@@ -1122,17 +1132,18 @@ function menusavecal(hObject,~)
             guidata(Parent,handles);
             
             molecules2listbox(ListMolecules,handles.molecules);
-        end
         
-        % check if massrange (handles.peakdata) of new spec is larger than
-        % massrange of spec that we load the data from (data.raw_peakdata)
-        % --> need to re-load molecules for entire massrange
-        if data.raw_peakdata(end,1)<handles.peakdata(end,1)
-            msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+            
+            % check if massrange (handles.peakdata) of new spec is larger than
+            % massrange of spec that we load the data from (data.raw_peakdata)
+            % --> need to re-load molecules for entire massrange
+            if data.raw_peakdata(end,1)<handles.peakdata(end,1)
+                msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+            end
+            
+            handles = gui_status_update('molecules_loaded', 1, handles);
+            handles = gui_status_update('changed', 1, handles);
         end
-        
-        handles = gui_status_update('molecules_loaded', 1, handles);
-        handles = gui_status_update('changed', 1, handles);
     end
 
     function menuloadmoleculesifm(hObject,~)
@@ -1202,18 +1213,24 @@ function menusavecal(hObject,~)
 
     function menubgcorrection(hObject,~)
         handles=guidata(Parent);
+        temp = handles.bgcorrectiondata;
         [handles.bgcorrectiondata, handles.startind, handles.endind]=bg_correction(handles.raw_peakdata,handles.bgcorrectiondata);    
-        handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
-        handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
         
-        % run calibration again, because it is lost, when the background
-        % correction is applied
-        handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
-        
-        guidata(Parent,handles);
-        handles = gui_status_update('bg_corrected', 1, handles);
-        handles = gui_status_update('fitted', 0, handles);
-        handles = gui_status_update('changed', 1, handles);
+        % need comparison if calibration process changed bgcorrection data.
+        % Only if so gui_status_vector should be changed.
+        if ~isequal(temp,handles.bgcorrectiondata)
+            handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
+            handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
+            
+            % run calibration again, because it is lost, when the background
+            % correction is applied
+            handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
+            
+            guidata(Parent,handles);
+            handles = gui_status_update('bg_corrected', 1, handles);
+            handles = gui_status_update('fitted', 0, handles);
+            handles = gui_status_update('changed', 1, handles);
+        end
     end
 
      function menusmoothmassaxis(hObject,~)
@@ -1245,6 +1262,8 @@ function menusavecal(hObject,~)
      end
 
     function menupeakdata2raw(hObject,~)
+        % function saves peakdata of calibrated spec to raw file (in case
+        % you need to perform a second calibration)
         handles=guidata(Parent);
         
         handles.raw_peakdata=handles.peakdata;
@@ -1262,6 +1281,7 @@ function menusavecal(hObject,~)
     function menucalibration(hObject,~)
         handles=guidata(Parent);
         
+        
         if handles.status.rootindexchanged
             %restore rootindex
             h=waitbar(0,'Restoring root-index');
@@ -1277,14 +1297,18 @@ function menusavecal(hObject,~)
         peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
         peakdata=subtractbg(peakdata,handles.bgcorrectiondata);
         
+        temp = handles.calibration;
         [handles.calibration,handles.molecules]= calibrate(peakdata,handles.molecules,handles.calibration,handles.settings);
 
-        
-        handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
-        guidata(Parent,handles);
-        handles = gui_status_update('calibrated', 1, handles);
-        handles = gui_status_update('fitted', 0, handles);
-        handles = gui_status_update('changed', 1, handles);
+        % need comparison if calibration process changed calibration data.
+        % Only if so gui_status_vector should be changed
+        if ~isequal(temp, handles.calibration)
+            handles.peakdata=subtractmassoffset(peakdata,handles.calibration);
+            guidata(Parent,handles);
+            handles = gui_status_update('calibrated', 1, handles);
+            handles = gui_status_update('fitted', 0, handles);
+            handles = gui_status_update('changed', 1, handles);
+        end
     end
 
     function load_h5(pathname,filename)
@@ -1450,11 +1474,11 @@ function menusavecal(hObject,~)
                     % Status vector
                     if ~isfield(data,'guistatusvector')
                         fprintf('Old File. No gui status vector found. Setting default value...');
-                        handles.status.guistatusvector = [1 1 1 1 0 0 1]; %see gui_status_update for details
+                        handles.status.guistatusvector = [1 1 1 1 0 0 1 0]; %see gui_status_update for details
                         fprintf(' done\n');
                     elseif length(data.guistatusvector)~=length(handles.status.guistatusvector)
                         fprintf('Old File. Wrong status vector length. Setting default value...');
-                        handles.status.guistatusvector = [1 1 1 1 0 0 1]; %see gui_status_update for details
+                        handles.status.guistatusvector = [1 1 1 1 0 0 1 0]; %see gui_status_update for details
                         fprintf(' done\n');
                     else
                         handles.status.guistatusvector = data.guistatusvector;
