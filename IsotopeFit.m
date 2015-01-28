@@ -928,8 +928,33 @@ init();
     end
 
     function labbookimport(hObject,~)
-        [pathname,filename]=readfromlabbook();
         
+        % before importing new file, check if another file is loaded and if 
+        % other file was changed. If yes -> ask "Save file?"
+        % get settings
+        handles = guidata(Parent);
+        
+        try
+            % is a file loaded?
+            if handles.status.guistatusvector(1) == 1
+                % has it changed?
+                if handles.status.guistatusvector(6) == 1
+                    result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
+                    switch result
+                        case 'Yes'
+                            save_file(Parent,'','save');
+                        case 'Cancel'
+                            return
+                        case 'No'
+                            ;
+                    end
+                end
+            end
+        catch
+            msgbox('IsotopeFit was not initialized properly. Stopping without saving');
+        end
+        
+        [pathname,filename]=readfromlabbook();
         if ~strcmp(filename,'')
             load_h5(pathname,filename);
             handles=guidata(Parent);
@@ -946,12 +971,38 @@ init();
         % created before the "Fit All" routine is carried out and deleted
         % afterwards (in order to protect the data in case the fitting
         % routine runs into trouble). If it exists, it's being loaded.
+        
+        % before opening backup file, check if another file is loaded and if 
+        % other file was changed. If yes -> ask "Save file?"
+        % get settings
+        handles = guidata(Parent);
+        
+        try
+            % is a file loaded?
+            if handles.status.guistatusvector(1) == 1
+                % has it changed?
+                if handles.status.guistatusvector(6) == 1
+                    result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
+                    switch result
+                        case 'Yes'
+                            save_file(Parent,'','save');
+                        case 'Cancel'
+                            return
+                        case 'No'
+                            ;
+                    end
+                end
+            end
+        catch
+            msgbox('IsotopeFit was not initialized properly. Stopping without saving');
+        end
+        
         filename = 'bkp.ifd';
         pathname = pwd;
         fullpath = fullfile(pathname, filename);
         
         % actually there?
-        if exist(filename, 'file') == 2
+        if exist(fullpath, 'file') == 2
             open_file(hObject, eventdata, fullpath);
         else % nope
             msgbox('No backup file found.');
@@ -1012,7 +1063,7 @@ function menusavecal(hObject,~)
         % this function exports the calibration points to an ASCII file
         handles=guidata(hObject);
 
-        %get data poits for massoffset from mass calibration
+        % get data poits for massoffset from mass calibration
         comlist = handles.calibration.comlist;
         massoffsetlist = handles.calibration.massoffsetlist;
         
@@ -1376,6 +1427,31 @@ function menusavecal(hObject,~)
     end
 
     function open_file(hObject, ~, fullpath)
+        
+        % before opening  new file, check if another file is loaded and if 
+        % other file was changed. If yes -> ask "Save file?"
+        % get settings
+        handles = guidata(Parent);
+        
+        try
+            % is a file loaded?
+            if handles.status.guistatusvector(1) == 1
+                % has it changed?
+                if handles.status.guistatusvector(6) == 1
+                    result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
+                    switch result
+                        case 'Yes'
+                            save_file(Parent,'','save');
+                        case 'Cancel'
+                            return
+                        case 'No'
+                            ;
+                    end
+                end
+            end
+        catch
+            msgbox('IsotopeFit was not initialized properly. Stopping without saving');
+        end
         
         % make open file remember the path of previous file 
         handles=guidata(Parent);
