@@ -335,6 +335,15 @@ init();
         guidata(Parent,handles);
         
         handles = gui_status_update();
+        
+        %empty area listbox and reset statusvariable
+        handles = gui_status_update('cs_selected', 0, handles);
+        set(ListSeries,'Value',1);
+        set(ListSeries,'String','');
+        
+        %clear axes
+        cla(areaaxes);
+        cla(dataaxes);
     end
 
     function menuratio(hObject,~)
@@ -1136,7 +1145,10 @@ function menusavecal(hObject,~)
         
         set(ListSeries,'Value',1);
         set(ListSeries,'String',serieslist);
-        
+                       
+        %reset area plot
+        cla(areaaxes);
+        listseriesclick(Parent,0)
     end
 
     function menuloadmoleculesfolder(hObject,~)
@@ -2082,6 +2094,14 @@ function menusavecal(hObject,~)
         end
         
         handles = gui_status_update('changed', 1, handles);
+        handles = gui_status_update('cs_selected', 0, handles);
+        
+        %empty area listbox
+        set(ListSeries,'Value',1);
+        set(ListSeries,'String','');
+        
+        %clear area axes
+        cla(areaaxes);
         
         guidata(hObject,handles);
         
