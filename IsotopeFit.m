@@ -687,10 +687,30 @@ init();
         lowmass = num2str(round(limits(1)));
         highmass = num2str(round(limits(2)));
         filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_mass_' lowmass '_' highmass '.txt'];
+                     
+        if handles.status.guistatusvector(2) == 0
+            choice = questdlg('There are no molecules loaded yet! Do you want to export current view of spectrum anyway?',...
+                'Warning!', 'Yes', 'No', 'No');
+        elseif handles.status.guistatusvector(3) == 0
+            choice = questdlg('Spectrum is not calibrated! Do you want to export current view of spectrum anyway?',...
+                'Warning!', 'Yes', 'No', 'No');
+        elseif handles.status.guistatusvector(7) == 0
+            choice = questdlg('Molecules are not fitted! Do you want to export current view of spectrum anyway?',...
+                'Warning!', 'Yes', 'No', 'No');
+        else
+            choice = 'Yes';
+        end
+        
+        if strcmp(choice, 'No')
+           return; 
+        end
+            
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
             'Export data',...
             filenamesuggestion);
+
+        
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             fid=fopen(fullfile(pathname,filename),'w');
@@ -1651,6 +1671,9 @@ function menusavecal(hObject,~)
          
         %write filename to visible display:
         set(filenamedisplay, 'String', handles.fileinfo.filename)
+        
+        % delete backup file since it's not needed anymore
+        delete('bkp.ifd')
     end
     
     function remove_molecules(hObject, ~)
@@ -2082,8 +2105,8 @@ function menusavecal(hObject,~)
                 % set fitted in status update to 1 
                 handles = gui_status_update('fitted', 1, handles);
                 
-                % and we're done
-                delete('bkp.ifd')
+                % and we're done (bkp.ifd is deleted when file is saved)
+
             case 'Fit selected'
                 %index consists of a list of molecules.
                 %for fitting, we need to find all molecules that overlap
