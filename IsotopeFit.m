@@ -66,7 +66,6 @@ e_searchstring=uicontrol(Parent,'Style','edit',...
     'String','N/A',...
     'Background','white',...
     'Enable','on',...
-    'Callback',@sortlistclick,...
     'Position',gridpos(64,64,30,32,1,7,0.01,0.01));         
          
 b_sortlist = uicontrol(Parent,'style','pushbutton',...
@@ -389,7 +388,17 @@ init();
 %                 else
 %                     a2=get_number_in_molname(molname,comp2);
 %                 end
-            
+% 
+                % try to generalize solution:  
+%                 if strcmp(answer{2}(end-1:end),'2') && isempty(a2) 
+%                     comp2 = answer{2}(1:end-1);
+%                     a2_temp = get_number_in_molname(molname,comp2);
+%                     a2=floor(a2_temp/2);
+%                 else
+%                     a2=get_number_in_molname(molname,comp2);
+%                 end
+%             
+
                 if a1+a2>0
                     F1=F1+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a1/(a1+a2);
                     F2=F2+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a2/(a1+a2);
@@ -1111,11 +1120,6 @@ function menusavecal(hObject,~)
         end
     end
 
-
-
-
-
-
     function listseriesclick(hObject,~)
         handles=guidata(hObject);
 
@@ -1124,12 +1128,12 @@ function menusavecal(hObject,~)
                 
         j=1;
         for i=1:size(handles.seriesarea,1)
-            %if (handles.seriesarea(i,ix)~=0)||(handles.seriesareaerror(i,ix)~=0)
+            if ~isnan(handles.seriesarea(i,ix))
                 n(j)=i-1;
                 data(j)=handles.seriesarea(i,ix);
                 dataerror(j)=handles.seriesareaerror(i,ix,:);
                 j=j+1;
-            %end
+            end
         end
         
         
@@ -1423,7 +1427,7 @@ function menusavecal(hObject,~)
         anothervariable = teststring{1};
         
         % this is kind of a signature for tofdaq files
-        if strcmp(anothervariable{1}, 'mass') & strcmp(anothervariable{2}, 'spectrum') & strcmp(anothervariable{3}, '=============')
+        if strcmp(anothervariable{1}, 'mass') && strcmp(anothervariable{2}, 'spectrum') && strcmp(anothervariable{3}, '=============')
             tofdaqfile = 1;
         end
         
@@ -1963,7 +1967,7 @@ function menusavecal(hObject,~)
 %          end
     end
     
-    function [areaout_sorted,areaerrorout_sorted,indexout_sorted,sortlist]=sortmolecules(molecules,searchstring,peakdata)
+    function [areaout_sorted,areaerrorout_sorted,indexout_sorted,sortlist_sorted]=sortmolecules(molecules,searchstring,peakdata)
         searchstring=['[' searchstring ']'];
         
         attached={};
@@ -1998,8 +2002,6 @@ function menusavecal(hObject,~)
             else
                 rowix=ix;
             end
-            %sort serieslist alphabetically
-            [attached_sorted,ix_attached] = sort(attached);
             %We need to correct the area to get the number of ions detected
             %in this massrange. This can be approx. done by dividing the
             %area by the mean pin-distance. the smaller the msq of delta m,
@@ -2028,12 +2030,9 @@ function menusavecal(hObject,~)
             areaerrorout(lineix,rowix,:)=molecules(i).areaerror/b;
             indexout(lineix,rowix)=i; %save index to molecule
             
-            %sort other outputs according to serieslist
-            areaout_sorted = areaout(:,ix_attached);
-            areaerrorout_sorted =areaerrorout(:,ix_attached);
-            indexout_sorted = indexout(:,ix_attached);
             
-            if toc(t_start) > 0.5 & show_waitbar == 0
+            
+            if toc(t_start) > 0.5 && show_waitbar == 0
                 show_waitbar = 1;
                 h= waitbar(0, 'Please wait...');
             end
@@ -2042,8 +2041,22 @@ function menusavecal(hObject,~)
             end
         end
         for i=1:length(attached)
-            sortlist{i}=[searchstring 'n' attached_sorted{i}(1:end-1)];
+            sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
         end
+        
+        
+        %sort serieslist alphabetically
+        [sortlist_sorted,ix_sorted] = sort(sortlist);
+        
+        %sort other outputs according to serieslist
+        areaout_sorted = areaout(:,ix_sorted);
+        areaerrorout_sorted =areaerrorout(:,ix_sorted);
+        indexout_sorted = indexout(:,ix_sorted);
+        
+        %
+        areaout_sorted(indexout_sorted==0)=NaN;
+        areaerrorout_sorted(indexout_sorted==0)=NaN;
+        
         if show_waitbar==1
             close(h);
         end
