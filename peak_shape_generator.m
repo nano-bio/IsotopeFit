@@ -368,9 +368,14 @@ drawnow;
         [x,ix]=sort([x(1)-1,x,x(end)+1]);
         y=[0 y 0];
         y=y(ix);
-                        
-        out=double(sum((K-pchip(x,y,masses)).^2));
+        
+        % pchip has a problem, when x values are not distinct
+        % remove double entries for evaluation
+        mask=[1 (diff(x)~=0)];
+        
+        out=double(sum((K-pchip(x(mask==1),y(mask==1),masses)).^2));
     end
+        
 
     function [x,y]=fitoffsets2coordinates(fitoffsets,xvalues,yvalues,fixedpoints)
         %moves non-fixed points according to the values in fitoffsets
@@ -406,7 +411,7 @@ drawnow;
         pptemp=ppdiff(handles.calibration.shape); % calculate derivative
         max_mass=mean(fnzeros(pptemp,[-0.5,0.5])); %find zero crossing
         
-        handles.calibration.shape.breaks=handles.calibration.shape.breaks-max_mass;
+        handles.calibration.shape.breaks=handles.calibration.shape.breaks-max_mass(1);
         
         % FWHM has to be 1
         max_signal=ppval(handles.calibration.shape,0);
@@ -414,10 +419,10 @@ drawnow;
         pptemp.coefs(:,4)=pptemp.coefs(:,4)-max_signal/2;
         
         FWHM_points=mean(fnzeros(pptemp,[-2,2]));
-        handles.calibration.shape=peak_width_adaption(handles.calibration.shape,1/(FWHM_points(2)-FWHM_points(1)),1);
+        handles.calibration.shape=peak_width_adaption(handles.calibration.shape,1/(FWHM_points(end)-FWHM_points(1)),1);
         
         % Re-calibrate Resolution:
-        handles.calibration.resolutionlist=handles.calibration.resolutionlist./(FWHM_points(2)-FWHM_points(1));
+        handles.calibration.resolutionlist=handles.calibration.resolutionlist./(FWHM_points(end)-FWHM_points(1));
         
         calibration_out=handles.calibration;
         uiresume(Parent);
