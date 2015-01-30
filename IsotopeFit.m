@@ -969,27 +969,9 @@ init();
         
         % before importing new file, check if another file is loaded and if 
         % other file was changed. If yes -> ask "Save file?"
-        % get settings
-        handles = guidata(Parent);
-        
-        try
-            % is a file loaded?
-            if handles.status.guistatusvector(1) == 1
-                % has it changed?
-                if handles.status.guistatusvector(6) == 1
-                    result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
-                    switch result
-                        case 'Yes'
-                            save_file(Parent,'','save');
-                        case 'Cancel'
-                            return
-                        case 'No'
-                            ;
-                    end
-                end
-            end
-        catch
-            msgbox('IsotopeFit was not initialized properly. Stopping without saving');
+        answer = asksave();
+        if strcmp(answer,'Close')
+            return
         end
         
         [pathname,filename]=readfromlabbook();
@@ -1009,31 +991,6 @@ init();
         % created before the "Fit All" routine is carried out and deleted
         % afterwards (in order to protect the data in case the fitting
         % routine runs into trouble). If it exists, it's being loaded.
-        
-        % before opening backup file, check if another file is loaded and if 
-        % other file was changed. If yes -> ask "Save file?"
-        % get settings
-        handles = guidata(Parent);
-        
-        try
-            % is a file loaded?
-            if handles.status.guistatusvector(1) == 1
-                % has it changed?
-                if handles.status.guistatusvector(6) == 1
-                    result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
-                    switch result
-                        case 'Yes'
-                            save_file(Parent,'','save');
-                        case 'Cancel'
-                            return
-                        case 'No'
-                            ;
-                    end
-                end
-            end
-        catch
-            msgbox('IsotopeFit was not initialized properly. Stopping without saving');
-        end
         
         filename = 'bkp.ifd';
         pathname = pwd;
@@ -1086,7 +1043,11 @@ init();
             for i=1:size(handles.seriesarea,1)
                 fprintf(fid,'%i\t',i-1);
                 for j=seriesid
-                    fprintf(fid,'%e\t%e\t',handles.seriesarea(i,j),handles.seriesareaerror(i,j));
+                    if ~isnan(handles.seriesarea(i,j))
+                        fprintf(fid,'%e\t%e\t',handles.seriesarea(i,j),handles.seriesareaerror(i,j));
+                    else
+                        fprintf(fid,'--\t--\t');
+                    end
                 end
                 fprintf(fid,'\n');
             end
@@ -1466,27 +1427,9 @@ function menusavecal(hObject,~)
         
         % before opening  new file, check if another file is loaded and if 
         % other file was changed. If yes -> ask "Save file?"
-        % get settings
-        handles = guidata(Parent);
-        
-        try
-            % is a file loaded?
-            if handles.status.guistatusvector(1) == 1
-                % has it changed?
-                if handles.status.guistatusvector(6) == 1
-                    result = questdlg('It seems the file has changed. Do you want to save it?', 'Save file?');
-                    switch result
-                        case 'Yes'
-                            save_file(Parent,'','save');
-                        case 'Cancel'
-                            return
-                        case 'No'
-                            ;
-                    end
-                end
-            end
-        catch
-            msgbox('IsotopeFit was not initialized properly. Stopping without saving');
+        answer = asksave();
+        if strcmp(answer,'Cancel')
+            return
         end
         
         % make open file remember the path of previous file 
@@ -2271,6 +2214,18 @@ function menusavecal(hObject,~)
     end
 
     function closeandsave(~, ~)
+        % before closing file, check if file was changed. If yes -> ask 
+        % "Save file?"
+        answer = asksave();
+        if strcmp(answer,'Close')
+            return
+        end
+        
+        % finally close
+        delete(Parent)
+    end
+
+    function result = asksave()
         % get settings
         handles = guidata(Parent);
         
@@ -2283,18 +2238,18 @@ function menusavecal(hObject,~)
                     switch result
                         case 'Yes'
                             save_file(Parent,'','save');
-                        case 'Cancel'
-                            return
-                        case 'No'
-                            ;
                     end
+                else
+                    % need any value for result
+                    result = '0';
                 end
+            else
+                result = '0';
             end
         catch
             msgbox('IsotopeFit was not initialized properly. Stopping without saving');
+            result = '0';
         end
         
-        % finally close
-        delete(Parent)
     end
 end
