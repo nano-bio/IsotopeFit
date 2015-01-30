@@ -1323,7 +1323,34 @@ function menusavecal(hObject,~)
         
         minind=mass2ind(handles.peakdata(:,1)',limits(1));
         maxind=mass2ind(handles.peakdata(:,1)',limits(2));
-                        
+        
+        %check if spectrum is fitted
+        if handles.status.guistatusvector(6)==0 % not fitted
+            result = questdlg('Spectrum is not fitted. Do you want me to fit the molecules in the current view?', 'Not fitted!');
+            switch result
+                case 'Yes'
+                    deltar=handles.settings.deltaresolution/100;
+                    deltam=handles.settings.deltamass;
+                    
+                    %be careful: don't double-calibrate masses!
+                    %set massoffset to zero for final fitting:
+                    calibrationtemp=handles.calibration;
+                    calibrationtemp.massoffsetmethode='Flat';
+                    calibrationtemp.massoffsetparam=0;
+                    
+                    handles.molecules(moleculelist)=fitwithcalibration(...
+                        handles.molecules(moleculelist),...
+                        handles.peakdata(minind:maxind,:),...
+                        calibrationtemp,...
+                        get(ListMethode,'Value'),...
+                        handles.settings.searchrange,...
+                        deltam,...
+                        deltar,...
+                        handles.settings.fittingmethod_main);
+            end
+        end    
+            
+        
         handles.calibration=peak_shape_generator(handles.peakdata(minind:maxind,:),handles.molecules(moleculelist),handles.calibration);
         guidata(Parent,handles);
         
@@ -2090,7 +2117,7 @@ function menusavecal(hObject,~)
                 handles = gui_status_update('fitted', 1, handles);
                 
                 % and we're done (bkp.ifd is deleted when file is saved)
-
+                handles = gui_status_update('changed', 1, handles);
             case 'Fit selected'
                 %index consists of a list of molecules.
                 %for fitting, we need to find all molecules that overlap
@@ -2100,7 +2127,7 @@ function menusavecal(hObject,~)
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
         end
         
-        handles = gui_status_update('changed', 1, handles);
+        
         handles = gui_status_update('cs_selected', 0, handles);
         
         %empty area listbox
