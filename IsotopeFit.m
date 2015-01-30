@@ -66,7 +66,6 @@ e_searchstring=uicontrol(Parent,'Style','edit',...
     'String','N/A',...
     'Background','white',...
     'Enable','on',...
-    'Callback',@sortlistclick,...
     'Position',gridpos(64,64,30,32,1,7,0.01,0.01));         
          
 b_sortlist = uicontrol(Parent,'style','pushbutton',...
@@ -388,7 +387,17 @@ init();
 %                 else
 %                     a2=get_number_in_molname(molname,comp2);
 %                 end
-            
+% 
+                % try to generalize solution:  
+%                 if strcmp(answer{2}(end-1:end),'2') && isempty(a2) 
+%                     comp2 = answer{2}(1:end-1);
+%                     a2_temp = get_number_in_molname(molname,comp2);
+%                     a2=floor(a2_temp/2);
+%                 else
+%                     a2=get_number_in_molname(molname,comp2);
+%                 end
+%             
+
                 if a1+a2>0
                     F1=F1+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a1/(a1+a2);
                     F2=F2+handles.molecules(i).area/sqrt(handles.molecules(i).com)*a2/(a1+a2);
@@ -686,10 +695,30 @@ init();
         lowmass = num2str(round(limits(1)));
         highmass = num2str(round(limits(2)));
         filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_mass_' lowmass '_' highmass '.txt'];
+                     
+        if handles.status.guistatusvector(2) == 0
+            choice = questdlg('There are no molecules loaded yet! Do you want to export current view of spectrum anyway?',...
+                'Warning!', 'Yes', 'No', 'No');
+        elseif handles.status.guistatusvector(3) == 0
+            choice = questdlg('Spectrum is not calibrated! Do you want to export current view of spectrum anyway?',...
+                'Warning!', 'Yes', 'No', 'No');
+        elseif handles.status.guistatusvector(7) == 0
+            choice = questdlg('Molecules are not fitted! Do you want to export current view of spectrum anyway?',...
+                'Warning!', 'Yes', 'No', 'No');
+        else
+            choice = 'Yes';
+        end
+        
+        if strcmp(choice, 'No')
+           return; 
+        end
+            
         [filename, pathname, filterindex] = uiputfile( ...
             {'*.*','ASCII data (*.*)'},...
             'Export data',...
             filenamesuggestion);
+
+        
         
         if ~(isequal(filename,0) || isequal(pathname,0))
             fid=fopen(fullfile(pathname,filename),'w');
@@ -936,8 +965,15 @@ init();
     end
 
     function labbookimport(hObject,~)
-        [pathname,filename]=readfromlabbook();
         
+        % before importing new file, check if another file is loaded and if 
+        % other file was changed. If yes -> ask "Save file?"
+        answer = asksave();
+        if strcmp(answer,'Close')
+            return
+        end
+        
+        [pathname,filename]=readfromlabbook();
         if ~strcmp(filename,'')
             load_h5(pathname,filename);
             handles=guidata(Parent);
@@ -954,12 +990,13 @@ init();
         % created before the "Fit All" routine is carried out and deleted
         % afterwards (in order to protect the data in case the fitting
         % routine runs into trouble). If it exists, it's being loaded.
+        
         filename = 'bkp.ifd';
         pathname = pwd;
         fullpath = fullfile(pathname, filename);
         
         % actually there?
-        if exist(filename, 'file') == 2
+        if exist(fullpath, 'file') == 2
             open_file(hObject, eventdata, fullpath);
         else % nope
             msgbox('No backup file found.');
@@ -1005,7 +1042,11 @@ init();
             for i=1:size(handles.seriesarea,1)
                 fprintf(fid,'%i\t',i-1);
                 for j=seriesid
-                    fprintf(fid,'%e\t%e\t',handles.seriesarea(i,j),handles.seriesareaerror(i,j));
+                    if ~isnan(handles.seriesarea(i,j))
+                        fprintf(fid,'%e\t%e\t',handles.seriesarea(i,j),handles.seriesareaerror(i,j));
+                    else
+                        fprintf(fid,'--\t--\t');
+                    end
                 end
                 fprintf(fid,'\n');
             end
@@ -1020,7 +1061,7 @@ function menusavecal(hObject,~)
         % this function exports the calibration points to an ASCII file
         handles=guidata(hObject);
 
-        %get data poits for massoffset from mass calibration
+        % get data poits for massoffset from mass calibration
         comlist = handles.calibration.comlist;
         massoffsetlist = handles.calibration.massoffsetlist;
         
@@ -1039,11 +1080,6 @@ function menusavecal(hObject,~)
         end
     end
 
-
-
-
-
-
     function listseriesclick(hObject,~)
         handles=guidata(hObject);
 
@@ -1052,12 +1088,12 @@ function menusavecal(hObject,~)
                 
         j=1;
         for i=1:size(handles.seriesarea,1)
-            %if (handles.seriesarea(i,ix)~=0)||(handles.seriesareaerror(i,ix)~=0)
+            if ~isnan(handles.seriesarea(i,ix))
                 n(j)=i-1;
                 data(j)=handles.seriesarea(i,ix);
                 dataerror(j)=handles.seriesareaerror(i,ix,:);
                 j=j+1;
-            %end
+            end
         end
         
         
@@ -1366,7 +1402,7 @@ function menusavecal(hObject,~)
         anothervariable = teststring{1};
         
         % this is kind of a signature for tofdaq files
-        if strcmp(anothervariable{1}, 'mass') & strcmp(anothervariable{2}, 'spectrum') & strcmp(anothervariable{3}, '=============')
+        if strcmp(anothervariable{1}, 'mass') && strcmp(anothervariable{2}, 'spectrum') && strcmp(anothervariable{3}, '=============')
             tofdaqfile = 1;
         end
         
@@ -1402,6 +1438,13 @@ function menusavecal(hObject,~)
     end
 
     function open_file(hObject, ~, fullpath)
+        
+        % before opening  new file, check if another file is loaded and if 
+        % other file was changed. If yes -> ask "Save file?"
+        answer = asksave();
+        if strcmp(answer,'Cancel')
+            return
+        end
         
         % make open file remember the path of previous file 
         handles=guidata(Parent);
@@ -1600,6 +1643,9 @@ function menusavecal(hObject,~)
          
         %write filename to visible display:
         set(filenamedisplay, 'String', handles.fileinfo.filename)
+        
+        % delete backup file since it's not needed anymore
+        delete('bkp.ifd')
     end
     
     function remove_molecules(hObject, ~)
@@ -1891,7 +1937,7 @@ function menusavecal(hObject,~)
 %          end
     end
     
-    function [areaout_sorted,areaerrorout_sorted,indexout_sorted,sortlist]=sortmolecules(molecules,searchstring,peakdata)
+    function [areaout_sorted,areaerrorout_sorted,indexout_sorted,sortlist_sorted]=sortmolecules(molecules,searchstring,peakdata)
         searchstring=['[' searchstring ']'];
         
         attached={};
@@ -1926,8 +1972,6 @@ function menusavecal(hObject,~)
             else
                 rowix=ix;
             end
-            %sort serieslist alphabetically
-            [attached_sorted,ix_attached] = sort(attached);
             %We need to correct the area to get the number of ions detected
             %in this massrange. This can be approx. done by dividing the
             %area by the mean pin-distance. the smaller the msq of delta m,
@@ -1956,12 +2000,9 @@ function menusavecal(hObject,~)
             areaerrorout(lineix,rowix,:)=molecules(i).areaerror/b;
             indexout(lineix,rowix)=i; %save index to molecule
             
-            %sort other outputs according to serieslist
-            areaout_sorted = areaout(:,ix_attached);
-            areaerrorout_sorted =areaerrorout(:,ix_attached);
-            indexout_sorted = indexout(:,ix_attached);
             
-            if toc(t_start) > 0.5 & show_waitbar == 0
+            
+            if toc(t_start) > 0.5 && show_waitbar == 0
                 show_waitbar = 1;
                 h= waitbar(0, 'Please wait...');
             end
@@ -1970,8 +2011,22 @@ function menusavecal(hObject,~)
             end
         end
         for i=1:length(attached)
-            sortlist{i}=[searchstring 'n' attached_sorted{i}(1:end-1)];
+            sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
         end
+        
+        
+        %sort serieslist alphabetically
+        [sortlist_sorted,ix_sorted] = sort(sortlist);
+        
+        %sort other outputs according to serieslist
+        areaout_sorted = areaout(:,ix_sorted);
+        areaerrorout_sorted =areaerrorout(:,ix_sorted);
+        indexout_sorted = indexout(:,ix_sorted);
+        
+        %
+        areaout_sorted(indexout_sorted==0)=NaN;
+        areaerrorout_sorted(indexout_sorted==0)=NaN;
+        
         if show_waitbar==1
             close(h);
         end
@@ -2033,8 +2088,8 @@ function menusavecal(hObject,~)
                 % set fitted in status update to 1 
                 handles = gui_status_update('fitted', 1, handles);
                 
-                % and we're done
-                delete('bkp.ifd')
+                % and we're done (bkp.ifd is deleted when file is saved)
+
             case 'Fit selected'
                 %index consists of a list of molecules.
                 %for fitting, we need to find all molecules that overlap
@@ -2186,6 +2241,18 @@ function menusavecal(hObject,~)
     end
 
     function closeandsave(~, ~)
+        % before closing file, check if file was changed. If yes -> ask 
+        % "Save file?"
+        answer = asksave();
+        if strcmp(answer,'Close')
+            return
+        end
+        
+        % finally close
+        delete(Parent)
+    end
+
+    function result = asksave()
         % get settings
         handles = guidata(Parent);
         
@@ -2198,18 +2265,18 @@ function menusavecal(hObject,~)
                     switch result
                         case 'Yes'
                             save_file(Parent,'','save');
-                        case 'Cancel'
-                            return
-                        case 'No'
-                            ;
                     end
+                else
+                    % need any value for result
+                    result = '0';
                 end
+            else
+                result = '0';
             end
         catch
             msgbox('IsotopeFit was not initialized properly. Stopping without saving');
+            result = '0';
         end
         
-        % finally close
-        delete(Parent)
     end
 end
