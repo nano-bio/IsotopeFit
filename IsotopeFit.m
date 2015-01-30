@@ -517,7 +517,7 @@ init();
                            [1 1 1 0 0 0 1 0],...   % mratio
                            [1 1 1 0 0 0 0 0],...   % merrors
                            [1 1 1 0 0 0 1 0],...   % b_sortlist
-                           [1 1 1 0 0 0 1 0],...   % b_refresh
+                           [1 1 1 0 0 0 0 0],...   % b_refresh
                            [1 1 0 0 0 0 0 0]};     % mpeakshape   
         
         if nargin > 1
@@ -1325,7 +1325,7 @@ function menusavecal(hObject,~)
         maxind=mass2ind(handles.peakdata(:,1)',limits(2));
         
         %check if spectrum is fitted
-        if handles.status.guistatusvector(6)==0 % not fitted
+        if handles.status.guistatusvector(7)==0 % not fitted
             result = questdlg('Spectrum is not fitted. Do you want me to fit the molecules in the current view?', 'Not fitted!');
             switch result
                 case 'Yes'
@@ -1349,9 +1349,15 @@ function menusavecal(hObject,~)
                         handles.settings.fittingmethod_main);
             end
         end    
-            
         
+        calibrationtemp=handles.calibration;
         handles.calibration=peak_shape_generator(handles.peakdata(minind:maxind,:),handles.molecules(moleculelist),handles.calibration);
+        
+        if ~isequal(calibrationtemp,handles.calibration)
+            % set fitted in status update to 0 
+            handles = gui_status_update('fitted', 0, handles);
+        end
+        
         guidata(Parent,handles);
         
     end
@@ -2117,7 +2123,6 @@ function menusavecal(hObject,~)
                 handles = gui_status_update('fitted', 1, handles);
                 
                 % and we're done (bkp.ifd is deleted when file is saved)
-                handles = gui_status_update('changed', 1, handles);
             case 'Fit selected'
                 %index consists of a list of molecules.
                 %for fitting, we need to find all molecules that overlap
@@ -2126,8 +2131,8 @@ function menusavecal(hObject,~)
                 
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
         end
-        
-        
+                
+        handles = gui_status_update('changed', 1, handles);
         handles = gui_status_update('cs_selected', 0, handles);
         
         %empty area listbox
