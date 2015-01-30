@@ -494,7 +494,7 @@ init();
         % list of gui elements that should be hidden/shown
         guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mmolecules', 'mcal', 'mcalsave', 'msave', 'msaveas',...
                        'mplay', 'mplayfit', 'mdata', 'mdatacs', 'mdatacms', 'mdatafms','mconvcore','mratio', 'merrors', 'b_sortlist',...
-                       'b_refresh'};
+                       'b_refresh','mpeakshape'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
         guirequirements = {[1 0 0 0 0 0 0 0],...   % mcalbgc
@@ -517,7 +517,8 @@ init();
                            [1 1 1 0 0 0 1 0],...   % mratio
                            [1 1 1 0 0 0 0 0],...   % merrors
                            [1 1 1 0 0 0 1 0],...   % b_sortlist
-                           [1 1 1 0 0 0 1 0]};     % b_refresh    
+                           [1 1 1 0 0 0 1 0],...   % b_refresh
+                           [1 1 0 0 0 0 0 0]};     % mpeakshape   
         
         if nargin > 1
             % we want to update the status vector
