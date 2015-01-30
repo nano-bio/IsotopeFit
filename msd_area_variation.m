@@ -5,11 +5,11 @@ massoffset=0;%massoffsetbycalibration(calibration,involved_molecules(moleculeind
 
 paramin=[zeros(1,length(involved_molecules)),resolution,massoffset];
 
-testspec=spec_measured-multispecparameters(massaxis,molecule,[area,resolution,massoffset]);
+testspec=spec_measured-multispecparameters(massaxis,molecule,[area,resolution,massoffset],calibration.shape);
 
 [parameters,~] = get_fit_params_using_linear_system(testspec,massaxis,involved_molecules,paramin,0,0);
 
-spec_calc=multispecparameters(massaxis,molecule,[area,resolution,massoffset])+multispecparameters(massaxis,involved_molecules,parameters);
+spec_calc=multispecparameters(massaxis,molecule,[area,resolution,massoffset],calibration.shape)+multispecparameters(massaxis,involved_molecules,parameters,calibration.shape);
 %plot(massaxis,spec_calc,massaxis,spec_measured);
 %drawnow();
 %pause(0.1);

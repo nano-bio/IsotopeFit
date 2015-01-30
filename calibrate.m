@@ -504,7 +504,7 @@ uiwait(Parent)
         
         handles=guidata(hObject);
  
-        handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,0,0,'linear_system');
+        handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),handles.calibration,inf,0,0,'linear_system');
         
         guidata(hObject,handles);
         updatemolecules(handles.ranges(rangeindex));
@@ -563,11 +563,11 @@ uiwait(Parent)
         [rootindex, rangeindex, moleculeindex]=getcurrentindex();
         switch get(hObject,'String')
             case 'Fit this'
-                handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),inf,deltares,deltam,handles.settings.fittingmethod_cal);
+                handles.ranges(rangeindex)=fitranges(handles.peakdata,handles.ranges(rangeindex),handles.calibration,inf,deltares,deltam,handles.settings.fittingmethod_cal);
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges(rangeindex));
             case 'Fit all'
-                handles.ranges=fitranges(handles.peakdata,handles.ranges,inf,deltares,deltam,handles.settings.fittingmethod_cal);
+                handles.ranges=fitranges(handles.peakdata,handles.ranges,handles.calibration,inf,deltares,deltam,handles.settings.fittingmethod_cal);
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges);
         end
@@ -835,7 +835,8 @@ uiwait(Parent)
             rangesignal=multispec(handles.ranges(rangeindex).molecules,...
             currentresolution,...
             currentmassoffset,...
-            calcmassaxis);
+            calcmassaxis,...
+            handles.calibration.shape);
             
             plot(previewaxes,calcmassaxis,rangesignal,'Color','green','Linewidth',2,'HitTest','off');
         end
@@ -844,14 +845,16 @@ uiwait(Parent)
         sumspectrum=multispec(handles.molecules(involvedmolecules),...
             currentresolution,...
             currentmassoffset,...
-            calcmassaxis);
+            calcmassaxis,...
+            handles.calibration.shape);
         plot(previewaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2,'HitTest','off');
         
         % single molecule
         calcsignal=multispec(handles.molecules(index),...
                 currentresolution,...
                 currentmassoffset,...
-                calcmassaxis); 
+                calcmassaxis,...
+                handles.calibration.shape); 
         plot(previewaxes,calcmassaxis,calcsignal,'Color','red','HitTest','off');
         
         %plot lines for mousecalibration

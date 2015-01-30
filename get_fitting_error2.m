@@ -5,7 +5,7 @@ function errout = get_fitting_error(spec_measured,massaxis,molecule,molecules_in
 massoffset=0;
 resolution=resolutionbycalibration(calibration,molecule.com); %resolution
 
-spec_calc=multispecparameters(massaxis,molecule,[molecule.area,resolution,massoffset])+multispec(molecules_involved,resolution,massoffset,massaxis);
+spec_calc=multispecparameters(massaxis,molecule,[molecule.area,resolution,massoffset],calibration.shape)+multispec(molecules_involved,resolution,massoffset,massaxis,calibration.shape);
 
 %minmsd=sqrt(double(sum((spec_measured-spec_calc).^2))/length(spec_measured));
 

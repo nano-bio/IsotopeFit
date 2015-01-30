@@ -6,11 +6,11 @@ shape=load(file);
 
 
 % find maximum and FWHM. set x- axis accordingly
-% max --> x=0 / FWHM --> x=+-1
+% max --> x=0 / FWHM --> x=+-0.5
 [maxval,maxidx]=max(shape(:,2));
 FWHMidx=find(shape(:,2)>=maxval/2,1);
 
-massaxis=((1:size(shape,1))-maxidx)/(maxidx-FWHMidx);
+massaxis=(((1:size(shape,1))-maxidx)/(maxidx-FWHMidx))/2;
 
 startidx=find(shape(:,2)>maxval/1000,1);
 endidx=size(shape,1)-find(shape(end:-1:1,2)>maxval/1000,1);

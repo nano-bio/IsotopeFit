@@ -1,4 +1,4 @@
-function errout = get_fitting_errors(spec_measured,massaxis,molecules,parameters,searchrange)
+function errout = get_fitting_errors(spec_measured,massaxis,shape,molecules,parameters,searchrange)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -8,7 +8,7 @@ dof=length(massaxis)-2;
 %sdrq = (msd(spec_measured(inderr),massaxis(inderr),molecules,parameters))/dof;
 
 for j=1:length(molecules)
-    M(:,j)=double(pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis)');
+    M(:,j)=double(pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis)',shape);
 end
 
  counts=sum(M.*repmat(parameters(1:end-2),size(M,1),1),1); %total counts per molecule

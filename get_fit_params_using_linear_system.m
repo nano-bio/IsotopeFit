@@ -1,4 +1,4 @@
-function [paramsout,errout] = get_fit_params_using_linear_system(spec_measured,massaxis,molecules,parameters,lb,ub)
+function [paramsout,errout] = get_fit_params_using_linear_system(spec_measured,massaxis,shape,molecules,parameters,lb,ub)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -10,7 +10,7 @@ M=zeros(length(massaxis),length(molecules));
 
 %fill matrix with isotopic pattern for every molecule
 for j=1:length(molecules)
-    M(:,j)=double(pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis)');
+    M(:,j)=double(pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis,shape)');
 end
 
 % left division gives vector of areas

@@ -1,4 +1,4 @@
-function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
+function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitting_method)
     %out = fitranges(peakdata,ranges)
     %   fits molecules organized in ranges to peakdata
     %   fits area, resolution and massoffset
@@ -85,15 +85,15 @@ function out = fitranges(peakdata,ranges,areaup,deltares,deltam,fitting_method)
         
         switch fitting_method
             case 'linear_system'
-                [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
             case 'simplex'    
-                [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
             case 'simplex_lin_combi'    
-                [fitparam,stderr]=get_fit_params_using_simplex_lin_combi(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_simplex_lin_combi(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
             case 'genetic'
-                [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
             case 'pattern_search'
-                [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind),massaxis(ind),ranges(i).molecules,parameters,lb,ub);
+                [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
         end
        
         % write fitparameters to molecules structure

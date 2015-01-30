@@ -4,7 +4,7 @@ switch methode
     case 1
         ranges=findranges(molecules,calibration,searchrange);
                
-        ranges=fitranges(peakdata,ranges,Inf,deltar,deltam,fitting_method);
+        ranges=fitranges(peakdata,ranges,calibration,Inf,deltar,deltam,fitting_method);
         
         k=1;
         for i=1:length(ranges)

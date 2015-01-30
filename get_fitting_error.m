@@ -8,11 +8,11 @@ dof=length(massaxis)-2;
 areas=zeros(1,length(molecules_involved));
 M=zeros(length(massaxis),length(molecules_involved));
 for j=1:length(molecules_involved)
-    M(:,j)=double(pattern(molecules_involved(j),1,resolutionbycalibration(calibration,molecules_involved(j).com),0,massaxis)');
+    M(:,j)=double(pattern(molecules_involved(j),1,resolutionbycalibration(calibration,molecules_involved(j).com),0,massaxis)',calibration.shape);
     areas(j)=molecules_involved(j).area;
 end
 
-molecule_pattern=double(pattern(molecule,1,resolutionbycalibration(calibration,molecule.com),0,massaxis)');
+molecule_pattern=double(pattern(molecule,1,resolutionbycalibration(calibration,molecule.com),0,massaxis)',calibration.shape);
 
 sum_spec=M*areas'+molecule_pattern*molecule.area;
 

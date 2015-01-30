@@ -73,20 +73,20 @@ for i=1:l
     
     switch fitting_method
         case 'linear_system'
-            [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+            [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind)-spec_calc(ind),massaxis(ind),calibration.shape,molecules(involved),parameters,lb,ub);
         case 'simplex'
-            [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+            [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind)-spec_calc(ind),massaxis(ind),calibration.shape,molecules(involved),parameters,lb,ub);
         case 'simplex_lin_combi'    
-            [fitparam,stderr]=get_fit_params_using_simplex_lin_combi(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+            [fitparam,stderr]=get_fit_params_using_simplex_lin_combi(spec_measured(ind)-spec_calc(ind),massaxis(ind),calibration.shape,molecules(involved),parameters,lb,ub);
         case 'genetic'
-            [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+            [fitparam,stderr]=get_fit_params_using_genetics(spec_measured(ind)-spec_calc(ind),massaxis(ind),calibration.shape,molecules(involved),parameters,lb,ub);
         case 'pattern_search'
-            [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind)-spec_calc(ind),massaxis(ind),molecules(involved),parameters,lb,ub);
+            [fitparam,stderr]=get_fit_params_using_pattern_search(spec_measured(ind)-spec_calc(ind),massaxis(ind),calibration.shape,molecules(involved),parameters,lb,ub);
     end
     
     %update calculated spec
     ind=findmassrange(massaxis,molecules(i),resolution,massoffset,10);
-    spec_calc(ind)=spec_calc(ind)+multispecparameters(massaxis(ind),molecules(i),fitparam([1,end-1,end]));
+    spec_calc(ind)=spec_calc(ind)+multispecparameters(massaxis(ind),molecules(i),fitparam([1,end-1,end]),calibration.shape);
     
     k=1;
     for j=involved

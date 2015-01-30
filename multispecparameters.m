@@ -1,4 +1,4 @@
-function out = multispecparameters(massaxis,molecules,parameters)
+function out = multispecparameters(massaxis,molecules,parameters,shape)
 %multispecparameters(massaxis,molecules,parameters)
 %   calculates isotopic pattern for molecules in list
 %   uses parameters for molecule areas, NOT area stored in molecules
@@ -11,7 +11,7 @@ function out = multispecparameters(massaxis,molecules,parameters)
 spec_calc=zeros(1,length(massaxis));
 
 for i=1:length(molecules)
-    spec_calc=spec_calc+pattern(molecules(i),parameters(i),parameters(end-1),parameters(end),massaxis);
+    spec_calc=spec_calc+pattern(molecules(i),parameters(i),parameters(end-1),parameters(end),massaxis,shape);
 end
 
 %out=sum((spec_measured-spec).^2.*abs(spec_measured));

@@ -1,4 +1,4 @@
-function [paramsout,errout] = get_fit_params_using_pattern_search(spec_measured,massaxis,molecules,parameters,lb,ub)
+function [paramsout,errout] = get_fit_params_using_pattern_search(spec_measured,massaxis,shape,molecules,parameters,lb,ub)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -13,10 +13,10 @@ opt=psoptimset(opt,'Cache','on');
 opt=psoptimset(opt,'ScaleMesh','on');
 opt=psoptimset(opt,'TolMesh',1e-6);
 
-paramsout = patternsearch(@(x) msd(spec_measured,massaxis,molecules,x),parameters,...
+paramsout = patternsearch(@(x) msd(spec_measured,massaxis,shape,molecules,x),parameters,...
     [],[],[],[],lb,ub,[],opt);
 
-errout=get_fitting_errors(spec_measured,massaxis,molecules,paramsout,0.5);
+errout=get_fitting_errors(spec_measured,massaxis,shape,molecules,paramsout,0.5);
 
 end
 

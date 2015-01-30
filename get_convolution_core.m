@@ -6,5 +6,8 @@ function [core,x] = get_convolution_core(peakdata,molecule_stems)
 core=double(ifftshift(ifft(fft(peakdata(:,2)')./fft(molecule_stems))))';
 x=double((((0:size(peakdata,1)-1)'/(size(peakdata,1)-1))-(0.5))*2*size(peakdata,1));
 
+%mass units:
+x=x*mean(diff(peakdata(:,1)));
+
 end
 

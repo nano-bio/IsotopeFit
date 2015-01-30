@@ -1,43 +1,25 @@
-function out = pattern(molecule,area,resolutionaxis,massshiftaxis,massaxis)
+function out = pattern(molecule,area,resolutionaxis,massshiftaxis,massaxis,shape)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
-y=zeros(1,length(massaxis));
-peaksum=0;
+%peakshapes are stored as 4th order splines
 
-%xc=[1,0.999890289,0.999522607];
+%global shape_He;
+%plot(convcore)
 
-%approx sigma calculation for center of molecule mass:
-sigma=molecule.com./resolutionaxis*(1/(2*sqrt(2*log(2))));
-eta=1; %1... Gauss --- 0... Lorentz
+out=zeros(size(massaxis));
 
-a=-30; %asymetric shift
+%this is not accurate! -> for large massranges, we need to calculate the
+%resolution in the loop!!!
+peakshape=peak_width_adaption(shape,molecule.com/mean(resolutionaxis),area);
 
- for i=1:size(molecule.peakdata,1)
-%     %resolution=polynomial(resolutionpolynom,molecule.peakdata(i,1));
-%     %massshift=polynomial(massshiftpolynom,molecule.peakdata(i,1));
-%     
-%     %exact sigma calculation for every mass:
-%     %sigma=molecule.peakdata(i,1)./resolutionaxis*(1/(2*sqrt(2*log(2)))); %factor:resolution in FWHM definition!!!!
-%     
-% %     for j=1:length(xc)%multiple peak fit
-% %         y=y+A(j)*area*molecule.peakdata(i,2)*(1./(sigma*w(j)*sqrt(2*pi))).*exp(-(1/2)*((massaxis-massshiftaxis-(sqrt(molecule.peakdata(i,1))+xc(j))^2)./(sigma*w(j))).^2); %Gauss
-% %         
-% %     end
-% 
-%     %peaksum=peaksum+molecule.peakdata(i,2);
-%     
-%     eta=0.6; %1... Gauss --- 0... Lorentz
-     yp=eta*area*molecule.peakdata(i,2)*(1./(sigma*sqrt(2*pi))).*exp(-(1/2)*((massaxis-massshiftaxis-molecule.peakdata(i,1))./sigma).^2); %Gauss
-     yp=yp+(1/pi)*(1-eta)*area*molecule.peakdata(i,2)*(sigma./(sigma.^2+(massaxis-massshiftaxis-molecule.peakdata(i,1)).^2)); %Lorentz
-     
-              
-     %asymetric variation
-%     yp=2*yp./(1+exp(a*(massaxis-massshiftaxis-molecule.peakdata(i,1)))); %Aaron L. Stancik, Eric B. Brauns: Vibrational Spectroscopy 47 (2008) 66–69
-     
-     y=y+yp;
- end
-%out=y/peaksum;
+for i=1:size(molecule.peakdata,1)
+    evalspline=peakshape;
+    evalspline.breaks=evalspline.breaks+molecule.peakdata(i,1);
+    out=out+molecule.peakdata(i,2)*ppval(evalspline,massaxis-massshiftaxis);
+    %out=out+interp1(sm+molecule.peakdata(i,1),s*molecule.peakdata(i,2),massaxis-massshiftaxis,'linear',0);
+end
 
-out=y/sum(molecule.peakdata(:,2));
+%int(out*dx)=area
 
+%convolution:

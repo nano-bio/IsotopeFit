@@ -250,7 +250,8 @@ mmolecules = uimenu('Label','Molecules','Enable','off');
        
 mcal = uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
-       mcalcal=uimenu(mcal,'Label','Mass- and Resolution calibration...','Callback',@menucalibration,'Enable','off','Separator','on');
+       mcalcal=uimenu(mcal,'Label','Mass- and resolution calibration...','Callback',@menucalibration,'Enable','off');
+       mpeakshape=uimenu(mcal,'Label','Edit peak shape...','Callback',@menupeakshape,'Enable','on','Separator','on');
        mpd2raw=uimenu(mcal,'Label','Write peakdata to raw peakdata...','Callback',@menupeakdata2raw,'Enable','on');
        mpdsmoothmass=uimenu(mcal,'Label','Smooth massaxis...','Callback',@menusmoothmassaxis,'Enable','on');
        mloadcal=uimenu(mcal,'Label','Load calibration and molecules from ifd...','Callback',@menuloadcalibration,'Enable','on','Separator','on');
@@ -278,9 +279,7 @@ mdata = uimenu('Label','Data');
        
 %%       
 % ===== END OF LAYOUT ===== %     
-      
-addpath('DERIVESTsuite');
-addpath('FMINSEARCHBND');
+addpath(genpath('EXTERNAL FUNCTIONS'));
 addpath('IsotopeDistribution');
 
 init();
@@ -667,7 +666,7 @@ init();
         if ~(isequal(filename,0) || isequal(pathname,0))
             resolutionaxis=resolutionbycalibration(handles.calibration,handles.peakdata(:,1)');
             % calculate fitted spectrum for all molecules
-            fitted_data=multispec(handles.molecules,resolutionaxis,0,handles.peakdata(:,1)',1)';
+            fitted_data=multispec(handles.molecules,resolutionaxis,0,handles.peakdata(:,1)',handles.calibration.shape)';
         
             % write data to ascii file
             fid=fopen(fullfile(pathname,filename),'w');
@@ -712,7 +711,7 @@ init();
             %read out molecule data and write names to first line
             for i=moleculelist'
                 %calculate fitted data for every molecule:
-                fitted_data(:,k)=multispec(handles.molecules(i),resolutionaxis,0,massaxis)';
+                fitted_data(:,k)=multispec(handles.molecules(i),resolutionaxis,0,massaxis,handles.calibration.shape)';
                 k=k+1;
                 %write name of molecule
                 fprintf(fid,'\t%s',handles.molecules(i).name);
@@ -759,7 +758,7 @@ init();
             fprintf('%i/%i\tMSD: %f\tArea: %f\n ',i,length(testareas),testmsd(i),testareas(i));
         end
                 
-        calcspec=multispec(handles.molecules(involved),resolutionbycalibration(handles.calibration,massaxis),0,massaxis);
+        calcspec=multispec(handles.molecules(involved),resolutionbycalibration(handles.calibration,massaxis),0,massaxis,handles.calibration.shape);
         
         stdabw=sqrt(sum((calcspec-spec_measured).^2));
                 
@@ -894,7 +893,7 @@ init();
                spec=double(interp1(mass(ind:end),handles.peakdata(ind:end,2)',t));
                spec(isnan(spec))=0;
            case 'Fitted Data'
-               spec=multispec(handles.molecules,3000,0,t);
+               spec=multispec(handles.molecules,3000,0,t,handles.calibration.shape);
        end
 
        spec=smooth(spec,10);
@@ -1277,6 +1276,21 @@ function menusavecal(hObject,~)
         msgbox('Done.');
     end
 
+    function menupeakshape(hObject,~)
+        handles=guidata(Parent);
+                
+        limits = get(dataaxes, 'XLim');
+        
+        %find molecules that are in current view
+        moleculelist=molecules_in_massrange_with_sigma(handles.molecules,limits(1),limits(2),handles.calibration,handles.settings.searchrange);
+        
+        minind=mass2ind(handles.peakdata(:,1)',limits(1));
+        maxind=mass2ind(handles.peakdata(:,1)',limits(2));
+                        
+        handles.calibration=peak_shape_generator(handles.peakdata(minind:maxind,:),handles.molecules(moleculelist),handles.calibration);
+        guidata(Parent,handles);
+        
+    end
 
     function menucalibration(hObject,~)
         handles=guidata(Parent);
@@ -1462,6 +1476,13 @@ function menusavecal(hObject,~)
                     %Calibration data
                     handles.calibration=data.calibration;
                     
+                    if ~isfield(handles.calibration,'shape') %compatibility: custom peak shapes
+                        fprintf('Old File. Load gaussian peak shape as default...');
+                        shapes=load('shapes.mat');
+                        handles.calibration.shape=shapes.gaussian;
+                        fprintf(' done\n');
+                    end
+                                        
                     handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
                     handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
                     handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
@@ -1512,6 +1533,10 @@ function menusavecal(hObject,~)
         out.massoffsetparam=0; %dont care for spline or pchip
         out.resolutionparam=3000; %flat calibration
         out.namelist={};
+        
+        %Default: Gaussian peak shape
+        shapes=load('shapes.mat');
+        out.shape=shapes.gaussian;
     end
 
     function save_file(hObject, ~, method)
@@ -1768,7 +1793,8 @@ function menusavecal(hObject,~)
         calcsignal=multispec(handles.molecules(index),...
             resolutionaxis,...
             0,...
-            calcmassaxis);
+            calcmassaxis,...
+            handles.calibration.shape);
         
         % plot data (= calibrated raw data)
         plot(dataaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5]);
@@ -1785,7 +1811,8 @@ function menusavecal(hObject,~)
         sumspectrum=multispec(handles.molecules(involvedmolecules),...
             resolutionaxis,...
             0,...
-            calcmassaxis);
+            calcmassaxis,...
+            handles.calibration.shape);
         
         plot(dataaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2);
         plot(dataaxes,calcmassaxis,calcsignal,'Color','red'); 
