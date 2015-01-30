@@ -349,7 +349,7 @@ drawnow;
         
         %X = fmincon(FUN,X0,A,B,Aeq,Beq,LB,UB,NONLCON,OPTIONS)
         offsets=fmincon(@(x) msd_spline(x,handles.masses(startindex:endindex),handles.K(startindex:endindex),handles.xvalues,handles.yvalues,fixedpoints),...
-                       startoffsets,[],[],[],[],lb,ub);
+                       startoffsets,[],[],[],[],lb,ub,[],optimoptions('fmincon','Algorithm','interior-point'));
                    
         [handles.xvalues,handles.yvalues]=fitoffsets2coordinates(offsets,handles.xvalues,handles.yvalues,fixedpoints);
         
