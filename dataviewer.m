@@ -28,6 +28,12 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
     dataaxes.updateslider = @updateslider;
     dataaxes.getclickcoordinates = @getclickcoordinates;
     
+    % add listener for changes in XLim of the data axes -> if the user pans
+    % or zooms using the tools in the toolbar we want to know and update
+    % the slider accordingly
+    
+    addlistener(dataaxes.axes, 'XLim', 'PostSet', @axeseventlisteningwrapper);
+    
     % ===== GUI ELEMENTS TO CHANGE VIEW IN DATA AXES ===== %
       
     % Toggle log scale for the data axes
@@ -150,7 +156,7 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         guidata(hObject,handles);
     end
 
-    function doubleyscale(hObject, ~)
+    function doubleyscale(~, ~)
         % This function multiplies the Y-axis with a factor of two (hence
         % making the signals smaller)
         
@@ -162,7 +168,7 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         set(dataaxes.axes, 'YLim', nl)
     end
 
-    function doublexscale(Parent, ~)
+    function doublexscale(~, ~)
         % This function multiplies the Y-axis with a factor of two (hence
         % making the signals smaller)
         
@@ -178,7 +184,7 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         updateslider(parobj, 'nothingreally');
     end
 
-    function halfyscale(hObject, ~)
+    function halfyscale(~, ~)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
@@ -190,7 +196,7 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         set(dataaxes.axes, 'YLim', nl)
     end
 
-    function halfxscale(Parent, ~)
+    function halfxscale(~, ~)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
@@ -206,7 +212,7 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         updateslider(parobj, 'nothingreally');
     end
 
-    function autoyscale(hObject, ~)
+    function autoyscale(~, ~)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
@@ -214,12 +220,20 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         set(dataaxes.axes, 'YLimMode', 'auto');
     end
 
-    function autoxscale(hObject, ~)
+    function autoxscale(~, ~)
         % This function divides the Y-axis by a factor of two (hence
         % making the signals bigger)
         
         % set back
         set(dataaxes.axes, 'XLimMode', 'auto');
+    end
+
+    function axeseventlisteningwrapper(~, ~)
+        % this wrapper has enough arguments to be a callback function.
+        % however, we don't need them so they are discarded.
+        % this updates the slider every time the user uses zooming or
+        % paning from the toolbar
+        updateslider(parobj, 'nothingreally');
     end
 
     function updateslider(hObject, ~)
@@ -259,7 +273,7 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         end
     end
 
-    function slidedataaxes(hObject, ~)
+    function slidedataaxes(~, ~)
         % This function updates the data axes when the slider for the
         % x-axis is clicked
         
@@ -281,17 +295,6 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
     function [x, y,mouseside]=getclickcoordinates(hObject)
         % this function returns the coordinates of a click in terms of the
         % axes units.
-%         axesHandle  = get(hObject,'Parent');
-        
-        % this gives absolute coordinates within _the window_ -> we have to
-        % convert to axes-units
-               
-%         coordinates = get(axesHandle,'CurrentPoint')
-%         areaaxespos = get(hObject, 'Position');
-%         xlim = get(hObject, 'XLim');
-%         ylim = get(hObject, 'YLim');
-%         x = xlim(1) + (xlim(2)-xlim(1))/areaaxespos(3)*(coordinates(1)-areaaxespos(1));
-%         y = ylim(1) + (ylim(2)-ylim(1))/areaaxespos(4)*(coordinates(2)-areaaxespos(2));
 
         % Strange: but this seems to work:
         coordinates=get(hObject,'CurrentPoint');

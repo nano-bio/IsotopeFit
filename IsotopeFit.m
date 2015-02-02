@@ -517,7 +517,7 @@ init();
                            [1 1 1 0 0 0 1 0],...   % mratio
                            [1 1 1 0 0 0 0 0],...   % merrors
                            [1 1 1 0 0 0 1 0],...   % b_sortlist
-                           [1 1 1 0 0 0 1 0],...   % b_refresh
+                           [1 1 1 0 0 0 0 0],...   % b_refresh
                            [1 1 0 0 0 0 0 0]};     % mpeakshape   
         
         if nargin > 1
@@ -545,30 +545,6 @@ init();
         end
         
         guidata(Parent,handles);
-    end
-
-    function peakdataout=approxpeakdata(peakdata,samplerate)
-        %this function resamples the peakdata with a given, equidistant
-        %samplerate (i.e. 0.1 massunits)
-        l=size(peakdata,1);
-        
-        %% massaxis needs to be smooth for resampling
-        mass=spline(1:round(l/1000):l,peakdata(1:round(l/1000):l,1)',1:l);
-        
-       %% sometimes, the spectrum isnt incrasing at the begininng. cut out
-       % this region
-       ind=find(diff(mass)<=0);
-       
-       if ~isempty(ind)
-           ind=ind(end)+1;
-       else
-           ind=1;
-       end
-       
-       %% resampling
-       mt=mass(ind):samplerate:mass(end);
-       peakdataout=[mt',...
-                    double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
     end
 
     function menuexportsmoothmassspec(hObject,~)
@@ -1062,7 +1038,7 @@ function menusavecal(hObject,~)
         % this function exports the calibration points to an ASCII file
         handles=guidata(hObject);
 
-        % get data poits for massoffset from mass calibration
+        % get data points for massoffset from mass calibration
         comlist = handles.calibration.comlist;
         massoffsetlist = handles.calibration.massoffsetlist;
         
@@ -1331,7 +1307,7 @@ function menusavecal(hObject,~)
         maxind=mass2ind(handles.peakdata(:,1)',limits(2));
         
         %check if spectrum is fitted
-        if handles.status.guistatusvector(6)==0 % not fitted
+        if handles.status.guistatusvector(7)==0 % not fitted
             result = questdlg('Spectrum is not fitted. Do you want me to fit the molecules in the current view?', 'Not fitted!');
             switch result
                 case 'Yes'
@@ -1355,9 +1331,15 @@ function menusavecal(hObject,~)
                         handles.settings.fittingmethod_main);
             end
         end    
-            
         
+        calibrationtemp=handles.calibration;
         handles.calibration=peak_shape_generator(handles.peakdata(minind:maxind,:),handles.molecules(moleculelist),handles.calibration);
+        
+        if ~isequal(calibrationtemp,handles.calibration)
+            % set fitted in status update to 0 
+            handles = gui_status_update('fitted', 0, handles);
+        end
+        
         guidata(Parent,handles);
         
     end
@@ -2044,10 +2026,11 @@ function menusavecal(hObject,~)
                 waitbar(i/length(molecules));
             end
         end
+        % preallocate for speed
+        sortlist = cell(1, length(attached));
         for i=1:length(attached)
             sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
         end
-        
         
         %sort serieslist alphabetically
         [sortlist_sorted,ix_sorted] = sort(sortlist);
@@ -2123,7 +2106,6 @@ function menusavecal(hObject,~)
                 handles = gui_status_update('fitted', 1, handles);
                 
                 % and we're done (bkp.ifd is deleted when file is saved)
-                handles = gui_status_update('changed', 1, handles);
             case 'Fit selected'
                 %index consists of a list of molecules.
                 %for fitting, we need to find all molecules that overlap
@@ -2132,8 +2114,8 @@ function menusavecal(hObject,~)
                 
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethode,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
         end
-        
-        
+                
+        handles = gui_status_update('changed', 1, handles);
         handles = gui_status_update('cs_selected', 0, handles);
         
         %empty area listbox

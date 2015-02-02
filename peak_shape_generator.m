@@ -201,7 +201,7 @@ drawnow;
             case 'normal'
                 [rsq,ix]=find_nearest_point(x,y);
                 
-                if (rsq>25)|(ix==currentix) %move node
+                if (rsq>25)||(ix==currentix) %move node
                     movepoint(currentix,x,y);
                 else %set current node    
                     set(ListPoints,'Value',ix);
