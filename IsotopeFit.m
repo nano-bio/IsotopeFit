@@ -214,7 +214,14 @@ b_refresh = uicontrol(Parent,'style','pushbutton',...
           'string','Refresh View',...
           'Callback',@(s,e) plotmolecule(0),...
           'Units','normalized',...
-          'Position',gridpos(64,64,62,64,47,52,0.01,0.01));
+          'Position',gridpos(64,64,62,64,48,53,0.01,0.01));
+
+% button to mark molecules in current view
+b_markmoleculesinview = uicontrol(Parent,'style','pushbutton',...
+          'string','Mark Molecules',...
+          'Callback',@markmoleculesinview,...
+          'Units','normalized',...
+          'Position',gridpos(64,64,62,64,43,48,0.01,0.01));
       
 % Plot overview
       
@@ -438,6 +445,27 @@ init();
             out=0;
         end
     end
+
+    function markmoleculesinview(~,~)
+        % this function marks all molecules in the currently viewed
+        % massrange and marks them in the list.
+        handles=guidata(Parent);
+        limits= get(dataaxes, 'XLim');
+        % those are the molecules in the range
+        moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2));
+        
+        % in case the list is filtered we need to remove that - filtered
+        % molecules could be in our range
+        if handles.status.moleculesfiltered == 1
+            set(ListFilter,'string', '');
+            filterListMolecules;
+        end
+        
+        % select them
+        set(ListMolecules,'Value', moleculelist);
+        % refresh view for the nicer looks!
+        plotmolecule(0);
+    end
         
     function menuconvcore(hObject,~)
         handles=guidata(Parent);
@@ -494,7 +522,7 @@ init();
         % list of gui elements that should be hidden/shown
         guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mmolecules', 'mcal', 'mcalsave', 'msave', 'msaveas',...
                        'mplay', 'mplayfit', 'mdata', 'mdatacs', 'mdatacms', 'mdatafms','mconvcore','mratio', 'merrors', 'b_sortlist',...
-                       'b_refresh','mpeakshape'};
+                       'b_refresh','mpeakshape','b_markmoleculesinview'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
         guirequirements = {[1 0 0 0 0 0 0 0],...   % mcalbgc
@@ -518,7 +546,8 @@ init();
                            [1 1 1 0 0 0 0 0],...   % merrors
                            [1 1 1 0 0 0 1 0],...   % b_sortlist
                            [1 1 1 0 0 0 0 0],...   % b_refresh
-                           [1 1 0 0 0 0 0 0]};     % mpeakshape   
+                           [1 1 0 0 0 0 0 0],...   % mpeakshape  
+                           [1 1 1 0 0 0 0 0]};     % b_refresh
         
         if nargin > 1
             % we want to update the status vector
