@@ -28,6 +28,12 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
     dataaxes.updateslider = @updateslider;
     dataaxes.getclickcoordinates = @getclickcoordinates;
     
+    % add listener for changes in XLim of the data axes -> if the user pans
+    % or zooms using the tools in the toolbar we want to know and update
+    % the slider accordingly
+    
+    addlistener(dataaxes.axes, 'XLim', 'PostSet', @axeseventlisteningwrapper);
+    
     % ===== GUI ELEMENTS TO CHANGE VIEW IN DATA AXES ===== %
       
     % Toggle log scale for the data axes
@@ -220,6 +226,14 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         
         % set back
         set(dataaxes.axes, 'XLimMode', 'auto');
+    end
+
+    function axeseventlisteningwrapper(~, ~)
+        % this wrapper has enough arguments to be a callback function.
+        % however, we don't need them so they are discarded.
+        % this updates the slider every time the user uses zooming or
+        % paning from the toolbar
+        updateslider(parobj, 'nothingreally');
     end
 
     function updateslider(hObject, ~)
