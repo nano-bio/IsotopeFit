@@ -1074,9 +1074,15 @@ function menusavecal(hObject,~)
             filenamesuggestion);
         handles=guidata(Parent);
         
+        %write title line
+        fid=fopen(fullfile(pathname,filename),'w');
+        fprintf(fid,'Center of Mass(Dalton) \t Mass Offset (Dalton)\n');
+        fclose(fid);
+        
+        %append data
         if ~(isequal(filename,0) || isequal(pathname,0))
             
-            dlmwrite(fullfile(pathname, filename), [comlist, massoffsetlist], 'Delimiter', '\t', 'Precision', '%e');
+            dlmwrite(fullfile(pathname, filename), [comlist, massoffsetlist], '-append', 'Delimiter', '\t', 'Precision', '%e');
                         
         end
     end
