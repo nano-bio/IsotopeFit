@@ -547,30 +547,6 @@ init();
         guidata(Parent,handles);
     end
 
-    function peakdataout=approxpeakdata(peakdata,samplerate)
-        %this function resamples the peakdata with a given, equidistant
-        %samplerate (i.e. 0.1 massunits)
-        l=size(peakdata,1);
-        
-        %% massaxis needs to be smooth for resampling
-        mass=spline(1:round(l/1000):l,peakdata(1:round(l/1000):l,1)',1:l);
-        
-       %% sometimes, the spectrum isnt incrasing at the begininng. cut out
-       % this region
-       ind=find(diff(mass)<=0);
-       
-       if ~isempty(ind)
-           ind=ind(end)+1;
-       else
-           ind=1;
-       end
-       
-       %% resampling
-       mt=mass(ind):samplerate:mass(end);
-       peakdataout=[mt',...
-                    double(interp1(mass(ind:end),peakdata(ind:end,2)',mt))'];
-    end
-
     function menuexportsmoothmassspec(hObject,~)
         %% Exports Peakdata of entire mass range to ascii file
         handles=guidata(hObject);
@@ -1062,7 +1038,7 @@ function menusavecal(hObject,~)
         % this function exports the calibration points to an ASCII file
         handles=guidata(hObject);
 
-        % get data poits for massoffset from mass calibration
+        % get data points for massoffset from mass calibration
         comlist = handles.calibration.comlist;
         massoffsetlist = handles.calibration.massoffsetlist;
         
@@ -2044,10 +2020,11 @@ function menusavecal(hObject,~)
                 waitbar(i/length(molecules));
             end
         end
+        % preallocate for speed
+        sortlist = cell(1, length(attached));
         for i=1:length(attached)
             sortlist{i}=[searchstring 'n' attached{i}(1:end-1)];
         end
-        
         
         %sort serieslist alphabetically
         [sortlist_sorted,ix_sorted] = sort(sortlist);
