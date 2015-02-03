@@ -114,24 +114,6 @@ uicontrol(SelectionPanel,'style','pushbutton',...
           'Units','normalized',...
           'Position',gridpos(6,8,3,3,4,4,0.02,0.02)); 
 
-%Preview Panel
-
-preview_dataviewer = dataviewer(PreviewPanel, gridpos(20,20,4,20,1,15,0.03,0.07), 45, 15, false, @previewclick);
-previewaxes = preview_dataviewer.axes;
-
-% uicontrol(PreviewPanel,'Style','Text',...
-%     'String','Zoomfaktor',...
-%     'Units','normalized',...
-%     'Position',gridpos(20,20,1,2,1,2,0.01,0.01));        
-%          
-% e_zoomfaktor = uicontrol(PreviewPanel,'Style','edit',...
-%     'Tag','e_zoomfaktor',...
-%     'Units','normalized',...,...
-%     'String','30',...
-%     'Background','white',...
-%     'Enable','on',...
-%     'Position',gridpos(20,20,1,2,3,3,0.01,0.01));
-
 % autozoom in preview panel
 uicontrol(PreviewPanel,'style','pushbutton',...
           'string','Autozoom',...
@@ -283,8 +265,9 @@ uicontrol(PreviewPanel,'style','pushbutton',...
           'Units','normalized',...
           'Position',gridpos(10,12,1,2,12,12,0.01,0.04)); 
 
+%Preview Panel
 
-
+previewaxes = dataviewer(PreviewPanel, 'preview', gridpos(20,20,4,20,1,15,0.03,0.07), 45, 15, false, @previewclick);
 
 %Calibration Panel
 
@@ -599,7 +582,6 @@ uiwait(Parent)
         
         %massoffset plot
               
-        
         switch(lower(handles.calibration.massoffsetmethode))
             case 'flat'
                 handles.calibration.massoffsetparam=mean(handles.calibration.massoffsetlist);
@@ -646,14 +628,13 @@ uiwait(Parent)
         
         plotdatapoints;
         
-        hold(massoffsetaxes,'on');
+        hold(massoffsetaxes, 'on');
         plot(massoffsetaxes,massaxis,massoffsety,'k--');
-        hold(massoffsetaxes,'off');
+        hold(massoffsetaxes, 'off');
         
-        hold(resolutionaxes,'on');
+        hold(resolutionaxes, 'on');
         plot(resolutionaxes,massaxis,resolutiony,'k--');
-        hold(resolutionaxes,'off');
-        
+        hold(resolutionaxes, 'off');
     end
 
     function [rootindex, rangeindex, moleculeindex]=getcurrentindex()
@@ -775,8 +756,8 @@ uiwait(Parent)
         previewsearchrange=10; %no need to add this to settings module?
         
         % in case we want to preserve the zoom status
-        xlims = get(previewaxes, 'XLim');
-        ylims = get(previewaxes, 'YLim');
+        xlims = get(previewaxes.axes, 'XLim');
+        ylims = get(previewaxes.axes, 'YLim');
         
         % center of mass of current molecule
         com=handles.molecules(index).com;
@@ -827,8 +808,8 @@ uiwait(Parent)
         calcmassaxis=handles.peakdata(ind,1)';
             
         % plotting data
-        plot(previewaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5],'HitTest','off');
-        hold(previewaxes,'on');
+        cla(previewaxes.axes)
+        previewaxes.cplot(handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5],'HitTest','off');
 
         % if molecule belongs to calibration -> plot range molecules too
         if inrange
@@ -838,7 +819,7 @@ uiwait(Parent)
             calcmassaxis,...
             handles.calibration.shape);
             
-            plot(previewaxes,calcmassaxis,rangesignal,'Color','green','Linewidth',2,'HitTest','off');
+            previewaxes.cplot(calcmassaxis,rangesignal,'Color','green','Linewidth',2,'HitTest','off');
         end
         
         % calculate and plot sum spectrum of involved molecules
@@ -847,7 +828,7 @@ uiwait(Parent)
             currentmassoffset,...
             calcmassaxis,...
             handles.calibration.shape);
-        plot(previewaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2,'HitTest','off');
+        previewaxes.cplot(calcmassaxis,sumspectrum,'k--','Linewidth',2,'HitTest','off');
         
         % single molecule
         calcsignal=multispec(handles.molecules(index),...
@@ -855,29 +836,26 @@ uiwait(Parent)
                 currentmassoffset,...
                 calcmassaxis,...
                 handles.calibration.shape); 
-        plot(previewaxes,calcmassaxis,calcsignal,'Color','red','HitTest','off');
+        previewaxes.cplot(calcmassaxis,calcsignal,'Color','red','HitTest','off');
         
         %plot lines for mousecalibration
         if ~isempty(handles.status.from_x_coordinate)
-            plot(previewaxes,[handles.status.from_x_coordinate,handles.status.from_x_coordinate],ylims,'r--','HitTest','off');
+            previewaxes.cplot([handles.status.from_x_coordinate,handles.status.from_x_coordinate],ylims,'r--','HitTest','off');
         end
         
         if ~isempty(handles.status.to_x_coordinate)
-            plot(previewaxes,[handles.status.to_x_coordinate,handles.status.to_x_coordinate],ylims,'k--','Color',[0.5 0.5 0.5],'HitTest','off');
+            previewaxes.cplot([handles.status.to_x_coordinate,handles.status.to_x_coordinate],ylims,'k--','Color',[0.5 0.5 0.5],'HitTest','off');
         end
         
-        hold(previewaxes,'off');
-        
         % set zoom status.
-        set(previewaxes, 'XLim',xlims);
+        set(previewaxes.axes, 'XLim',xlims);
         
         % automatic y-zoom by matlab, when zoom changed
         % otherwise set previous ylims
         if ~changezoom
-            set(previewaxes, 'YLim',ylims);
+            set(previewaxes.axes, 'YLim',ylims);
         end
-        
-        set(previewaxes,'ButtonDownFcn',@previewclick);
+
         guidata(Parent,handles);
     end
 

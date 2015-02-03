@@ -65,18 +65,9 @@ e_endmass=uicontrol(Parent,'Style','edit',...
     'String','End',...
     'Background','white',...
     'Position',gridpos(layoutlines,layoutrows,29,30,9,10,0.01,0.01));
-% 
-% axis1 = axes('Parent',Parent,...
-%              'ActivePositionProperty','OuterPosition',...
-%              'Units','normalized',...
-%              'Position',gridpos(66,60,17,61,4,60,0.04,0.04));
-         
-% for backwards compatibility with the existing code, we map updateslider
-% to the function inside the dataviewer object
+
 gridpos(layoutlines,layoutrows,4,28,1,layoutrows,0.025,0.01);
-dvhandle = dataviewer(Parent, gridpos(layoutlines,layoutrows,4,28,1,layoutrows,0.025,0.01), 50, 40, false, []);
-axis1 = dvhandle.axes;
-updateslider = dvhandle.updateslider;
+dv = dataviewer(Parent, 'dataaxes', gridpos(layoutlines,layoutrows,4,28,1,layoutrows,0.025,0.01), 50, 40, false, []);
 
 e_ndiv=uicontrol(Parent,'Style','edit',...
     'Tag','edit_ndiv',...
@@ -159,8 +150,8 @@ function show(hObject, ~)
 
     % retrieve current view settings from axes:
     if (handles.startup == 0) % only if we're not starting up any more...
-        xlim = get(axis1, 'XLim');
-        ylim = get(axis1, 'YLim');
+        xlim = get(dv.axes, 'XLim');
+        ylim = get(dv.axes, 'YLim');
     end
 
     % read out the two fields for start and end mass. in case they are
@@ -199,12 +190,12 @@ function show(hObject, ~)
     handles.signalcrop=handles.signal(handles.startind:handles.endind);
 
     % plot spectrum and fitted curve (pchip) between data points of background correction
-    plot(axis1,handles.massaxiscrop,handles.signalcrop,handles.massaxiscrop,interp1(handles.bgcorrectiondata.bgm,handles.bgcorrectiondata.bgy,handles.massaxiscrop,'pchip','extrap'));
+    dv.cplot(handles.massaxiscrop,handles.signalcrop,handles.massaxiscrop,interp1(handles.bgcorrectiondata.bgm,handles.bgcorrectiondata.bgy,handles.massaxiscrop,'pchip','extrap'));
 
     % reset zoom state to what it was before:
     if (handles.startup == 0)
-        set(axis1, 'XLim', xlim)
-        set(axis1, 'YLim', ylim)
+        set(dv.axes, 'XLim', xlim)
+        set(dv.axes, 'YLim', ylim)
     end
 
     % now we plotted something and it's definitely not startup conditions
@@ -216,7 +207,7 @@ function show(hObject, ~)
 end
 
 
-% ====FUNCTIONS NEEDED TO CHANGE VIEW IN AXIS1==== % 
+% ====FUNCTIONS NEEDED TO CHANGE VIEW IN dv.axes==== % 
 
 % initialize some status values needed for the view change functions
 handles.status.logscale = 0;
@@ -236,7 +227,7 @@ function plotoverview(hObject, ~)
     % full mass range we were probably not in overview mode. if at the
     % same time overview is still true, the user probably jumped out of
     % overview mode to a molecule and we should now go to overview
-    cl = get(axis1, 'XLim');
+    cl = get(dv.axes, 'XLim');
     viewedrange = (cl(2) - cl(1))*2;
 
     maxmass = max(handles.massaxiscrop);
@@ -248,16 +239,16 @@ function plotoverview(hObject, ~)
     % are we already in overview?
     if handles.status.overview == 0
         % save the old settings so we can toggle back
-        oxl = get(axis1, 'XLim');
-        oyl = get(axis1, 'YLim');
+        oxl = get(dv.axes, 'XLim');
+        oyl = get(dv.axes, 'YLim');
         handles.status.lastlims = [oxl oyl];
-        set(axis1, 'YLimMode', 'auto');
-        set(axis1, 'XLimMode', 'auto');
+        set(dv.axes, 'YLimMode', 'auto');
+        set(dv.axes, 'XLimMode', 'auto');
         handles.status.overview = 1;
     elseif handles.status.overview == 1
         % jump back to last settings
-        set(axis1, 'XLim', [handles.status.lastlims(1) handles.status.lastlims(2)]);
-        set(axis1, 'YLim', [handles.status.lastlims(3) handles.status.lastlims(4)]);
+        set(dv.axes, 'XLim', [handles.status.lastlims(1) handles.status.lastlims(2)]);
+        set(dv.axes, 'YLim', [handles.status.lastlims(3) handles.status.lastlims(4)]);
         handles.status.overview = 0;
     end
 

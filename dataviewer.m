@@ -1,8 +1,9 @@
-function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderbool, callbackfcn)
+function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, datasliderbool, callbackfcn)
     % This function draws a complete set of axes including buttons for view
     % adjustments around it. It expects 5 arguments:
-    % parobj = the parent object where to drin in (e.g. Parent in most
+    % parobj = the parent object where to draw in (e.g. Parent in most
     % cases)
+    % tag = string to identify this axes - for example: 'massspecplot1'
     % posext = the position vector in the reference frame of the parent
     % object (just use gridpos as normal)
     % xfatness, yfatness = basically the number of virtual gridlines within
@@ -21,12 +22,15 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
 
     dataaxes.axes = axes('Parent',parobj,...
         'ButtonDownFcn',callbackfcn,...
-        'NextPlot','replacechildren',...
+        'NextPlot','add',...
         'Units','normalized',...
+        'Tag', tag,...
         'Position',alignelements(posext, 3, subgridx, 3, subgridy, 0.01, 0.02));
-    
+
     dataaxes.updateslider = @updateslider;
     dataaxes.getclickcoordinates = @getclickcoordinates;
+    dataaxes.cplot = @cplot;
+    dataaxes.cstem = @cstem;
     
     % add listener for changes in XLim of the data axes -> if the user pans
     % or zooms using the tools in the toolbar we want to know and update
@@ -131,29 +135,65 @@ function dataaxes = dataviewer(parobj, posext, xfatness, yfatness, datasliderboo
         posvec(4) = posext(4)*posint(4);
     end
 
+    % ===== WRAPPER FOR PLOT FUNCTIONS ===== %
+    % we need a wrapper for the plot functions, because the built-in
+    % plot-functions destroy all axes properties which is annoying and
+    % quite frankly stupid
+    
+    function cplot(varargin)
+        % read all properties
+        allproperties = get(dataaxes.axes);
+        
+        % plot the data
+        arguments={dataaxes.axes,varargin{:}};
+        
+        plot(arguments{:});
+        
+        % remove properties that are read-only and cannot be written back
+        allproperties = rmfield(allproperties, 'BeingDeleted');
+        allproperties = rmfield(allproperties, 'Children');
+        allproperties = rmfield(allproperties, 'CurrentPoint');
+        allproperties = rmfield(allproperties, 'TightInset');
+        allproperties = rmfield(allproperties, 'Type');
+        
+        % set all properties again
+        set(dataaxes.axes, allproperties);
+    end
+
+    function cstem(varargin)
+        % read all properties
+        allproperties = get(dataaxes.axes);
+        
+        % plot the data
+        arguments={dataaxes.axes,varargin{:}};
+        stem(arguments{:});
+        
+        % remove properties that are read-only and cannot be written back
+        allproperties = rmfield(allproperties, 'BeingDeleted');
+        allproperties = rmfield(allproperties, 'Children');
+        allproperties = rmfield(allproperties, 'CurrentPoint');
+        allproperties = rmfield(allproperties, 'TightInset');
+        allproperties = rmfield(allproperties, 'Type');
+        
+        % set all properties again
+        set(dataaxes.axes, allproperties);
+    end
+
     % ===== FUNCTIONS TO CHANGE VIEW ===== %
 
-    function togglelogscale(hObject, ~)
+    function togglelogscale(~, ~)
         % This button toggles the logarithmic display of the data axes in
         % y-direction.
-
-        % get settings
-        handles = guidata(hObject);
-
+        
         % turn warning about negative values off
         warning('off', 'MATLAB:Axes:NegativeDataInLogAxis')
 
         % toggle function
-        if (get(hObject,'Value') == get(hObject,'Max'))
+        if strcmp(get(dataaxes.axes, 'YScale'),'linear')
             set(dataaxes.axes, 'YScale', 'log');
-            handles.status.logscale = 1;
-        elseif (get(hObject,'Value') == get(hObject,'Min'))
+        else
             set(dataaxes.axes, 'YScale', 'linear');
-            handles.status.logscale = 0;
         end
-
-        % save back
-        guidata(hObject,handles);
     end
 
     function doubleyscale(~, ~)

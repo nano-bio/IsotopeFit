@@ -48,15 +48,11 @@ delete(hTemp);
 
 % for backwards compatibility with the existing code, we map updateslider
 % to the function inside the dataviewer object
-dvhandle = dataviewer(Parent, gridpos(64,64,33,62,1,54,0.025,0.01), 50, 29, true, @dataaxesclick);
-dataaxes = dvhandle.axes;
-updateslider = dvhandle.updateslider;
+dataaxes = dataviewer(Parent, 'dataaxes', gridpos(64,64,33,62,1,54,0.025,0.01), 50, 29, true, @dataaxesclick);
 
 % Area Axes
 
-tmp = dataviewer(Parent, gridpos(64,64,1,32,10,54,0.025,0.03), 50, 29, false, @areaaxesclick);
-areaaxes = tmp.axes;
-areaaxesgetclickcoordinates = tmp.getclickcoordinates;
+areaaxes = dataviewer(Parent, 'areaaxes', gridpos(64,64,1,32,10,54,0.025,0.03), 50, 29, false, @areaaxesclick);
          
 % ===== TOOLBAR LEFT OF AREA AXES ===== %
 
@@ -347,8 +343,8 @@ init();
         set(ListSeries,'String','');
         
         %clear axes
-        cla(areaaxes);
-        cla(dataaxes);
+        cla(areaaxes.axes);
+        cla(dataaxes.axes);
     end
 
     function menuratio(hObject,~)
@@ -450,7 +446,7 @@ init();
         % this function marks all molecules in the currently viewed
         % massrange and marks them in the list.
         handles=guidata(Parent);
-        limits= get(dataaxes, 'XLim');
+        limits= get(dataaxes.axes, 'XLim');
         % those are the molecules in the range
         moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2));
         
@@ -469,7 +465,7 @@ init();
         
     function menuconvcore(hObject,~)
         handles=guidata(Parent);
-        limits= get(dataaxes, 'XLim');
+        limits= get(dataaxes.axes, 'XLim');
             
         %find molecules that are in current view
         moleculelist=molecules_in_massrange_with_sigma(handles.molecules,limits(1),limits(2),handles.calibration,handles.settings.searchrange);
@@ -618,7 +614,6 @@ init();
 
             shiftsearch=[0:(size(handles.peakdata,1)-1)]-size(handles.peakdata,1)/2;
             
-            tic
             gausspeak=normpdf(shiftsearch,0,str2double(answer{1}));
             
             %    data=10*getdata(werte,peaks,height,0);
@@ -626,11 +621,8 @@ init();
              
             smooth_data=ifftshift(ifft(fft(handles.peakdata(end:-1:1,2)).*fft(gausspeak')));
             smooth_data=smooth_data(end:-1:1);
-            plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2),'color',[0.7,0.7,0.7]);
-            hold on;
-            plot(dataaxes,handles.peakdata(:,1),smooth_data,'k-');
-            hold off;
-            toc
+            dataaxes.cplot(handles.peakdata(:,1),handles.peakdata(:,2),'color',[0.7,0.7,0.7]);
+            dataaxes.cplot(handles.peakdata(:,1),smooth_data,'k-');
             
             %write title line
             fid=fopen(fullfile(pathname,filename),'w');
@@ -697,7 +689,7 @@ init();
     function menuexportcurrentview(hObject,~)
         %% Exports Peakdata + fitted curves of current plot to ascii file
         handles = guidata(hObject);
-        limits = get(dataaxes, 'XLim');
+        limits = get(dataaxes.axes, 'XLim');
         lowmass = num2str(round(limits(1)));
         highmass = num2str(round(limits(2)));
         filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_mass_' lowmass '_' highmass '.txt'];
@@ -816,8 +808,8 @@ init();
         fprintf('Lower error: %f\n',leftarea);
         fprintf('Upper error: %f\n',rightarea);
         
-        hold(areaaxes,'off');
-        plot(areaaxes,testareas,testmsd,testareas,repmat(minmsd*1.05,1,length(testareas)))
+        cla(areaaxes.axes)
+        areaaxes.cplot(testareas,testmsd,testareas,repmat(minmsd*1.05,1,length(testareas)))
         
 %         
 %         hold(areaaxes,'on');
@@ -836,10 +828,8 @@ init();
          [~,speclow]=msd_area_variation(spec_measured,massaxis,handles.molecules(setdiff(involved,moleculeindex)),handles.molecules(moleculeindex),leftarea,handles.calibration);
          [~,spechigh]=msd_area_variation(spec_measured,massaxis,handles.molecules(setdiff(involved,moleculeindex)),handles.molecules(moleculeindex),rightarea,handles.calibration);
 %         
-         hold(dataaxes,'on');
-         plot(dataaxes,massaxis,speclow,'b--');
-         plot(dataaxes,massaxis,spechigh,'g--');
-         hold(dataaxes,'off');
+         dataaxes.cplot(massaxis,speclow,'b--');
+         dataaxes.cplot(massaxis,spechigh,'g--');
         
         guidata(Parent,handles);
     end
@@ -941,7 +931,7 @@ init();
        dspec=dspec/max(abs(dspec));
 
 
-       plot(dataaxes,t,spec);
+       dataaxes.cplot(t,spec);
 
        %plot(dataaxes,t(1:end-1),dspec);
        close(h);
@@ -983,7 +973,7 @@ init();
         if ~strcmp(filename,'')
             load_h5(pathname,filename);
             handles=guidata(Parent);
-            plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2));
+            dataaxes.cplot(handles.peakdata(:,1),handles.peakdata(:,2));
             
             %write filename to visible display:
             set(filenamedisplay, 'String', handles.fileinfo.originalfilename);
@@ -1110,19 +1100,18 @@ function menusavecal(hObject,~)
         
         
         %area(areaaxes,n,data+dataerror,data-dataerror,'Facecolor',[0.7,0.7,0.7],'Linestyle','none');
-        hold off;
-        plot(areaaxes,n,data,'k--', 'HitTest', 'Off');
-        hold on;
+        %hold off;
+        cla(areaaxes.axes)
+        areaaxes.cplot(n,data,'k--', 'HitTest', 'Off');
         
-        stem(areaaxes,n,data,'filled','+k', 'HitTest', 'Off'); 
-        stem(areaaxes,n,data+dataerror,'Marker','v','Color','b','LineStyle','none', 'HitTest', 'Off');
-        stem(areaaxes,n,data-dataerror,'Marker','^','Color','b','LineStyle','none', 'HitTest', 'Off');
+        areaaxes.cstem(n,data,'filled','+k', 'HitTest', 'Off'); 
+        areaaxes.cstem(n,data+dataerror,'Marker','v','Color','b','LineStyle','none', 'HitTest', 'Off');
+        areaaxes.cstem(n,data-dataerror,'Marker','^','Color','b','LineStyle','none', 'HitTest', 'Off');
         
+        % THIS SHOULD NOT BE NECESSARY ANY MORE. REMOVE SOON!
         % this property is lost everytime you plot something. why? you 
         % know, because that's why.
-        set(areaaxes, 'ButtonDownFcn', @areaaxesclick)
-        
-        hold off;
+        % set(areaaxes, 'ButtonDownFcn', @areaaxesclick)
         
        % imagesc(log(handles.seriesarea)');
         handles = gui_status_update('cs_selected', 1, handles);
@@ -1143,7 +1132,7 @@ function menusavecal(hObject,~)
         set(ListSeries,'String',serieslist);
                        
         %reset area plot
-        cla(areaaxes);
+        cla(areaaxes.axes);
         listseriesclick(Parent,0)
     end
 
@@ -1327,7 +1316,7 @@ function menusavecal(hObject,~)
     function menupeakshape(hObject,~)
         handles=guidata(Parent);
                 
-        limits = get(dataaxes, 'XLim');
+        limits = get(dataaxes.axes, 'XLim');
         
         %find molecules that are in current view
         moleculelist=molecules_in_massrange_with_sigma(handles.molecules,limits(1),limits(2),handles.calibration,handles.settings.searchrange);
@@ -1605,7 +1594,7 @@ function menusavecal(hObject,~)
             handles=guidata(Parent);
             handles = gui_status_update('file_loaded', 1, handles);
             
-            plot(dataaxes,handles.peakdata(:,1),handles.peakdata(:,2));
+            dataaxes.cplot(handles.peakdata(:,1),handles.peakdata(:,2));
             
             %write filename to visible display:
             set(filenamedisplay, 'String', handles.fileinfo.originalfilename)
@@ -1737,7 +1726,7 @@ function menusavecal(hObject,~)
         % Reads out click coordinates and finds the corresponding molecule.
         handles=guidata(Parent);
 
-        [x, y] = areaaxesgetclickcoordinates(hObject);
+        [x, y] = areaaxes.getclickcoordinates(hObject);
         
         ix1=round(x)+1; % n: row index
         ix2=get(ListSeries,'Value'); % column index
@@ -1863,18 +1852,20 @@ function menusavecal(hObject,~)
     function plotmolecule(index)
         handles=guidata(Parent);
         
-        limits=get(dataaxes,'xlim');
+        limits=get(dataaxes.axes,'xlim');
+        % clear axes
+        cla(dataaxes.axes)
         
-         if index~=0
+        if index~=0
             % "Normal" mode: zoom to clicked molecule
             ind = findmassrange(handles.peakdata(:,1)',handles.molecules(index),resolutionbycalibration(handles.calibration,handles.molecules(index).com),0,30);
-         else
+        else
             % Refresh view: plot molecules of actual massrange
             ind = mass2ind(handles.peakdata(:,1),limits(1)):mass2ind(handles.peakdata(:,1),limits(2));
             index = getrealselectedmolecules();
             index = index(1); %in case if there is more than one m. selected
-         end
-            
+        end
+        
         % corresponding mass values of axis
         calcmassaxis=handles.peakdata(ind,1)';
         
@@ -1888,13 +1879,11 @@ function menusavecal(hObject,~)
             handles.calibration.shape);
         
         % plot data (= calibrated raw data)
-        plot(dataaxes,handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5]);
-        hold(dataaxes,'on');
+        dataaxes.cplot(handles.peakdata(:,1)',handles.peakdata(:,2)','Color',[0.5 0.5 0.5]);
         
         % plot fitted data for all peaks that are displayed (need to find out which molecules are involved in this range)
-                
-        limits = [calcmassaxis(1) calcmassaxis(end)];
         
+        limits = [calcmassaxis(1) calcmassaxis(end)];
         
         involvedmolecules=molecules_in_massrange(handles.molecules, limits(1), limits(2));
         
@@ -1905,29 +1894,20 @@ function menusavecal(hObject,~)
             calcmassaxis,...
             handles.calibration.shape);
         
-        plot(dataaxes,calcmassaxis,sumspectrum,'k--','Linewidth',2);
-        plot(dataaxes,calcmassaxis,calcsignal,'Color','red'); 
-   
+        dataaxes.cplot(calcmassaxis,sumspectrum,'k--','Linewidth',2);
+        dataaxes.cplot(calcmassaxis,calcsignal,'Color','red');
+        
         %calculate and plot sum spectrum of involved molecules if current
         %molecule is in calibrationlist
         
-        % set semilog plot if necessary
-        if (handles.status.logscale == 1)
-            set(dataaxes, 'YScale', 'log');
-        elseif (handles.status.logscale == 0)
-            set(dataaxes, 'YScale', 'linear');
-        end
-
-        hold(dataaxes,'off');
-        
         %Zoom data
         %[~,i]=max(handles.molecules(index).peakdata(:,2));
- %       calcmassaxis
-        xlim(dataaxes,[limits(1),limits(2)]);  
+        %       calcmassaxis
+        xlim(dataaxes.axes,[limits(1),limits(2)]);
         %ylim(previewaxes,[0,max(max(handles.molecules(index).peakdata(:,2)),max(handles.peakdata(handles.molecules(index).minind:handles.molecules(index).maxind,2)))]);
-
+        
         % Update the slider bar accordingly:
-        updateslider;
+        dataaxes.updateslider;
         
         % set the displays
         % note this is not the nominal mass
@@ -2152,7 +2132,7 @@ function menusavecal(hObject,~)
         set(ListSeries,'String','');
         
         %clear area axes
-        cla(areaaxes);
+        cla(areaaxes.axes);
         
         guidata(hObject,handles);
         
@@ -2204,15 +2184,15 @@ function menusavecal(hObject,~)
 
         % we need y-values for drawing. we always paint across the whole
         % axes (in y-direction)
-        ylim = get(dataaxes, 'YLim');
+        ylim = get(dataaxes.axes, 'YLim');
         
         % time to draw
         for i = 1:length(sections_masses)
             p = patch([sections_masses(i,1) sections_masses(i,1) sections_masses(i,2) sections_masses(i,2)],...
                       [ylim(1) ylim(2) ylim(2) ylim(1)],...
                       'r',...
-                      'Parent', dataaxes);
-            set(p,'FaceAlpha',0.4, 'EdgeColor', 'none', 'Parent', dataaxes);
+                      'Parent', dataaxes.axes);
+            set(p,'FaceAlpha',0.4, 'EdgeColor', 'none', 'Parent', dataaxes.axes);
         end
         guidata(Parent,handles);
     end
@@ -2235,7 +2215,7 @@ function menusavecal(hObject,~)
         % full mass range we were probably not in overview mode. if at the
         % same time overview is still true, the user probably jumped out of
         % overview mode to a molecule and we should now go to overview
-        cl = get(dataaxes, 'XLim');
+        cl = get(dataaxes.axes, 'XLim');
         viewedrange = (cl(2) - cl(1))*2;
         
         maxmass = max(handles.peakdata(:,1));
@@ -2247,17 +2227,17 @@ function menusavecal(hObject,~)
         % are we already in overview?
         if handles.status.overview == 0
             % save the old settings so we can toggle back
-            oxl = get(dataaxes, 'XLim');
-            oyl = get(dataaxes, 'YLim');
+            oxl = get(dataaxes.axes, 'XLim');
+            oyl = get(dataaxes.axes, 'YLim');
             handles.status.lastlims = [oxl oyl];
-            set(dataaxes, 'YLimMode', 'auto');
-            set(dataaxes, 'XLimMode', 'auto');
+            set(dataaxes.axes, 'YLimMode', 'auto');
+            set(dataaxes.axes, 'XLimMode', 'auto');
             handles.status.overview = 1;
         elseif handles.status.overview == 1
             % jump back to last settings
             handles.status.lastlims;
-            set(dataaxes, 'XLim', [handles.status.lastlims(1) handles.status.lastlims(2)]);
-            set(dataaxes, 'YLim', [handles.status.lastlims(3) handles.status.lastlims(4)]);
+            set(dataaxes.axes, 'XLim', [handles.status.lastlims(1) handles.status.lastlims(2)]);
+            set(dataaxes.axes, 'YLim', [handles.status.lastlims(3) handles.status.lastlims(4)]);
             handles.status.overview = 0;
         end
         
@@ -2270,8 +2250,8 @@ function menusavecal(hObject,~)
         % a new file is loaded.
         
         % clear plots
-        cla(dataaxes);
-        cla(areaaxes);
+        cla(dataaxes.axes);
+        cla(areaaxes.axes);
         
         % empty molecule list
         set(ListMolecules,'Value',1);
