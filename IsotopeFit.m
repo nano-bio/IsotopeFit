@@ -62,6 +62,7 @@ e_searchstring=uicontrol(Parent,'Style','edit',...
     'String','N/A',...
     'Background','white',...
     'Enable','on',...
+    'Callback',@sortlistclick,... 
     'Position',gridpos(64,64,30,32,1,7,0.01,0.01));         
          
 b_sortlist = uicontrol(Parent,'style','pushbutton',...
@@ -101,13 +102,13 @@ ListFilter = uicontrol(Parent,'Style','edit',...
     'Callback',@filterListMolecules,...
     'Position',gridpos(64,64,16,18,53,61,0.01,0.01));
 
-uicontrol(Parent,'style','pushbutton',...
+b_listfilter = uicontrol(Parent,'style','pushbutton',...
     'string','Filter',...
     'Callback',@filterListMolecules,...
     'Units','normalized',...
     'Position',gridpos(64,64,16,18,61,64,0.01,0.01));
 
-uicontrol(Parent,'style','pushbutton',...
+b_removemolec = uicontrol(Parent,'style','pushbutton',...
     'string','Remove selected molecules',...
     'Callback',@remove_molecules,...
     'Units','normalized',...
@@ -151,13 +152,13 @@ areadisplay = uicontrol(Parent,'Style','Text',...
 
 % Now for the fit buttons:
       
-uicontrol(Parent,'style','pushbutton',...
+b_fitall = uicontrol(Parent,'style','pushbutton',...
           'string','Fit all',...
           'Callback',@fitbuttonclick,...
           'Units','normalized',...
           'Position',gridpos(64,64,4,7,57,60,0.01,0.01));
       
-uicontrol(Parent,'style','pushbutton',...
+b_fitselected = uicontrol(Parent,'style','pushbutton',...
           'string','Fit selected',...
           'Callback',@fitbuttonclick,...
           'Units','normalized',...
@@ -170,13 +171,6 @@ ListMethode = uicontrol(Parent,'style','popupmenu',...
           'Units','normalized',...
           'Position',gridpos(64,64,4,7,60,64,0.01,0.01));
       
-% Autodetect peaks button
-      
-uicontrol(Parent,'style','pushbutton',...
-          'string','Autodetect peaks',...
-          'Callback',@showlargedeviations,...
-          'Units','normalized',...
-          'Position',gridpos(64,64,1,4,53,64,0.01,0.01));
 
 % ===== FILENAME DISPLAY ON TOP ===== %
 
@@ -269,7 +263,8 @@ mdata = uimenu('Label','Data');
                mdatafms = uimenu(mexport,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
        mconvcore = uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
                mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
-               mconvcore_map=uimenu(mconvcore,'Label','Map...','Callback',@menuconvcoremap,'Enable','on');      
+               mconvcore_map=uimenu(mconvcore,'Label','Map...','Callback',@menuconvcoremap,'Enable','on');
+       mautodetect = uimenu(mdata,'Label','Autodetect Peaks...','Callback',@showlargedeviations,'Enable','on');
        mratio = uimenu(mdata,'Label','Calculate ratio of 2 compounds...','Enable','on','Callback',@menuratio);
        mplay = uimenu(mdata,'Label','Play','Separator','on');
                mplayorig = uimenu(mplay,'Label','Original','Callback',@menuplay,'Enable','on');
@@ -518,7 +513,8 @@ init();
         % list of gui elements that should be hidden/shown
         guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mmolecules', 'mcal', 'mcalsave', 'msave', 'msaveas',...
                        'mplay', 'mplayfit', 'mdata', 'mdatacs', 'mdatacms', 'mdatafms','mconvcore','mratio', 'merrors', 'b_sortlist',...
-                       'b_refresh','mpeakshape','b_markmoleculesinview'};
+                       'b_refresh','mpeakshape','b_markmoleculesinview', 'b_listfilter', 'b_removemolec', 'b_fitall', 'b_fitselected',...
+                       'mautodetect'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
         guirequirements = {[1 0 0 0 0 0 0 0],...   % mcalbgc
@@ -543,7 +539,12 @@ init();
                            [1 1 1 0 0 0 1 0],...   % b_sortlist
                            [1 1 1 0 0 0 0 0],...   % b_refresh
                            [1 1 0 0 0 0 0 0],...   % mpeakshape  
-                           [1 1 1 0 0 0 0 0]};     % b_refresh
+                           [1 1 1 0 0 0 0 0],...   % b_markmoleculesinview
+                           [1 1 0 0 0 0 0 0],...   % b_listfilter
+                           [1 1 0 0 0 0 0 0],...   % b_removemolec 
+                           [1 1 0 0 0 0 0 0],...   % b_fitall
+                           [1 1 0 0 0 0 0 0],...   % b_fitselected 
+                           [1 0 0 0 0 0 0 0]};     % mautodetect
         
         if nargin > 1
             % we want to update the status vector
@@ -1649,6 +1650,17 @@ function menusavecal(hObject,~)
                 guidata(Parent,handles);
             end
             
+            % if we autosaved, we don't want that temporary filename to be
+            % stored
+            if ~strcmp(method,'autosave')
+                handles.fileinfo.filename=filename;
+                handles.fileinfo.pathname=pathname;
+                
+                % also belongs in here: if we didn't autosave, we want our
+                % status to be "unchanged"
+                handles = gui_status_update('changed', 0, handles);
+            end
+            
             data.raw_peakdata=handles.raw_peakdata;
             data.startind=handles.startind;
             data.endind=handles.endind;
@@ -1661,17 +1673,7 @@ function menusavecal(hObject,~)
             data.guistatusvector=handles.status.guistatusvector;
             
             save(fullfile(pathname,filename),'data');
-            
-            % if we autosaved, we don't want that temporary filename to be
-            % stored
-            if ~strcmp(method,'autosave')
-                handles.fileinfo.filename=filename;
-                handles.fileinfo.pathname=pathname;
-                
-                % also belongs in here: if we didn't autosave, we want our
-                % status to be "unchanged"
-                handles = gui_status_update('changed', 0, handles);
-            end
+
             guidata(Parent,handles);
          end
          
@@ -2269,7 +2271,7 @@ function menusavecal(hObject,~)
         % before closing file, check if file was changed. If yes -> ask 
         % "Save file?"
         answer = asksave();
-        if strcmp(answer,'Close')
+        if strcmp(answer,'Cancel')
             return
         end
         
