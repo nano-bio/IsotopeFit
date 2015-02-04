@@ -13,8 +13,7 @@ function ok = comp_ms(original_data, corrected_data, xaxis, position)
         'Units','normalized',...
         'OuterPosition', position);
 
-    tmp = dataviewer(Parent, gridpos(64,64,4,64,1,64,0.025,0.02), 50, 50, false);
-    massaxes = tmp.axes;
+    massaxes = dataviewer(Parent, 'compms', gridpos(64,64,4,64,1,64,0.025,0.02), 50, 50, false, []);
 
     uicontrol(Parent,'style','pushbutton',...
         'string','Cancel',...
@@ -29,10 +28,9 @@ function ok = comp_ms(original_data, corrected_data, xaxis, position)
         'Position',gridpos(64,64,1,3,33,64,0.01,0.01));
 
     % plot
-    hold on;
-    plot(massaxes, xaxis, original_data, 'r');
-    plot(massaxes, xaxis, corrected_data, 'g');
-    hold off;
+    cla(massaxes.axes)
+    massaxes.cplot(xaxis, original_data, 'r');
+    massaxes.cplot(xaxis, corrected_data, 'g');
 
     ok = false;
     

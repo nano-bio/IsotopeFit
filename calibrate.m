@@ -412,7 +412,7 @@ uiwait(Parent)
     end
 
     function previewclick(hObject,~)
-        [x,y,mouseside]=preview_dataviewer.getclickcoordinates(hObject);
+        [x,y,mouseside]=previewaxes.getclickcoordinates(hObject);
           
         handles=guidata(hObject);       
         switch mouseside
@@ -848,12 +848,14 @@ uiwait(Parent)
         end
         
         % set zoom status.
-        set(previewaxes.axes, 'XLim',xlims);
+        xlim(previewaxes.axes, xlims);
         
         % automatic y-zoom by matlab, when zoom changed
         % otherwise set previous ylims
         if ~changezoom
-            set(previewaxes.axes, 'YLim',ylims);
+            ylim(previewaxes.axes, ylims);
+        else
+            ylim(previewaxes.axes, 'auto');
         end
 
         guidata(Parent,handles);

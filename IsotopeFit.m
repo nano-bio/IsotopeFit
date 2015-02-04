@@ -1568,6 +1568,14 @@ function menusavecal(hObject,~)
                     % File info                    
                     handles.fileinfo.filename=filename;
                     handles.fileinfo.originalfilename=filename(1:end-4);
+                    
+                    % did we save the f5 file at one point?
+                    try
+                        handles.fileinfo.h5completepath=data.fileinfo.h5completepath;
+                    catch
+                        fprintf('Original h5 file not known.\n');
+                    end
+                    
                     handles.fileinfo.pathname=pathname;
                     
                     % Status vector
@@ -1672,6 +1680,8 @@ function menusavecal(hObject,~)
             
             data.guistatusvector=handles.status.guistatusvector;
             
+            data.fileinfo = handles.fileinfo;
+            
             save(fullfile(pathname,filename),'data');
 
             guidata(Parent,handles);
@@ -1719,6 +1729,9 @@ function menusavecal(hObject,~)
         if (length(index) >= 2)
             index = index(1);
         end
+        
+        % set the y-limits to auto
+        ylim(dataaxes.axes, 'auto');
         
         % plot the molecule
         plotmolecule(index);

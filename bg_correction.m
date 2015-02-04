@@ -143,6 +143,9 @@ guidata(Parent,handles);
 show(Parent,0);
 
 function show(hObject, ~)
+    % clear axes
+    cla(dv.axes);
+    
     handles=guidata(hObject);
     handles.bgcorrectiondata.ndiv=str2double(get(e_ndiv,'String'));
     handles.bgcorrectiondata.percent=str2double(get(e_percent,'String'));
