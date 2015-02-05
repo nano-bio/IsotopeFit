@@ -292,7 +292,7 @@ drawnow;
         handles.yvalues(end)=0;
         
         %calculate spline
-        handles.calibration.shape=pchip([handles.xvalues(1)-1,handles.xvalues,handles.xvalues(end)+1],[0,handles.yvalues,0]);
+        handles.calibration.shape=interpfcn([handles.xvalues(1)-1,handles.xvalues,handles.xvalues(end)+1],[0,handles.yvalues,0]);
         
         guidata(Parent,handles);
         
@@ -369,13 +369,25 @@ drawnow;
         y=[0 y 0];
         y=y(ix);
         
-        % pchip has a problem, when x values are not distinct
+        out=double(sum((K-interpfcn(x,y,masses)).^2));
+    end
+    
+    function out=interpfcn(x,y,xx)
+        % splines have a problem, when x values are not distinct
         % remove double entries for evaluation
         mask=[1 (diff(x)~=0)];
         
-        out=double(sum((K-pchip(x(mask==1),y(mask==1),masses)).^2));
-    end
+        pp=spline(x(mask==1),y(mask==1));
         
+        pp.coefs(1,:)=[0 0 0 0];
+        pp.coefs(end,:)=[0 0 0 0];
+        
+        if nargin==2
+            out=pp;
+        else
+            out=ppval(pp,xx);
+        end
+    end
 
     function [x,y]=fitoffsets2coordinates(fitoffsets,xvalues,yvalues,fixedpoints)
         %moves non-fixed points according to the values in fitoffsets
