@@ -38,7 +38,7 @@ generate_cluster_ifm(folder,file,{'CO2' 'H2O'},{nCO2 [0 1]},mapprox,th);
 generate_cluster_ifm(folder,file,{'C60' 'CO2'},{nC60 nCO2},mapprox,th,{'C60++' 'CO2'},2);
 
 %-------------------------------------------  generate clusters end
-
+cd ('..');
 
 % for generation of single files, use generate_cluster function:
 % --> i.e. generate_cluster_ifm(folder,{'C60' 'CO2' 'H'},{nC60 nCO2 [0 1]},mapprox,th); 

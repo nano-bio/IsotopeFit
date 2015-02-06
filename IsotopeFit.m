@@ -514,7 +514,7 @@ init();
         guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mmolecules', 'mcal', 'mcalsave', 'msave', 'msaveas',...
                        'mplay', 'mplayfit', 'mdata', 'mdatacs', 'mdatacms', 'mdatafms','mconvcore','mratio', 'merrors', 'b_sortlist',...
                        'b_refresh','mpeakshape','b_markmoleculesinview', 'b_listfilter', 'b_removemolec', 'b_fit', 'ListMolecules',...
-                       'mautodetect', 'ListSeries', 'b_ov'};
+                       'mautodetect', 'ListSeries', 'b_ov', 'e_searchstring', 'ListFilter'};
         % according requirement list. each entry in each vector corresponds
         % to one of the states defined above
         guirequirements = {[1 0 0 0 0 0 0 0],...   % mcalbgc
@@ -546,7 +546,9 @@ init();
                            [1 1 0 0 0 0 0 0],...   % ListMolecules
                            [1 0 0 0 0 0 0 0],...   % mautodetect
                            [1 1 0 0 0 0 0 0],...   % ListSeries
-                           [1 0 0 0 0 0 0 0]};     % b_ov
+                           [1 0 0 0 0 0 0 0],...   % b_ov
+                           [1 1 0 0 0 0 0 0],...   % e_searchstring
+                           [1 1 0 0 0 0 0 0]};     % ListFilter
         
         if nargin > 1
             % we want to update the status vector
