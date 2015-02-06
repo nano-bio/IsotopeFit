@@ -2164,12 +2164,10 @@ function menusavecal(hObject,~)
                 % Only the molecules that are visible in the current view.
                 handles=guidata(Parent);
                 limits= get(dataaxes.axes, 'XLim');
-                % those are the molecules in the range
-                % note that the list gets transposed (')!!!
-                moleculelist=molecules_in_massrange(handles.molecules,limits(1),limits(2))';
                 
-                allinvolved=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),moleculelist,handles.settings.searchrange,handles.calibration);
-                
+                %find molecules that are in current view
+                allinvolved=molecules_in_massrange_with_sigma(handles.molecules,limits(1),limits(2),handles.calibration,handles.settings.searchrange);
+        
                 handles.molecules(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethod,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
         end
                 
@@ -2185,9 +2183,9 @@ function menusavecal(hObject,~)
         
         guidata(hObject,handles);
         
-        % in order to plot we call moleculelistclick, because this function
-        % plots and updates all the labels!
-        moleculelistclick();
+        % in order to plot we call plotmolecule(0), because this function
+        % refreshes the curves in the current view
+        plotmolecule(0);
     end
 
     function showlargedeviations(hObject, ~)
