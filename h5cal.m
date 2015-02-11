@@ -11,12 +11,17 @@ function ma = h5cal(datafile)
         % evalc is basically the same as eval, but it shuts the fuck up. c
         % stands for "capture" so we capture it to a random variable
         silence = evalc([pnames{i} ' = sym(pnames{i})']);
+        
+        % assume they are real
+        eval(['assume(' pnames{i} ', ''real'')'])
     end
     syms i m;
 
     % assume indices and masses to be larger than zero
     assume(m > 0);
     assume(i > 0);
+    assume(m, 'real');
+    assume(i, 'integer');
 
     % FUN FACT: the last character that comes out of the h5 file looks like a
     % space (ASCII 32), but it isn't! It's a NUL instead (ASCII 0). Solve
@@ -24,8 +29,8 @@ function ma = h5cal(datafile)
     % doesn't work - doesn't trim ASCII 0).
     mcf = mcf(1:end-1);
 
-    % solve for m
-    reverse_mcf = solve(mcf, m);
+    % solve for m; we only want real solutions
+    reverse_mcf = solve(mcf, m, 'Real', true);
 
     % assign numerical values to the parameters (symbols not needed any more)
     for n = 1:length(pnames)
