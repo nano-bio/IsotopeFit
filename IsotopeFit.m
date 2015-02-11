@@ -1403,8 +1403,21 @@ function menusavecal(hObject,~)
     function load_h5(pathname,filename)
         init();
         handles=guidata(Parent);
-        mass = h5read(fullfile(pathname,filename),'/FullSpectra/MassAxis');
+        % h5 files carry a mass axis (created and the time of measurement) 
+        % and a calibration (created possibly later). the two aren't
+        % necessarily the same. we ask the user which one he/she'd like
+        question = 'Do you want to use the mass axis or use the calibration of the h5-file to create a new one? If in doubt, choose calibration.';
+        userselection = questdlg(question,'title','Calibration','Mass Axis','Calibration');
+        
+        if strcmp(userselection, 'Mass Axis')
+            mass = h5read(fullfile(pathname,filename),'/FullSpectra/MassAxis');
+        else
+            mass = h5cal(fullfile(pathname,filename));
+        end
+        
+        % read signal
         signal = h5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum');
+        
         handles.raw_peakdata=[mass,signal];
         handles.startind=1;
         handles.endind=size(handles.raw_peakdata,1);
