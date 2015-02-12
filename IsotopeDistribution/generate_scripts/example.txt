@@ -1,0 +1,53 @@
+% ------------------------------
+% use this script to generate clusters
+% with the 'generate_from_file' function
+%
+% to generate the ifm file defined below,
+% call generate_from_file('example.txt') in the
+% IsotopeDistribution folder
+%
+% ifm files will be saved to
+% IsotopeDistribution/molecules/folder/file.ifm
+% ------------------------------
+
+
+% ------------------------------
+% file name definition
+% ------------------------------
+file example_v1
+folder example
+
+% ------------------------------
+% overwrite existing file
+% ------------------------------
+removeoldfile
+
+% ------------------------------
+% values for approximation
+% ------------------------------
+% most of the time, this values should be ok:
+th 1e-4
+mapprox 1e-3
+
+% ------------------------------
+% alternative names
+% ------------------------------
+% use this to give a special name instead of the sum-formula
+% altname C60 Fulleren
+% altname CO2 Kohlendioxyd
+
+% ------------------------------
+% cluster definitions
+% ------------------------------
+charge 1
+C60 1:10 CO2 0:1
+He [1,2,3,4,10]
+
+charge 2 ++
+% doubly charged species
+% the 3rd parameter will be attached to
+% the name of the parent ion
+% in this case: C60++
+% if there is no 3rd parameter, '_cn' will be attached, where
+% n is the number of charges
+C60 1:10 CO2 0:1
