@@ -239,9 +239,10 @@ mfile = uimenu('Label','File');
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        
-mmolecules = uimenu('Label','Molecules','Enable','off');
-       uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
-       uimenu(mmolecules,'Label','Load from IsotopeFit file...','Callback',@menuloadmoleculesif);
+mmolecules = uimenu('Label','Molecules','Enable','on');
+       mloadfromfolder = uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
+       mloadfromif = uimenu(mmolecules,'Label','Load from IsotopeFit file...','Callback',@menuloadmoleculesif);
+       mgenerateifm = uimenu(mmolecules,'Label','Generate ifm file...','Callback',@menugenerateifm,'Separator','on');
        
 mcal = uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
@@ -510,7 +511,7 @@ init();
             'cs_selected'};
         
         % list of gui elements that should be hidden/shown
-        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mmolecules', 'mcal', 'mcalsave', 'msave', 'msaveas',...
+        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mloadfromfolder', 'mloadfromif','mgenerateifm', 'mcal', 'mcalsave', 'msave', 'msaveas',...
                        'mplay', 'mplayfit', 'mdata', 'mdatacs', 'mdatacms', 'mdatafms','mconvcore','mratio', 'merrors', 'b_sortlist',...
                        'b_refresh','mpeakshape','b_markmoleculesinview', 'b_listfilter', 'b_removemolec', 'b_fit', 'ListMolecules',...
                        'mautodetect', 'ListSeries', 'b_ov', 'e_searchstring', 'ListFilter'};
@@ -521,7 +522,9 @@ init();
                            [1 0 0 0 0 0 0 0],...   % mloadcal
                            [1 1 1 0 0 0 0 0],...   % mcaldc
                            [1 1 1 0 0 0 0 0],...   % mpd2raw
-                           [1 0 0 0 0 0 0 0],...   % mmolecules
+                           [1 0 0 0 0 0 0 0],...   % mloadfromfolder
+                           [1 0 0 0 0 0 0 0],...   % mloadfromif
+                           [0 0 0 0 0 0 0 0],...   % mgenerateifm
                            [1 0 0 0 0 0 0 0],...   % mcal
                            [1 1 1 0 0 0 0 0],...   % mcalsave
                            [1 0 0 0 0 0 0 0],...   % msave
@@ -1189,13 +1192,41 @@ function menusavecal(hObject,~)
                     if data.raw_peakdata(end,1)<handles.peakdata(end,1)
                         msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
                     end
-                    
-                    handles = gui_status_update('molecules_loaded', 1, handles);
-                    handles = gui_status_update('changed', 1, handles);
             end
             
             handles = gui_status_update('molecules_loaded', 1, handles);
             handles = gui_status_update('changed', 1, handles);
+        end
+    end
+
+    function menugenerateifm(hObject,~)
+         handles=guidata(Parent);
+        [filename, pathname, filterindex] = uigetfile( ...
+            {'*.*','Generate script (*.*)'},...
+            'Open generate script');
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+                [ifmfolder,ifmfile]=generate_from_file(fullfile(pathname,filename));
+                
+                ifmfullfile=['molecules/' ifmfolder '/' ifmfile '.ifm'];                
+                
+                
+                %load the molecules
+                % is a file loaded?
+                if handles.status.guistatusvector(1) == 1
+                    result = questdlg(sprintf('Molecules saved to %s.\nDo you want to load these molecules?',ifmfullfile), 'Load Molecules?');
+                    if strcmp(result,'Yes')
+                        handles.molecules=load_molecules_from_ifm(ifmfullfile,handles.peakdata);
+                        
+                        guidata(Parent,handles);
+                        molecules2listbox(ListMolecules,handles.molecules);
+                        
+                        handles = gui_status_update('molecules_loaded', 1, handles);
+                        handles = gui_status_update('changed', 1, handles);
+                    end
+                else
+                    msgbox(sprintf('Molecules saved to %s.\nMolecules could not be loaded. Please load a spectrum first.',ifmfullfile), 'Load Molecules?','warn');
+                end
         end
     end
 

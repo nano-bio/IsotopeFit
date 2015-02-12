@@ -3,7 +3,7 @@
 % with the 'generate_from_file' function
 %
 % to generate the ifm file defined below,
-% call generate_from_file('example.txt') in the
+% call generate_from_file('generate_scripts/example.txt') in the
 % IsotopeDistribution folder
 %
 % ifm files will be saved to
