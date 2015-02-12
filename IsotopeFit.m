@@ -241,8 +241,7 @@ mfile = uimenu('Label','File');
        
 mmolecules = uimenu('Label','Molecules','Enable','off');
        uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
-       uimenu(mmolecules,'Label','Load from ifd...','Callback',@menuloadmoleculesifd);
-       uimenu(mmolecules,'Label','Load from ifm...','Callback',@menuloadmoleculesifm);
+       uimenu(mmolecules,'Label','Load from IsotopeFit file...','Callback',@menuloadmoleculesif);
        
 mcal = uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
@@ -1155,54 +1154,49 @@ function menusavecal(hObject,~)
         handles = gui_status_update('changed', 1, handles);
     end
 
-    function menuloadmoleculesifd(hObject,~)
+    function menuloadmoleculesif(hObject,~)
         handles=guidata(Parent);
         [filename, pathname, filterindex] = uigetfile( ...
-            {'*.ifd','IsotopeFit data file (*.ifd)'},...
-            'Open IsotopeFit data file');
+            {'*.ifd;*.ifm','IsotopeFit files (*.ifd,*.ifm)'},...
+            'Load IsotopeFit molecules');
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-            data={}; %load needs a predefined variable
-            load(fullfile(pathname,filename),'-mat');
-            
-            % need to check if any of the molecules are out of range and
-            % remove them
-            handles.molecules = remove_out_of_range_molec(data.molecules, handles.peakdata);
-
-            
-            guidata(Parent,handles);
-            
-            molecules2listbox(ListMolecules,handles.molecules);
-        
-            
-            % check if massrange (handles.peakdata) of new spec is larger than
-            % massrange of spec that we load the data from (data.raw_peakdata)
-            % --> need to re-load molecules for entire massrange
-            if data.raw_peakdata(end,1)<handles.peakdata(end,1)
-                msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+            [~,~,suffix]=fileparts(filename);
+            switch lower(suffix)
+                case '.ifm'
+                    handles.molecules=load_molecules_from_ifm(fullfile(pathname,filename),handles.peakdata);
+                    
+                    guidata(Parent,handles);
+                    
+                    molecules2listbox(ListMolecules,handles.molecules);
+                case '.ifd'
+                    data={}; %load needs a predefined variable
+                    load(fullfile(pathname,filename),'-mat');
+                    
+                    % need to check if any of the molecules are out of range and
+                    % remove them
+                    handles.molecules = remove_out_of_range_molec(data.molecules, handles.peakdata);
+                    
+                    
+                    guidata(Parent,handles);
+                    
+                    molecules2listbox(ListMolecules,handles.molecules);
+                    
+                    
+                    % check if massrange (handles.peakdata) of new spec is larger than
+                    % massrange of spec that we load the data from (data.raw_peakdata)
+                    % --> need to re-load molecules for entire massrange
+                    if data.raw_peakdata(end,1)<handles.peakdata(end,1)
+                        msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+                    end
+                    
+                    handles = gui_status_update('molecules_loaded', 1, handles);
+                    handles = gui_status_update('changed', 1, handles);
             end
             
             handles = gui_status_update('molecules_loaded', 1, handles);
             handles = gui_status_update('changed', 1, handles);
         end
-    end
-
-    function menuloadmoleculesifm(hObject,~)
-        handles=guidata(Parent);
-        [filename, pathname, filterindex] = uigetfile( ...
-            {'*.ifm','IsotopeFit molecules file (*.ifm)'},...
-            'Open IsotopeFit molecules file');
-        
-        if ~(isequal(filename,0) || isequal(pathname,0))
-            handles.molecules=load_molecules_from_ifm(fullfile(pathname,filename),handles.peakdata);
-            
-            guidata(Parent,handles);
-            
-            molecules2listbox(ListMolecules,handles.molecules);
-        end
-
-        handles = gui_status_update('molecules_loaded', 1, handles);
-        handles = gui_status_update('changed', 1, handles);
     end
 
     function menuloadcalibration(hObject,~)
