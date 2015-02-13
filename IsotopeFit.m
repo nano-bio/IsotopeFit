@@ -360,8 +360,6 @@ init();
             max_mass=str2double(answer{3});
         end
         
-        
-        i=1;
         F1=0; %fraction of compound 1
         F2=0; %fraction of compound 2
         
@@ -430,7 +428,7 @@ init();
             if isempty(temp)
                 out=1;
             else
-                out=str2num(temp);
+                out=str2double(temp);
             end
         else
             out=0;
@@ -1771,8 +1769,6 @@ function menusavecal(hObject,~)
     end
     
     function moleculelistclick(hObject,~)
-        handles=guidata(Parent);
-        
         index = getrealselectedmolecules();
         
         % we can always only plot one molecule. if several have been
@@ -2232,7 +2228,7 @@ function menusavecal(hObject,~)
         % we check for a background level in the mass range between 2.1 and
         % 3.9 amu. subsequently we search through backdata that is above
         % the aforementioned background level.
-        bg_area = find(handles.peakdata(:,1) < 3.9 & handles.peakdata(:,1) < 2.1);
+        bg_area = find(handles.peakdata(:,1) < 3.9 && handles.peakdata(:,1) < 2.1);
         noise_threshold = mean(handles.peakdata(bg_area,2));
         possible_peak_areas = find(handles.peakdata(:,2) > noise_threshold);
         

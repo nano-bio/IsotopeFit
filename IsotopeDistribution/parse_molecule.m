@@ -1,9 +1,5 @@
 function out = parse_molecule(string,minmassdistance,th)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-
-startind=1;
-files=dir('atoms');
+%parse_molecule Create isotope pattern from molecule
 
 i=1;
 
