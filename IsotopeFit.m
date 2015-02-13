@@ -239,10 +239,10 @@ mfile = uimenu('Label','File');
     uimenu(mfile,'Label','Quit','Callback','exit',... 
            'Separator','on','Accelerator','Q');
        
-mmolecules = uimenu('Label','Molecules','Enable','off');
-       uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
-       uimenu(mmolecules,'Label','Load from ifd...','Callback',@menuloadmoleculesifd);
-       uimenu(mmolecules,'Label','Load from ifm...','Callback',@menuloadmoleculesifm);
+mmolecules = uimenu('Label','Molecules','Enable','on');
+       mloadfromfolder = uimenu(mmolecules,'Label','Load from folder...','Callback',@menuloadmoleculesfolder);
+       mloadfromif = uimenu(mmolecules,'Label','Load from IsotopeFit file...','Callback',@menuloadmoleculesif);
+       mgenerateifm = uimenu(mmolecules,'Label','Generate ifm file...','Callback',@menugenerateifm,'Separator','on');
        
 mcal = uimenu('Label','Calibration');
        mcalbgc=uimenu(mcal,'Label','Background correction...','Callback',@menubgcorrection,'Enable','off');
@@ -360,8 +360,6 @@ init();
             max_mass=str2double(answer{3});
         end
         
-        
-        i=1;
         F1=0; %fraction of compound 1
         F2=0; %fraction of compound 2
         
@@ -430,7 +428,7 @@ init();
             if isempty(temp)
                 out=1;
             else
-                out=str2num(temp);
+                out=str2double(temp);
             end
         else
             out=0;
@@ -511,7 +509,7 @@ init();
             'cs_selected'};
         
         % list of gui elements that should be hidden/shown
-        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mmolecules', 'mcal', 'mcalsave', 'msave', 'msaveas',...
+        guielements = {'mcalbgc', 'mcalcal', 'mloadcal', 'mcaldc', 'mpd2raw', 'mloadfromfolder', 'mloadfromif','mgenerateifm', 'mcal', 'mcalsave', 'msave', 'msaveas',...
                        'mplay', 'mplayfit', 'mdata', 'mdatacs', 'mdatacms', 'mdatafms','mconvcore','mratio', 'merrors', 'b_sortlist',...
                        'b_refresh','mpeakshape','b_markmoleculesinview', 'b_listfilter', 'b_removemolec', 'b_fit', 'ListMolecules',...
                        'mautodetect', 'ListSeries', 'b_ov', 'e_searchstring', 'ListFilter'};
@@ -522,7 +520,9 @@ init();
                            [1 0 0 0 0 0 0 0],...   % mloadcal
                            [1 1 1 0 0 0 0 0],...   % mcaldc
                            [1 1 1 0 0 0 0 0],...   % mpd2raw
-                           [1 0 0 0 0 0 0 0],...   % mmolecules
+                           [1 0 0 0 0 0 0 0],...   % mloadfromfolder
+                           [1 0 0 0 0 0 0 0],...   % mloadfromif
+                           [0 0 0 0 0 0 0 0],...   % mgenerateifm
                            [1 0 0 0 0 0 0 0],...   % mcal
                            [1 1 1 0 0 0 0 0],...   % mcalsave
                            [1 0 0 0 0 0 0 0],...   % msave
@@ -1155,31 +1155,41 @@ function menusavecal(hObject,~)
         handles = gui_status_update('changed', 1, handles);
     end
 
-    function menuloadmoleculesifd(hObject,~)
+    function menuloadmoleculesif(hObject,~)
         handles=guidata(Parent);
         [filename, pathname, filterindex] = uigetfile( ...
-            {'*.ifd','IsotopeFit data file (*.ifd)'},...
-            'Open IsotopeFit data file');
+            {'*.ifd;*.ifm','IsotopeFit files (*.ifd,*.ifm)'},...
+            'Load IsotopeFit molecules');
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-            data={}; %load needs a predefined variable
-            load(fullfile(pathname,filename),'-mat');
-            
-            % need to check if any of the molecules are out of range and
-            % remove them
-            handles.molecules = remove_out_of_range_molec(data.molecules, handles.peakdata);
-
-            
-            guidata(Parent,handles);
-            
-            molecules2listbox(ListMolecules,handles.molecules);
-        
-            
-            % check if massrange (handles.peakdata) of new spec is larger than
-            % massrange of spec that we load the data from (data.raw_peakdata)
-            % --> need to re-load molecules for entire massrange
-            if data.raw_peakdata(end,1)<handles.peakdata(end,1)
-                msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+            [~,~,suffix]=fileparts(filename);
+            switch lower(suffix)
+                case '.ifm'
+                    handles.molecules=load_molecules_from_ifm(fullfile(pathname,filename),handles.peakdata);
+                    
+                    guidata(Parent,handles);
+                    
+                    molecules2listbox(ListMolecules,handles.molecules);
+                case '.ifd'
+                    data={}; %load needs a predefined variable
+                    load(fullfile(pathname,filename),'-mat');
+                    
+                    % need to check if any of the molecules are out of range and
+                    % remove them
+                    handles.molecules = remove_out_of_range_molec(data.molecules, handles.peakdata);
+                    
+                    
+                    guidata(Parent,handles);
+                    
+                    molecules2listbox(ListMolecules,handles.molecules);
+                    
+                    
+                    % check if massrange (handles.peakdata) of new spec is larger than
+                    % massrange of spec that we load the data from (data.raw_peakdata)
+                    % --> need to re-load molecules for entire massrange
+                    if data.raw_peakdata(end,1)<handles.peakdata(end,1)
+                        msgbox(sprintf('Spectrum is larger than spectrum molecules have been loaded from.  \n Probably molecules in higher massrange could not be loaded.'),'Warning', 'Warn');
+                    end
             end
             
             handles = gui_status_update('molecules_loaded', 1, handles);
@@ -1187,22 +1197,35 @@ function menusavecal(hObject,~)
         end
     end
 
-    function menuloadmoleculesifm(hObject,~)
-        handles=guidata(Parent);
+    function menugenerateifm(hObject,~)
+         handles=guidata(Parent);
         [filename, pathname, filterindex] = uigetfile( ...
-            {'*.ifm','IsotopeFit molecules file (*.ifm)'},...
-            'Open IsotopeFit molecules file');
+            {'*.*','Generate script (*.*)'},...
+            'Open generate script');
         
         if ~(isequal(filename,0) || isequal(pathname,0))
-            handles.molecules=load_molecules_from_ifm(fullfile(pathname,filename),handles.peakdata);
-            
-            guidata(Parent,handles);
-            
-            molecules2listbox(ListMolecules,handles.molecules);
+                [ifmfolder,ifmfile]=generate_from_file(fullfile(pathname,filename));
+                
+                ifmfullfile=['molecules/' ifmfolder '/' ifmfile '.ifm'];                
+                
+                
+                %load the molecules
+                % is a file loaded?
+                if handles.status.guistatusvector(1) == 1
+                    result = questdlg(sprintf('Molecules saved to %s.\nDo you want to load these molecules?',ifmfullfile), 'Load Molecules?');
+                    if strcmp(result,'Yes')
+                        handles.molecules=load_molecules_from_ifm(ifmfullfile,handles.peakdata);
+                        
+                        guidata(Parent,handles);
+                        molecules2listbox(ListMolecules,handles.molecules);
+                        
+                        handles = gui_status_update('molecules_loaded', 1, handles);
+                        handles = gui_status_update('changed', 1, handles);
+                    end
+                else
+                    msgbox(sprintf('Molecules saved to %s.\nMolecules could not be loaded. Please load a spectrum first.',ifmfullfile), 'Load Molecules?','warn');
+                end
         end
-
-        handles = gui_status_update('molecules_loaded', 1, handles);
-        handles = gui_status_update('changed', 1, handles);
     end
 
     function menuloadcalibration(hObject,~)
@@ -1746,8 +1769,6 @@ function menusavecal(hObject,~)
     end
     
     function moleculelistclick(hObject,~)
-        handles=guidata(Parent);
-        
         index = getrealselectedmolecules();
         
         % we can always only plot one molecule. if several have been
@@ -2207,7 +2228,7 @@ function menusavecal(hObject,~)
         % we check for a background level in the mass range between 2.1 and
         % 3.9 amu. subsequently we search through backdata that is above
         % the aforementioned background level.
-        bg_area = find(handles.peakdata(:,1) < 3.9 & handles.peakdata(:,1) < 2.1);
+        bg_area = find(handles.peakdata(:,1) < 3.9 && handles.peakdata(:,1) < 2.1);
         noise_threshold = mean(handles.peakdata(bg_area,2));
         possible_peak_areas = find(handles.peakdata(:,2) > noise_threshold);
         

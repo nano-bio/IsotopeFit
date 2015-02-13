@@ -17,7 +17,7 @@ for i=1:length(molecules)
         waitbar(i/length(molecules));
     end
     
-    if toc(tstart)>0.5 & show_waitbar==0
+    if toc(tstart)>0.5 && show_waitbar==0
         h = waitbar(0,'Please wait...');
         show_waitbar=1;
     end

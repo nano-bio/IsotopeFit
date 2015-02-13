@@ -1,16 +1,21 @@
-function generate_from_file(file)
+function [folder,file]=generate_from_file(file_in)
 % generate_from_file(file)
 % uses cluster definitions in [generate_scripts/file] to generate ifm - files
 % see generate_scripts/example.txt
 
-h=fopen(['generate_scripts/' file]);
+h=fopen(file_in);
 
 %set standard values
 th=1e-3;
 mapprox=1e-4;
 c=1;
 add_to_name='';
-file=strtok(file,'.');
+
+% if there is no file/folder definition in the script,
+% use filename as a default value
+% the ifm file is copied to IsotopeDistribution/folder/file.ifm
+% (this should be changed in the future)
+[~,file,~]=fileparts(file_in);
 folder=file;
 
 

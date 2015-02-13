@@ -42,6 +42,10 @@ function ma = h5cal(datafile)
     i = 1:double(samples);
     % evaluate the reversed calibration function to retrieve massaxis
     ma = eval(reverse_mcf);
+    % apparantely in some cases this functions evaluates to some complex
+    % numbers (despite the fact that a real solution is available). to make
+    % sure not to produce any errors we take the absolute value.
+    ma = abs(ma);
     % transpose
     ma = ma';
 end
