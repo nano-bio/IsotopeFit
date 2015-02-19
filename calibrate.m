@@ -585,9 +585,15 @@ uiwait(Parent)
                 guidata(hObject,handles);
                 updatemolecules(handles.ranges(rangeindex));
             case 'Fit all'
-                handles.ranges=fitranges(handles.peakdata,handles.ranges,handles.calibration,inf,deltares,deltam,handles.settings.fittingmethod_cal);
-                guidata(hObject,handles);
-                updatemolecules(handles.ranges);
+                choice = questdlg('Are you sure you want to fit all molecules?','Fit All?', 'Yes', 'No', 'No')
+                switch choice
+                    case 'Yes'
+                        handles.ranges=fitranges(handles.peakdata,handles.ranges,handles.calibration,inf,deltares,deltam,handles.settings.fittingmethod_cal);
+                        guidata(hObject,handles);
+                        updatemolecules(handles.ranges);
+                    case 'No'
+                        return;
+                end
         end
         
         writetopreviewedit(handles.ranges(rangeindex).com,handles.ranges(rangeindex).massoffset,...
