@@ -1375,6 +1375,8 @@ function menusavecal(hObject,~)
                         deltam,...
                         deltar,...
                         handles.settings.fittingmethod_main);
+                case 'Cancel'
+                    return;
             end
         end    
         
