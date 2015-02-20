@@ -1831,18 +1831,17 @@ function menusavecal(hObject,~)
     function dataaxesclick(~, ~)
         % intentionally does nothing
     end
-        
+
     function filterListMolecules(~,~)
         handles=guidata(Parent);
-        
-        % Get text currently in molecule listbox
-        listboxText = get(ListMolecules,'string');
-        
+
         % get text to be used as a filter
         filtertext = get(ListFilter,'string');
         
         % check if our filtertext is empty
         if ~isempty(filtertext)
+            % Get text for all molecules
+            listboxText = {handles.molecules.name};
             
             set(ListMolecules, 'Value', 1);
 
@@ -1857,7 +1856,6 @@ function menusavecal(hObject,~)
             handles.status.moleculesfiltered = 1;
         else
             % it's empty. we just fill the Listbox with all molecules
-            
             % check first if ListMolecules is empty
             if ~isempty(get(ListMolecules, 'String'))
                 % first read out, what is currently selected
@@ -1871,7 +1869,6 @@ function menusavecal(hObject,~)
             
             % select the previously selected molecule
             set(ListMolecules, 'Value', curr_ind);
-
             handles.status.moleculesfiltered = 0;
         end
         
