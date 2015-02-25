@@ -261,6 +261,7 @@ mdata = uimenu('Label','Data');
                mdatacms = uimenu(mexport,'Label','Calibrated Mass Spectrum...','Callback',@menuexportmassspec,'Enable','on');
                mdatasmooth = uimenu(mexport,'Label','Smooth Mass Spectrum...','Callback',@menuexportsmoothmassspec,'Enable','on');
                mdatafms = uimenu(mexport,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
+               mdatafms = uimenu(mexport,'Label','Cal. Mass Spectrum for Selected Series...','Callback',@export_series_spec,'Enable','on');
        mconvcore = uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
                mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
                mconvcore_map=uimenu(mconvcore,'Label','Map...','Callback',@menuconvcoremap,'Enable','on');
@@ -1124,6 +1125,69 @@ function menusavecal(hObject,~)
         
 %        set(ListSeries,'String',serieslist);
         
+    end
+
+    function export_series_spec(hObject,~)
+        handles=guidata(hObject);
+        
+        ixlist=get(ListSeries,'Value');
+        ix = ixlist(1);
+        
+         % retrieve the name of the series to be exported
+        seriesstring = get(ListSeries, 'String');
+        seriesname = seriesstring{ix};
+        
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_' seriesname '_spec.txt'];
+        
+        [filename, pathname] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export data',...
+            filenamesuggestion);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            j=1;
+            exportindex=[];
+            for i=1:size(handles.seriesarea,1)
+                if ~isnan(handles.seriesarea(i,ix))
+                    n(j)=i-1;
+                    exportindex(j)=handles.seriesindex(i,ix);
+                    j=j+1;
+                end
+            end
+                        
+            massaxis=handles.peakdata(:,1)';
+            rawspec=handles.peakdata(:,2)';
+                                   
+            resolutionaxis=resolutionbycalibration(handles.calibration,massaxis);
+            
+            seriesspec=multispec(handles.molecules(exportindex),...
+                resolutionaxis,...
+                0,...
+                massaxis,...
+                handles.calibration.shape);
+            
+            %DELETE THIS!!
+            mtemp=handles.molecules(exportindex);
+            subtractidx=2;
+            for i=1:length(mtemp)
+                mtemp(i).area=handles.molecules(exportindex(subtractidx)).area;
+            end
+            seriestosubtract=multispec(mtemp,...
+                resolutionaxis,...
+                0,...
+                massaxis,...
+                handles.calibration.shape);
+            %-------------
+            
+            %write title line
+            fid=fopen(fullfile(pathname,filename),'w');
+            fprintf(fid,'Mass (Dalton)\tSignal (a.u.)\t%s\t%s contrib\n',seriesname,handles.molecules(exportindex(subtractidx)).name);
+            fclose(fid);
+
+            %append data
+            dlmwrite(fullfile(pathname,filename),[massaxis',rawspec',seriesspec',seriestosubtract'],'-append','delimiter','\t','precision','%e');
+           
+        end 
     end
 
     function sortlistclick(hObject,~)
