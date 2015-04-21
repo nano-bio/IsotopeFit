@@ -35,7 +35,7 @@ while i<=l %parse string
                 nbraces=nbraces-1;
             end
             if string(i)=='('
-                nbraces=nbraces-1;
+                nbraces=nbraces+1;
             end
         end
         substring=string(startpos+1:i-1);
