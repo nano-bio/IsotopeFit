@@ -14,7 +14,7 @@ function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitt
         maxmolperrange=max(length(ranges(i).molecules),maxmolperrange);
     end
 
-    if maxmolperrange>10
+    if maxmolperrange>200
         choice = questdlg(sprintf('At least in one range, there are more then 10 molecules (max: %i). Do you want to continue?',maxmolperrange), ...
             'Fit Ranges', ...
             'Yes','No','No');

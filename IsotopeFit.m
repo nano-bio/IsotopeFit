@@ -2306,17 +2306,27 @@ function menusavecal(hObject,~)
             ES_mat=zeros(n_bufs*n_writes,length(index));
             
             moltemp=handles.molecules;
+            
+            handles.bgcorrectiondata
+            
+            %some values for background correction
+            tot_counts=sum(handles.peakdata(:,2));
+            bgc_temp=handles.bgcorrectiondata;
             for w=1:n_writes
                 w/n_writes
                 for b=1:n_bufs
                     peakdatatemp(:,2)=readh5buffer(fn, w, b)';
+                    
+                    % background correction
+                    bgc_temp.bgy=handles.bgcorrectiondata.bgy*sum(peakdatatemp(:,2))/tot_counts; %adapt bg counts to the total counts for this write
+                    peakdatatemp=subtractbg(peakdatatemp,bgc_temp);
                     
                     % fit the isotope corrected value for each buffer:
                     moltemp(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethod,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
                     ES_mat((w-1)*n_bufs+b,:)=[moltemp(index).area]';
                     
 %                   You can also simply count the events within the
-%                   massrange of the molecules. (not isotope corrected!)
+%                   massrange of the molecules. (not isotope corrected!):
 %                       for i=1:length(index)
 %                          ES_mat((w-1)*n_bufs+b,i)=sum(peakdatatemp(handles.molecules(index(i)).minind:handles.molecules(index(i)).maxind,2));
 %                       end
