@@ -262,6 +262,10 @@ mdata = uimenu('Label','Data');
                mdatasmooth = uimenu(mexport,'Label','Smooth Mass Spectrum...','Callback',@menuexportsmoothmassspec,'Enable','on');
                mdatafms = uimenu(mexport,'Label','Fitted Mass Spectrum...','Callback',@menuexportfittedspec,'Enable','on');
                mdatafms = uimenu(mexport,'Label','Cal. Mass Spectrum for Selected Series...','Callback',@export_series_spec,'Enable','on');
+               mdataes = uimenu(mexport,'Label','Energy scan','Enable','on','Separator', 'on');
+                    mdataes_all = uimenu(mdataes,'Label','All molecules','Callback',@export_energy_scan,'Enable','on');
+                    mdataes_sel = uimenu(mdataes,'Label','Selected molecules','Callback',@export_energy_scan,'Enable','on');
+                    
        mconvcore = uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
                mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
                mconvcore_map=uimenu(mconvcore,'Label','Map...','Callback',@menuconvcoremap,'Enable','on');
@@ -2209,6 +2213,133 @@ function menusavecal(hObject,~)
 %         %end
 %         close(h);
 %     end
+
+    function export_energy_scan(hObject,eventdata)
+        handles=guidata(hObject);
+        
+        % ====================================== Check for h5 file
+        % load file
+        if isfield(handles.fileinfo,'h5completepath')
+            if exist(handles.fileinfo.h5completepath,'file')
+                fn = handles.fileinfo.h5completepath;
+            else
+                choices = questdlg('h5-File not found. Do you want to select one?', 'Select file?', 'Yes', 'No', 'No');
+                switch choices
+                    case 'Yes'
+                        [filename, pathname, ~] = uigetfile({'*.h5','HDF5 data file (*.h5)';});
+                        if ~(isequal(filename,0) || isequal(pathname,0))                        
+                            fn = fullfile(pathname,filename);
+                            handles.fileinfo.h5completepath = fn;
+                            guidata(hObject,handles);
+                        else
+                            return
+                        end
+                    case 'No'
+                        return;
+                end
+            end
+        else
+            choices = questdlg('No original h5-File is known. Do you want to select one?', 'Select file?', 'Yes', 'No', 'No');
+            switch choices
+                case 'Yes'
+                        [filename, pathname, ~] = uigetfile({'*.h5','HDF5 data file (*.h5)';});
+                        if ~(isequal(filename,0) || isequal(pathname,0))                        
+                            fn = fullfile(pathname,filename);
+                            handles.fileinfo.h5completepath = fn;
+                            guidata(hObject,handles);
+                        else
+                            return
+                        end
+                    case 'No'
+                        return
+            end
+        end
+        
+        % =========================== Save energies to ASCII file
+        
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_energy_scans.txt'];
+        
+        [filename, pathname] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export data',...
+            filenamesuggestion);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+            deltar=handles.settings.deltaresolution/100;
+            deltam=handles.settings.deltamass;
+            
+            %be careful: don't double-calibrate masses!
+            %set massoffset to zero for final fitting:
+            calibrationtemp=handles.calibration;
+            calibrationtemp.massoffsetmethode='Flat';
+            calibrationtemp.massoffsetparam=0;
+                        
+            %peakdatatemp=approxpeakdata(handles.peakdata,0.2);%much faster with lower resolution
+            peakdatatemp=handles.peakdata;%full resolution
+            
+            %# get the range value
+            range=get(hObject,'Label'); %All molecules or Selected_molecules
+            
+            % which range should we fit?
+             switch range
+                 case 'Selected molecules'
+                 % indices for all molecules selected
+                    index=getrealselectedmolecules();
+                    allinvolved=findinvolvedmolecules(handles.molecules,1:length(handles.molecules),index,handles.settings.searchrange,handles.calibration);
+                 case 'All molecules'
+                    allinvolved=1:length(handles.molecules);
+                    index=allinvolved;
+             end
+                 
+            n_writes=getnumberofinstancesinh5(fn,'writes');
+            n_bufs=getnumberofinstancesinh5(fn,'buffers');
+            
+            %ask settings
+            prompt = {'Start value for calibration','End value for calibration'};
+            dlg_title = 'Axis calibration';
+            num_lines = 1;
+            def = {'0','100'};
+            answer = inputdlg(prompt,dlg_title,num_lines,def);
+            
+            energy_axis=linspace(str2double(answer{1}),str2double(answer{2}),n_bufs*n_writes);
+            
+            ES_mat=zeros(n_bufs*n_writes,length(index));
+            
+            moltemp=handles.molecules;
+            for w=1:n_writes
+                w/n_writes
+                for b=1:n_bufs
+                    peakdatatemp(:,2)=readh5buffer(fn, w, b)';
+                    
+                    % fit the isotope corrected value for each buffer:
+                    moltemp(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethod,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
+                    ES_mat((w-1)*n_bufs+b,:)=[moltemp(index).area]';
+                    
+%                   You can also simply count the events within the
+%                   massrange of the molecules. (not isotope corrected!)
+%                       for i=1:length(index)
+%                          ES_mat((w-1)*n_bufs+b,i)=sum(peakdatatemp(handles.molecules(index(i)).minind:handles.molecules(index(i)).maxind,2));
+%                       end
+                end
+            end
+            
+            %write ASCII file
+            %write title line
+            fid=fopen(fullfile(pathname,filename),'w');
+            fprintf(fid,'Energy\t');
+            for i=index
+                fprintf(fid,'%s\t',handles.molecules(i).name);
+            end
+            fprintf(fid,'\n');
+            fclose(fid);
+                      
+            %append data
+            fprintf('dlmwrite. please wait...');
+            dlmwrite(fullfile(pathname,filename),[energy_axis',ES_mat],'-append','delimiter','\t','precision','%e');
+            fprintf(' done.\n');
+            
+        end %save file dialog
+    end
 
     function fitbuttonclick(hObject,eventdata)
         handles=guidata(hObject);

@@ -40,7 +40,10 @@ function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitt
     %iterations was reached.
     maxruns=10;
 
-    h = waitbar(0,'Please wait...'); 
+    
+    
+    t_start=tic;
+    show_wb=0;
     
     fprintf('Start fitting %i ranges using %s\n',l, fitting_method);
     
@@ -54,7 +57,7 @@ function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitt
         maxdatapoints=50*nmolecules;
         
         parameters=zeros(1,nmolecules+2);
-        fprintf('%i/%i (%5.1f - %5.1f): %i molecules\n',i,l, ranges(i).minmass,ranges(i).maxmass,nmolecules);
+        fprintf('%i/%i (%5.1f - %5.1f): %i molecules\r',i,l, ranges(i).minmass,ranges(i).maxmass,nmolecules);
 
         %ind=findmassrange(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,10);
         ind=findmassrange2(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,searchrange);
@@ -107,9 +110,18 @@ function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitt
         rangestemp(i).massoffseterror=stderr(end);
         rangestemp(i).resolutionerror=stderr(end-1);
         
-        waitbar(i/l); %only possible for patternsearch
+        if ~show_wb
+            if toc(t_start)>0.5
+                h = waitbar(0,'Please wait...'); 
+                show_wb=1;
+            end
+        else
+            waitbar(i/l); %only possible for patternsearch
+        end
     end
-    close(h);
+    if show_wb
+        close(h);
+    end
     fprintf('Done.\n')
 
     %center of mass of ranges needs to be recalculated due to different areas
