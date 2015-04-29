@@ -2353,7 +2353,7 @@ function menusavecal(hObject,~)
                       
             %append data
             fprintf('dlmwrite. please wait...');
-            dlmwrite(fullfile(pathname,filename),[energy_axis',ES_mat.*repmat(1./c_vec,size(ES_mat,2),1)],'-append','delimiter','\t','precision','%e');
+            dlmwrite(fullfile(pathname,filename),[energy_axis',ES_mat.*repmat(1./c_vec,size(ES_mat,1),1)],'-append','delimiter','\t','precision','%e');
             fprintf(' done.\n');
             
         end %save file dialog
