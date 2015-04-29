@@ -2333,11 +2333,19 @@ function menusavecal(hObject,~)
                 end
             end
             
+            %correct for total counts per molecule
+            dm=diff(handles.peakdata(:,1));
+            c_vec=zeros(1,length(index));
+            
             %write ASCII file
             %write title line
             fid=fopen(fullfile(pathname,filename),'w');
             fprintf(fid,'Energy\t');
+            k=1;
             for i=index
+                %calculate c_vec for correction
+                c_vec(k)=mean(dm(handles.molecules(i).minind:handles.molecules(i).maxind));
+                k=k+1;
                 fprintf(fid,'%s\t',handles.molecules(i).name);
             end
             fprintf(fid,'\n');
@@ -2345,7 +2353,7 @@ function menusavecal(hObject,~)
                       
             %append data
             fprintf('dlmwrite. please wait...');
-            dlmwrite(fullfile(pathname,filename),[energy_axis',ES_mat],'-append','delimiter','\t','precision','%e');
+            dlmwrite(fullfile(pathname,filename),[energy_axis',ES_mat.*repmat(1./c_vec,size(ES_mat,2),1)],'-append','delimiter','\t','precision','%e');
             fprintf(' done.\n');
             
         end %save file dialog
