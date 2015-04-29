@@ -89,6 +89,8 @@ function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitt
         switch fitting_method
             case 'linear_system'
                 [fitparam,stderr]=get_fit_params_using_linear_system(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
+            case 'linear_system_baseline' %for energy scans only
+                [fitparam,stderr]=get_fit_params_using_linear_system_baseline(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
             case 'simplex'    
                 [fitparam,stderr]=get_fit_params_using_simplex(spec_measured(ind),massaxis(ind),calibration.shape,ranges(i).molecules,parameters,lb,ub);
             case 'simplex_lin_combi'    

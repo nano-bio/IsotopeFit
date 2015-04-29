@@ -2318,11 +2318,11 @@ function menusavecal(hObject,~)
                     peakdatatemp(:,2)=readh5buffer(fn, w, b)';
                     
                     % background correction
-                    bgc_temp.bgy=handles.bgcorrectiondata.bgy*sum(peakdatatemp(:,2))/tot_counts; %adapt bg counts to the total counts for this write
-                    peakdatatemp=subtractbg(peakdatatemp,bgc_temp);
+%                     bgc_temp.bgy=handles.bgcorrectiondata.bgy*sum(peakdatatemp(:,2))/tot_counts; %adapt bg counts to the total counts for this write
+%                     peakdatatemp=subtractbg(peakdatatemp,bgc_temp);
                     
                     % fit the isotope corrected value for each buffer:
-                    moltemp(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,get(ListMethod,'Value'),handles.settings.searchrange,deltam,deltar,handles.settings.fittingmethod_main);
+                    moltemp(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,1,handles.settings.searchrange,deltam,deltar,'linear_system_baseline');
                     ES_mat((w-1)*n_bufs+b,:)=[moltemp(index).area]';
                     
 %                   You can also simply count the events within the
