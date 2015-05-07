@@ -9,11 +9,14 @@ function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitt
     l=length(ranges);
 
     %check if there are too many molecules per range
+    
+    fprintf('Finding the number of molecules per range... ')
     maxmolperrange=1;
     for i=1:l
         maxmolperrange=max(length(ranges(i).molecules),maxmolperrange);
     end
-
+    fprintf('done.\n')
+    
     if maxmolperrange>200
         choice = questdlg(sprintf('At least in one range, there are more then 200 molecules (max: %i). Do you want to continue?',maxmolperrange), ...
             'Fit Ranges', ...
@@ -60,14 +63,16 @@ function out = fitranges(peakdata,ranges,calibration,areaup,deltares,deltam,fitt
         fprintf('%i/%i (%5.1f - %5.1f): %i molecules\r',i,l, ranges(i).minmass,ranges(i).maxmass,nmolecules);
 
         %ind=findmassrange(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,10);
+        fprintf('finding massrange... ')
         ind=findmassrange2(massaxis,ranges(i).molecules,ranges(i).resolution,ranges(i).massoffset,searchrange);
-
+        fprintf('done.\n')
+        
         %is it necessary to cut out some datapoints?
         ndp=length(ind); %number of datapoints
         if ndp>maxdatapoints %then cut out some datapoints
             ind=ind(round((1:maxdatapoints)*(ndp/maxdatapoints)));%ind will be maxdatapoints long
         end
-
+        
         for j=1:nmolecules
             if ranges(i).molecules(j).area==0 %dirty workaround: when area=0, no fitting. dont know why!
                 parameters(j)=0.1;

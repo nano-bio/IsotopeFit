@@ -4,7 +4,7 @@ function out = multispec(molecules,resolutionaxis,massoffsetaxis,massaxis,shape)
 %   uses area stored in molecules structure
 %   DONT use this for fitting!
 
-spec_calc=zeros(1,length(massaxis));
+spec_calc=sparse(1,length(massaxis));
 
 show_waitbar = 0;
 

@@ -5,12 +5,11 @@ function [paramsout,errout] = get_fit_params_using_linear_system(spec_measured,m
 % Pre-allocate space for Matrix:
 % lines:number of datapoints,
 % columns: number of molecules
-
-M=zeros(length(massaxis),length(molecules));
+M=sparse(length(massaxis),length(molecules));
 
 %fill matrix with isotopic pattern for every molecule
 for j=1:length(molecules)
-    M(:,j)=double(pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis,shape)');
+    M(:,j)=pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis,shape)';
 end
 
 % left division gives vector of areas

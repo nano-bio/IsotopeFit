@@ -782,8 +782,8 @@ init();
         massaxis=handles.peakdata(massind,1)';
         spec_measured=handles.peakdata(massind,2)';
                
-        
-        testareas=handles.molecules(moleculeindex).area+((-9:0.2:9)*(1+handles.molecules(moleculeindex).area/10));
+        searchrange=0.01;
+        testareas=handles.molecules(moleculeindex).area+(linspace(-searchrange,searchrange,20)*(1+handles.molecules(moleculeindex).area/10));
         testmsd=zeros(size(testareas));
         
         handles.molecules(involved).name
@@ -806,20 +806,20 @@ init();
         areainterp=testareas(1):(testareas(minind)-testareas(1))/1000:testareas(minind);
         testmsdinterp=spline(testareas,testmsd,areainterp);
         
-        [~,ind]=min(abs(testmsdinterp-minmsd*1.1));
+        [~,ind]=min(abs(testmsdinterp-minmsd*1.0005));
         leftarea=areainterp(ind);
         
         areainterp=testareas(minind):(testareas(end)-testareas(minind))/1000:testareas(end);
         testmsdinterp=spline(testareas,testmsd,areainterp);
         
-        [~,ind]=min(abs(testmsdinterp-minmsd*1.1));
+        [~,ind]=min(abs(testmsdinterp-minmsd*1.0005));
         rightarea=areainterp(ind);
         
         fprintf('Lower error: %f\n',leftarea);
         fprintf('Upper error: %f\n',rightarea);
         
         cla(areaaxes.axes)
-        areaaxes.cplot(testareas,testmsd,testareas,repmat(minmsd*1.05,1,length(testareas)))
+        areaaxes.cplot(testareas,testmsd,testareas,repmat(minmsd*1.0005,1,length(testareas)))
         
 %         
 %         hold(areaaxes,'on');
@@ -1316,6 +1316,10 @@ function menusavecal(hObject,~)
             
             % Molecules (that are in massrange)
             handles.molecules=remove_out_of_range_molec(data.molecules, handles.peakdata);
+            
+            % Initialize parameters (necessary because eventually the
+            % massaxis has changed
+            handles.molecules = init_molecule_properties(handles.molecules,handles.peakdata);
             
             % check if massrange (handles.peakdata) of new spec is larger than
             % massrange of spec that we load the data from (data.raw_peakdata)
