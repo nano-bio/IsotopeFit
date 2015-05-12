@@ -20,13 +20,6 @@ folder=file;
 
 
 replacename={};
-data={};
-data.molecules=[];
-cid_list=[];
-charge_list=[];
-
-fprintf('Cluster ID generation... please wait ...\n');
-
 while ~feof(h)
     % read line from file
     line=fgetl(h);
@@ -85,51 +78,14 @@ while ~feof(h)
                         end
                     end
                     altnamelist{1}=[altnamelist{1} add_to_name];
-                    
-                    %generate the clustersnames and cid's
-                    [m,cid]=molecules_from_cluster_definition(namelist,nlist,altnamelist);
-                    data.molecules=cat(2,data.molecules,m);
-                    cid_list=cat(1,cid_list,cid);
-                    charge_list=cat(2,charge_list,repmat(c,1,length(m)));
+                    %generate the clusters
+                    generate_cluster_ifm(folder,file,namelist,nlist,mapprox,th,altnamelist,c);
             end
         end
     end
 end
 
-%check for double entries
-fprintf('\nCheck for double entries... ')
-[~,ind]=unique([charge_list', cid_list],'rows','stable');
-if length(ind)<size(cid_list,1)
-    fprintf('Double definitions found and removed. Check your cluster definitions.\n');
-else
-    fprintf('None found.\n')
-end
-
-fprintf('\nCalculating peakdata...\n');
-data.molecules = add_peakdata_to_molecules(data.molecules(ind),charge_list(ind),mapprox,th);
-fprintf('done.\n');
-
 fclose(h);
-
-%save to ifm file
-if ~isempty(folder)
-    %standard location in molecules/folder/file
-    folder=['molecules',filesep,folder];
-    if ~(exist(folder)==7)
-        mkdir(folder);
-        fprintf('\nFolder %s generated\n',folder);
-    end
-    if ~strcmpi(file(end-3:end),'.ifm')
-        file=[file,'.ifm'];
-    end
-    pathandfile=[folder,filesep,file];
-    %pathandfile=[folder,filesep,filename,'.ifm'];
-else
-    %full path to file provided
-    pathandfile=filen;
-end
-
-save(pathandfile,'data');
 
 end
 
