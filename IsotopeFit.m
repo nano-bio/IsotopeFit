@@ -1103,7 +1103,7 @@ function menusavecal(hObject,~)
             if ~isnan(handles.seriesarea(i,ix))
                 n(j)=i-1;
                 data(j)=handles.seriesarea(i,ix);
-                dataerror(j)=handles.seriesareaerror(i,ix,:);
+                dataerror(j)=handles.seriesareaerror(i,ix);
                 j=j+1;
             end
         end
@@ -1645,70 +1645,9 @@ function menusavecal(hObject,~)
         if ~(isequal(filename,0) || isequal(pathname,0))
             switch filterindex
                 case 1 %ifd
-                    data={}; %load needs a predefined variable
-                    load(fullfile(pathname,filename),'-mat');
-                    
-                    handles.raw_peakdata=data.raw_peakdata;
-                    %handles.bgpolynom=data.bgpolynom;
-                    handles.startind=data.startind;
-                    handles.endind=data.endind;
-                                       
-                    % Background correction data
-                    handles.bgcorrectiondata=data.bgcorrectiondata;
-                    
-                    if ~isfield(handles.bgcorrectiondata,'bgm') %compatibility: old bg correction method
-                        fprintf('Old File. Fixing background correction data...');
-                        handles.bgcorrectiondata.bgm=[];
-                        handles.bgcorrectiondata.bgy=[];
-                        fprintf(' done\n');
-                    end
-                    
-                    handles.molecules=convert_molecule_datatype(data.molecules);
-                    
-                    %Calibration data
-                    handles.calibration=data.calibration;
-                    
-                    if ~isfield(handles.calibration,'shape') %compatibility: custom peak shapes
-                        fprintf('Old File. Load gaussian peak shape as default...');
-                        shapes=load('shapes.mat');
-                        handles.calibration.shape=shapes.gaussian;
-                        fprintf(' done\n');
-                    end
-                                        
-                    handles.peakdata=croppeakdata(handles.raw_peakdata,handles.startind, handles.endind);
-                    handles.peakdata=subtractbg(handles.peakdata,handles.bgcorrectiondata);
-                    handles.peakdata=subtractmassoffset(handles.peakdata,handles.calibration);
-                    
-                    % File info                    
-                    handles.fileinfo.filename=filename;
-                    handles.fileinfo.originalfilename=filename(1:end-4);
-                    
-                    % did we save the f5 file at one point?
-                    try
-                        handles.fileinfo.h5completepath=data.fileinfo.h5completepath;
-                    catch
-                        fprintf('Original h5 file not known.\n');
-                    end
-                    
-                    handles.fileinfo.pathname=pathname;
-                    
-                    % Status vector
-                    if ~isfield(data,'guistatusvector')
-                        fprintf('Old File. No gui status vector found. Setting default value...');
-                        handles.status.guistatusvector = [1 1 1 1 0 0 1 0]; %see gui_status_update for details
-                        fprintf(' done\n');
-                    elseif length(data.guistatusvector)~=length(handles.status.guistatusvector)
-                        fprintf('Old File. Wrong status vector length. Setting default value...');
-                        handles.status.guistatusvector = [1 1 1 1 0 0 1 0]; %see gui_status_update for details
-                        fprintf(' done\n');
-                    else
-                        handles.status.guistatusvector = data.guistatusvector;
-                    end
-                    
+                    handles=load_ifd(filename,pathname,handles);
                     guidata(Parent,handles);
-                    
                     molecules2listbox(ListMolecules,handles.molecules);
-                    
                 case 2 %h5
                     load_h5(pathname,filename);
                 case 4 %ASCII
@@ -2051,49 +1990,6 @@ function menusavecal(hObject,~)
         
         guidata(Parent,handles);
     end
-
-    function out=croppeakdata(peakdata,ix1,ix2)
-        out=peakdata(ix1:ix2,:);
-    end
-
-    function out=subtractbg(peakdata,bgcorrectiondata)
-        out=peakdata;
-        %out(:,2)=out(:,2)-polynomial(bgpolynom,peakdata(:,1));
-        if length(bgcorrectiondata.bgm)>1
-            out(:,2)=out(:,2)-interp1(bgcorrectiondata.bgm',bgcorrectiondata.bgy',peakdata(:,1),'pchip','extrap');
-        end
-    end
-
-    function out=subtractmassoffset(peakdata,calibration)
-        out=peakdata;
-        xaxis=min(peakdata(:,1)):0.01:max(peakdata(:,1));
-        mo=massoffsetbycalibration(calibration,xaxis);
-        %mo=massoffsetbycalibration(calibration,peakdata(:,1));
-        
-        % maybe you think, that this would do the job:
-        % out(:,1)=out(:,1)-mo;
-        % BUT THINK ABOUT:
-        % you have to calculate the mass offset for the position of the
-        % SHIFTED spectrum. This requires the calculation of the INVERSE:
-        % mass_old = mass_new + mo(mass_new)
-        %          = A * mass_new 
-        %                    with A = eye*[(mass_new+mo(mass_new))./mass_new]
-        % mass_new = inv(A) * mass_old
-        % A is diagonal -> yeah, you simply have to perform a pointwise
-        % division:
-        
-        %out(:,1)=out(:,1).*(out(:,1)./(out(:,1)+mo));
-        yaxis=xaxis+mo;
-        out(:,1)=interp1(yaxis,xaxis,peakdata(:,1),'pchip','extrap');
-
-%          for i=1:size(out,1);
-%             ind=mass2ind(peakdata(:,1),peakdata(i,1)+mo(i));
-%             out(i,2)=peakdata(ind,2);
-%             if ~mod(i,1000)
-%                 fprintf('%i/%i\n',i,size(out,1)) 
-%             end
-%          end
-    end
     
     function [areaout_sorted,areaerrorout_sorted,indexout_sorted,sortlist_sorted]=sortmolecules(molecules,searchstring,peakdata)
         searchstring=['[' searchstring ']'];
@@ -2155,7 +2051,7 @@ function menusavecal(hObject,~)
             
             areaout(lineix,rowix)=molecules(i).area/b;
             %areaerrorout(lineix,rowix)=sqrt(molecules(i).area/b);
-            areaerrorout(lineix,rowix,:)=molecules(i).areaerror/b;
+            areaerrorout(lineix,rowix)=molecules(i).areaerror/b;
             indexout(lineix,rowix)=i; %save index to molecule
             
             

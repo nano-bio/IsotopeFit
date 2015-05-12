@@ -22,7 +22,7 @@ for i=1:size(molecule.peakdata,1)
     evalspline=peakshape;
     evalspline.breaks=evalspline.breaks+molecule.peakdata(i,1);
     ind=find(evalspline.breaks(1)<massaxis & evalspline.breaks(end)>massaxis);
-    out=out+sparse(ones(size(ind)),ind,molecule.peakdata(i,2)*ppval(evalspline,massaxis(ind)),1,l);
+    out=out+sparse(ones(size(ind)),ind,molecule.peakdata(i,2)*double(ppval(evalspline,massaxis(ind))),1,l);
     
     %out(ind)=out(ind)+sparse(molecule.peakdata(i,2)*ppval(evalspline,massaxis(ind)));
 end

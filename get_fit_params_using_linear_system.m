@@ -38,7 +38,12 @@ end
 %and massoffset
 %errout=[error_est,NaN,NaN];
 
-errout=1.96*diag(sqrt(inv(M'*M)*sum(((M*A)'-spec_measured).^2)/(length(spec_measured-length(A)))));
+%Here we have to compute inv(M'*M) which may be inaccurate in some
+%cases. we use qr factorization instead
+R=qr(M,0);
+S=inv(R); %then inv(M'*M)=S*S'
+
+errout=1.96*diag(sqrt(S*S'*sum(((M*A)'-spec_measured).^2)/(length(spec_measured-length(A)))));
 errout(end+1)=0; %resolution
 errout(end+2)=0; %mass offset
 % 
