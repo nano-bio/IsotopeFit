@@ -1049,7 +1049,7 @@ init();
                 fprintf(fid,'%i\t',i-1);
                 for j=seriesid
                     if ~isnan(handles.seriesarea(i,j))
-                        fprintf(fid,'%e\t%e\t',handles.seriesarea(i,j),handles.seriesareaerror(i,j));
+                        fprintf(fid,'%e\t%e\t',full(handles.seriesarea(i,j)),full(handles.seriesareaerror(i,j)));
                     else
                         fprintf(fid,'--\t--\t');
                     end
