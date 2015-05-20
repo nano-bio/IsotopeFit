@@ -782,7 +782,7 @@ init();
         massaxis=handles.peakdata(massind,1)';
         spec_measured=handles.peakdata(massind,2)';
                
-        searchrange=0.01;
+        searchrange=1;
         testareas=handles.molecules(moleculeindex).area+(linspace(-searchrange,searchrange,20)*(1+handles.molecules(moleculeindex).area/10));
         testmsd=zeros(size(testareas));
         
