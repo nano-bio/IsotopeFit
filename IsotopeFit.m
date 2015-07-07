@@ -692,7 +692,7 @@ init();
             fclose(fid);
             
             % append data matrix to ascii file
-            dlmwrite(fullfile(pathname,filename),[handles.peakdata(:,1),fitted_data],'-append','delimiter','\t','precision','%e');
+            dlmwrite(fullfile(pathname,filename),full([handles.peakdata(:,1),fitted_data]),'-append','delimiter','\t','precision','%e');
         end
     end
 
