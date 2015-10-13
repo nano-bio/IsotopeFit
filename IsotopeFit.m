@@ -2117,6 +2117,14 @@ function menusavecal(hObject,~)
     function export_energy_scan(hObject,eventdata)
         handles=guidata(hObject);
         
+        % ================== Baseline File
+        % we write the fitted baseline to a file "baseline.txt"
+        % in the function get_fit_params_using_linear_system_baseline
+        % check if an old version of this file exists and delete it
+        if exist('baseline.txt','file')
+            delete baseline.txt
+        end
+        
         % ====================================== Check for h5 file
         % load file
         if isfield(handles.fileinfo,'h5completepath')
@@ -2201,8 +2209,23 @@ function menusavecal(hObject,~)
             def = {'0','100'};
             answer = inputdlg(prompt,dlg_title,num_lines,def);
             
-            energy_axis=linspace(str2double(answer{1}),str2double(answer{2}),n_bufs*n_writes);
+            x_start=str2double(answer{1});
+            x_end=str2double(answer{2});
             
+            choices = questdlg('Do you want to change the number of evaluation buffers/writes? (If not sure, press No)', 'Change number of data points', 'Yes', 'No', 'No');
+            switch choices
+                case 'Yes'
+                    prompt = {'Buffers','Writes'};
+                    dlg_title = 'Number of data points';
+                    num_lines = 1;
+                    def = {num2str(n_bufs),num2str(n_writes)};
+                    answer = inputdlg(prompt,dlg_title,num_lines,def);
+                    n_bufs=str2double(answer{1});
+                    n_writes=str2double(answer{2});
+            end
+            
+            energy_axis=linspace(x_start,x_end,n_bufs*n_writes);
+                        
             ES_mat=zeros(n_bufs*n_writes,length(index));
             
             moltemp=handles.molecules;
@@ -2248,9 +2271,10 @@ function menusavecal(hObject,~)
                 k=k+1;
                 fprintf(fid,'%s\t',handles.molecules(i).name);
             end
+            
             fprintf(fid,'\n');
             fclose(fid);
-                      
+                     
             %append data
             fprintf('dlmwrite. please wait...');
             dlmwrite(fullfile(pathname,filename),[energy_axis',ES_mat.*repmat(1./c_vec,size(ES_mat,1),1)],'-append','delimiter','\t','precision','%e');
