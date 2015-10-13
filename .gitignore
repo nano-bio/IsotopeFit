@@ -10,6 +10,7 @@ DERIVESTsuite/
 FMINSEARCHBND/
 EXTERNAL FUNCTIONS/
 *Thumbs.db
+baseline.txt
 IsotopeDistribution/molecules/
 IsotopeDistribution/generate_makros/*
 !IsotopeDistribution/generate_makros/example.m
