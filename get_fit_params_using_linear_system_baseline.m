@@ -15,7 +15,9 @@ end
 
 M(:,end)=ones(size(massaxis'))/(massaxis(end)-massaxis(1)); %the baseline
 
-[A,~,residual] = lsqnonneg(M,double(spec_measured)');
+%[A,~,residual] = lsqnonneg(M,double(spec_measured)');
+A=M\double(spec_measured)';
+
 
 paramsout=parameters;
 paramsout(1:end-2)=A(1:end-1)';

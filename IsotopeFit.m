@@ -2224,6 +2224,29 @@ function menusavecal(hObject,~)
                     n_writes=str2double(answer{2});
             end
             
+            choices = questdlg('Do you want to use the sum spectrum as reference measurement?', 'Difference spectrum', 'Yes', 'No', 'No');
+            switch choices
+                case 'Yes'
+                    diff_evaluation=true;
+                    %window size: we use a smoothed signal to do a
+                    %"pointwise normalization" for every data point during
+                    %the fitting process
+                    prompt = {'Window size'};
+                    dlg_title = 'Pointwise normalization';
+                    num_lines = 1;
+                    def = {'1000'};
+                    answer = inputdlg(prompt,dlg_title,num_lines,def);
+                    
+                    window_size=str2double(answer{1});
+                    
+                    tic
+                    sumspec=peakdatatemp(:,2);
+                    normalization_ref=smooth(peakdatatemp(:,2),window_size);
+                    toc
+                case 'No'
+                    diff_evaluation=false;
+            end
+            
             energy_axis=linspace(x_start,x_end,n_bufs*n_writes);
                         
             ES_mat=zeros(n_bufs*n_writes,length(index));
@@ -2239,6 +2262,10 @@ function menusavecal(hObject,~)
                 w/n_writes
                 for b=1:n_bufs
                     peakdatatemp(:,2)=readh5buffer(fn, w, b)';
+                    
+                    if diff_evaluation
+                        peakdatatemp(:,2)=peakdatatemp(:,2)-smooth(peakdatatemp(:,2),window_size)./normalization_ref.*sumspec;
+                    end
                     
                     % background correction
 %                     bgc_temp.bgy=handles.bgcorrectiondata.bgy*sum(peakdatatemp(:,2))/tot_counts; %adapt bg counts to the total counts for this write
