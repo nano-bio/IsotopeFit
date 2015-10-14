@@ -139,12 +139,9 @@ function handles = driftcorrection(handles, listindices)
     
 
     % how big is our data?
-    fileinfo = h5info(fn, '/FullSpectra/TofData');
-    sizes = fileinfo.Dataspace.Size;
-
-    bufs = sizes(3);
-    writes = sizes(4);
-    mslength = sizes(1);
+    bufs = getnumberofinstancesinh5(fn, 'buffers');
+    writes = getnumberofinstancesinh5(fn, 'writes');
+    mslength = getnumberofinstancesinh5(fn, 'timebins');
     
     handles.calibration.dc.shifts = zeros(nod, writes-1);
     handles.calibration.dc.shiftweights = zeros(nod, writes-1);
