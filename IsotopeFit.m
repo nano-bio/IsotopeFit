@@ -2231,7 +2231,7 @@ function menusavecal(hObject,~)
                     %window size: we use a smoothed signal to do a
                     %"pointwise normalization" for every data point during
                     %the fitting process
-                    prompt = {'Window size'};
+                    prompt = {'Window size (use inf for all datapoints)'};
                     dlg_title = 'Pointwise normalization';
                     num_lines = 1;
                     def = {'1000'};
@@ -2241,7 +2241,11 @@ function menusavecal(hObject,~)
                     
                     tic
                     sumspec=peakdatatemp(:,2);
-                    normalization_ref=smooth(peakdatatemp(:,2),window_size);
+                    if window_size==inf
+                        normalization_ref=mean(peakdatatemp(:,2));
+                    else
+                        normalization_ref=smooth(peakdatatemp(:,2),window_size);
+                    end
                     toc
                 case 'No'
                     diff_evaluation=false;
@@ -2264,7 +2268,14 @@ function menusavecal(hObject,~)
                     peakdatatemp(:,2)=readh5buffer(fn, w, b)';
                     
                     if diff_evaluation
-                        peakdatatemp(:,2)=peakdatatemp(:,2)-smooth(peakdatatemp(:,2),window_size)./normalization_ref.*sumspec;
+                        if window_size==inf
+                            peakdatatemp(:,2)=peakdatatemp(:,2)-mean(peakdatatemp(:,2))/normalization_ref*sumspec;
+                        else
+                            peakdatatemp(:,2)=peakdatatemp(:,2)-smooth(peakdatatemp(:,2),window_size)./normalization_ref.*sumspec;
+                        end
+                        if (w==1)&(b==1)                        
+                            dlmwrite('buf1write1.txt',peakdatatemp,'delimiter','\t','precision','%e');
+                        end
                     end
                     
                     % background correction
