@@ -265,6 +265,8 @@ mdata = uimenu('Label','Data');
                mdataes = uimenu(mexport,'Label','Energy scan','Enable','on','Separator', 'on');
                     mdataes_all = uimenu(mdataes,'Label','All molecules','Callback',@export_energy_scan,'Enable','on');
                     mdataes_sel = uimenu(mdataes,'Label','Selected molecules','Callback',@export_energy_scan,'Enable','on');
+                    mdataes_diff = uimenu(mdataes,'Label','Difference scan (selected molecules)','Callback',@export_difference_scan,'Enable','on');
+                    
                     
        mconvcore = uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
                mconvcore_cv=uimenu(mconvcore,'Label','Current view...','Callback',@menuconvcore,'Enable','on');
@@ -2114,19 +2116,10 @@ function menusavecal(hObject,~)
 %         close(h);
 %     end
 
-    function export_energy_scan(hObject,eventdata)
-        handles=guidata(hObject);
+    function out=geth5fn()
+        handles=guidata(Parent);
         
-        % ================== Baseline File
-        % we write the fitted baseline to a file "baseline.txt"
-        % in the function get_fit_params_using_linear_system_baseline
-        % check if an old version of this file exists and delete it
-        if exist('baseline.txt','file')
-            delete baseline.txt
-        end
-        
-        % ====================================== Check for h5 file
-        % load file
+        out='';
         if isfield(handles.fileinfo,'h5completepath')
             if exist(handles.fileinfo.h5completepath,'file')
                 fn = handles.fileinfo.h5completepath;
@@ -2138,7 +2131,7 @@ function menusavecal(hObject,~)
                         if ~(isequal(filename,0) || isequal(pathname,0))                        
                             fn = fullfile(pathname,filename);
                             handles.fileinfo.h5completepath = fn;
-                            guidata(hObject,handles);
+                            guidata(Parent,handles);
                         else
                             return
                         end
@@ -2162,6 +2155,27 @@ function menusavecal(hObject,~)
                         return
             end
         end
+        out=fn;
+    end
+        
+
+    function export_energy_scan(hObject,eventdata)
+        handles=guidata(hObject);
+        
+        % ================== Baseline File
+        % we write the fitted baseline to a file "baseline.txt"
+        % in the function get_fit_params_using_linear_system_baseline
+        % check if an old version of this file exists and delete it
+        if exist('baseline.txt','file')
+            delete baseline.txt
+        end
+        
+        % ====================================== Check for h5 file
+        % load file
+        fn=geth5fn();
+        if isempty(fn)
+            return
+        end;
         
         % =========================== Save energies to ASCII file
         
@@ -2320,6 +2334,121 @@ function menusavecal(hObject,~)
             
         end %save file dialog
     end
+
+function export_difference_scan(hObject,eventdata)
+        handles=guidata(hObject);
+        
+                
+        % ====================================== Check for h5 file
+        % load file
+        fn=geth5fn();
+        if isempty(fn)
+            return
+        end;
+        
+        % =========================== Save energies to ASCII file
+        
+        filenamesuggestion = [handles.fileinfo.pathname handles.fileinfo.filename(1:end-4) '_energy_scans.txt'];
+        
+        [filename, pathname] = uiputfile( ...
+            {'*.*','ASCII data (*.*)'},...
+            'Export data',...
+            filenamesuggestion);
+        
+        if ~(isequal(filename,0) || isequal(pathname,0))
+                 
+            n_writes=getnumberofinstancesinh5(fn,'writes');
+            n_bufs=getnumberofinstancesinh5(fn,'buffers');
+            
+            %ask settings
+            prompt = {'Start value for calibration','End value for calibration'};
+            dlg_title = 'Axis calibration';
+            num_lines = 1;
+            def = {'0','100'};
+            answer = inputdlg(prompt,dlg_title,num_lines,def);
+            
+            x_start=str2double(answer{1});
+            x_end=str2double(answer{2});
+            
+            choices = questdlg('Do you want to change the number of evaluation buffers/writes? (If not sure, press No)', 'Change number of data points', 'Yes', 'No', 'No');
+            switch choices
+                case 'Yes'
+                    prompt = {'Buffers','Writes'};
+                    dlg_title = 'Number of data points';
+                    num_lines = 1;
+                    def = {num2str(n_bufs),num2str(n_writes)};
+                    answer = inputdlg(prompt,dlg_title,num_lines,def);
+                    n_bufs=str2double(answer{1});
+                    n_writes=str2double(answer{2});
+            end
+                        
+            sum_spec=handles.peakdata(:,2)';
+                        
+            energy_axis=linspace(x_start,x_end,n_bufs*n_writes);
+                    
+            index=getrealselectedmolecules();
+            
+            ES_mat=zeros(n_bufs*n_writes,length(index));
+            
+            for w=1:n_writes
+                
+                for b=1:n_bufs
+                    single_spec=readh5buffer(fn, w, b);
+                    ((w-1)*n_writes+b)/(n_bufs*n_writes)
+                    for i=1:length(index)
+                        ind=findmassrange2(handles.peakdata(:,1),handles.molecules(index(i)),resolutionbycalibration(handles.calibration,handles.molecules(index(i)).com),0,20);
+                                                
+                        y1=sum_spec(ind);
+                        y2=single_spec(ind);
+                        
+                        small_ind=findmassrange2(handles.peakdata(ind,1)',handles.molecules(index(i)),resolutionbycalibration(handles.calibration,handles.molecules(index(i)).com),0,2);
+                        
+                        
+                        %drift correction
+                        crosscorr=ifftshift(ifft(fft(y1(end:-1:1)).*fft(y2)));
+                        
+                        [~,maxind]=max(crosscorr);
+                        range=maxind-5:0.1:maxind+5;
+                        
+                        p=polyfit(range,interp1(1:length(crosscorr),crosscorr,range,'spline'),2);
+                        
+                        shift=(-p(2)/(2*p(1)))-round((length(y1))/2);
+                        
+                        %correct drift
+                        y2=interp1(1:length(y2),y2,(1:length(y2))+shift,'spline','extrap');
+                        
+                        
+                        %difference spectrum                        
+                        a=y1(setdiff(1:length(y1),small_ind))'\y2(setdiff(1:length(y1),small_ind))';
+                        y_diff=y2-a*y1;
+ 
+                        
+                       ES_mat((w-1)*n_bufs+b,i)=sum(y_diff(small_ind));
+                    end
+                end
+            end
+            
+
+            %write ASCII file
+            %write title line
+            fid=fopen(fullfile(pathname,filename),'w');
+            fprintf(fid,'Energy\t');
+
+            for i=index
+                fprintf(fid,'%s\t',handles.molecules(i).name);
+            end
+            
+            fprintf(fid,'\n');
+            fclose(fid);
+                     
+            %append data
+            fprintf('dlmwrite. please wait...');
+            dlmwrite(fullfile(pathname,filename),[energy_axis',ES_mat],'-append','delimiter','\t','precision','%e');
+            fprintf(' done.\n');
+            
+        end %save file dialog
+    end
+
 
     function fitbuttonclick(hObject,eventdata)
         handles=guidata(hObject);
