@@ -481,25 +481,48 @@ function handles = driftcorrection(handles, listindices)
         corr_sum_spectrum = zeros('like', sumdata(:, 1));
         
         % loop through writes
-        for i = 1:writes-1
-            % write the polynom over the timeaxis (as opposed to mass axis
-            % used in the plots)
-            poly = polyval(handles.calibration.dc.shiftpolynomstime{i}, timeaxis);
-            stepfunc = round(poly);
-            
-            % this is tricky: we set the first n datapoints to 0, where n
-            % is the function value of the correction function in position
-            % 1. this prevents indicides out of bound. as long as the
-            % fitted function is continuous this works. same procedure for
-            % the end.
-            stepfunc(1:abs(stepfunc(1))) = 0;
-            stepfunc(size(stepfunc, 2)-stepfunc(end):size(stepfunc, 2)) = 0;
-            
-            % now sum them up.
-            corr_sum_spectrum = corr_sum_spectrum + sumdata(timeaxis+stepfunc, i);
-            
-            % update waitbar
-            waitbar(i/(writes-1), h);
+        if use_buffers == 1
+            for i = 1:bufs-1
+                % write the polynom over the timeaxis (as opposed to mass axis
+                % used in the plots)
+                poly = polyval(handles.calibration.dc.shiftpolynomstime{i}, timeaxis);
+                stepfunc = round(poly);
+
+                % this is tricky: we set the first n datapoints to 0, where n
+                % is the function value of the correction function in position
+                % 1. this prevents indicides out of bound. as long as the
+                % fitted function is continuous this works. same procedure for
+                % the end.
+                stepfunc(1:abs(stepfunc(1))) = 0;
+                stepfunc(size(stepfunc, 2)-stepfunc(end):size(stepfunc, 2)) = 0;
+
+                % now sum them up.
+                corr_sum_spectrum = corr_sum_spectrum + sumdata(timeaxis+stepfunc, i);
+
+                % update waitbar
+                waitbar(i/(bufs-1), h);
+            end
+        else
+            for i = 1:writes-1
+                % write the polynom over the timeaxis (as opposed to mass axis
+                % used in the plots)
+                poly = polyval(handles.calibration.dc.shiftpolynomstime{i}, timeaxis);
+                stepfunc = round(poly);
+
+                % this is tricky: we set the first n datapoints to 0, where n
+                % is the function value of the correction function in position
+                % 1. this prevents indicides out of bound. as long as the
+                % fitted function is continuous this works. same procedure for
+                % the end.
+                stepfunc(1:abs(stepfunc(1))) = 0;
+                stepfunc(size(stepfunc, 2)-stepfunc(end):size(stepfunc, 2)) = 0;
+
+                % now sum them up.
+                corr_sum_spectrum = corr_sum_spectrum + sumdata(timeaxis+stepfunc, i);
+
+                % update waitbar
+                waitbar(i/(writes-1), h);
+            end
         end
         
         % close waitbar
