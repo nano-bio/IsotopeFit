@@ -86,15 +86,16 @@ function handles = driftcorrection(handles, listindices)
     end
       
     %ask settings
-    prompt = {'Start mass (avoid Schaltpeak):','End mass','Number of divisions:'};
+    prompt = {'Start mass (avoid Schaltpeak):','End mass','Number of divisions:','Write 1 if this is a spectroscopy file (1 write, many buffers)'};
     dlg_title = 'Drift correction parameters';
     num_lines = 1;
-    def = {'5','inf','4'};
+    def = {'5','inf','4', '0'};
     answer = inputdlg(prompt,dlg_title,num_lines,def);
     
     startmass=str2double(answer{1}); %datapoints below this value will be ignored
     endmass=str2double(answer{2});
     nod=str2double(answer{3});
+    use_buffers = str2double(answer{4})
     
     if endmass>handles.raw_peakdata(end,1)
         endmass=handles.raw_peakdata(end,1);
@@ -106,15 +107,6 @@ function handles = driftcorrection(handles, listindices)
     % search for largest peak in each division to find center-indices for
     % driftcorrection
     for i=1:nod
-%         [~, handles.calibration.dc.centerindex(i)]=...
-%             max(handles.raw_peakdata(round(startindex+searchrange+(endindex-startindex)/nod*(i-1)):...
-%                                  round(startindex-searchrange+(endindex-startindex)/nod*(i)),2));
-%        handles.calibration.dc.centerindex(i)=handles.calibration.dc.centerindex(i)+...
-%            round(startindex+searchrange+(endindex-startindex)/nod*(i-1));
-%            
-%        handles.calibration.dc.minindex(i)=handles.calibration.dc.centerindex(i)-searchrange;
-%        handles.calibration.dc.maxindex(i)=handles.calibration.dc.centerindex(i)+searchrange;
-
        handles.calibration.dc.minindex(i)=round(startindex+(endindex-startindex)/nod*(i-1));
        handles.calibration.dc.maxindex(i)=round(startindex+(endindex-startindex)/nod*i);
        handles.calibration.dc.centerindex(i)=round((handles.calibration.dc.minindex(i)+handles.calibration.dc.maxindex(i))/2);
@@ -143,22 +135,43 @@ function handles = driftcorrection(handles, listindices)
     writes = getnumberofinstancesinh5(fn, 'writes');
     mslength = getnumberofinstancesinh5(fn, 'timebins');
     
-    handles.calibration.dc.shifts = zeros(nod, writes-1);
-    handles.calibration.dc.shiftweights = zeros(nod, writes-1);
+    if use_buffers == 1
+        handles.calibration.dc.shifts = zeros(nod, bufs-1);
+        handles.calibration.dc.shiftweights = zeros(nod, bufs-1);
+    else
+        handles.calibration.dc.shifts = zeros(nod, writes-1);
+        handles.calibration.dc.shiftweights = zeros(nod, writes-1);
+    end
      
     % sum all buffers in each write
-    sumdata = sum_writes(writes, mslength);
+    if use_buffers == 1
+        sumdata = sum_bufs(bufs, mslength);
+    else
+        sumdata = sum_writes(writes, mslength);
+    end
     
     % now that we know how many writes we have, we can create the slider
-    timeslider = uicontrol(Parent,'style','slider',...
-          'Callback',@slidetimeaxes,...
-          'Units','normalized',...
-          'TooltipString','Slide through the writes',...
-          'Max',writes-1,...
-          'Min',1,...
-          'Value',1,...
-          'SliderStep',[1/(writes-1) 1/(writes-1)],...
-          'Position',gridpos(64,30,21,23,4,30,0.01,0.01));
+    if use_buffers == 1
+        timeslider = uicontrol(Parent,'style','slider',...
+              'Callback',@slidetimeaxes,...
+              'Units','normalized',...
+              'TooltipString','Slide through the writes',...
+              'Max',bufs-1,...
+              'Min',1,...
+              'Value',1,...
+              'SliderStep',[1/(bufs-1) 1/(bufs-1)],...
+              'Position',gridpos(64,30,21,23,4,30,0.01,0.01));
+    else
+        timeslider = uicontrol(Parent,'style','slider',...
+              'Callback',@slidetimeaxes,...
+              'Units','normalized',...
+              'TooltipString','Slide through the writes',...
+              'Max',writes-1,...
+              'Min',1,...
+              'Value',1,...
+              'SliderStep',[1/(writes-1) 1/(writes-1)],...
+              'Position',gridpos(64,30,21,23,4,30,0.01,0.01));
+    end
 
     % let's plot each peak
     for i=1:nod
@@ -167,15 +180,21 @@ function handles = driftcorrection(handles, listindices)
     end
     
     % calculate the shifts for each molecule
-    for i=1:nod
-        calcmolshift(i);
+    if use_buffers == 1
+        for i=1:nod
+            calcmolshiftbuffers(i);
+        end
+    else
+        for i=1:nod
+            calcmolshift(i);
+        end
     end
     
     % calculate cumulative sum of shifts
     handles.calibration.dc.shifts=cumsum(handles.calibration.dc.shifts,2);
     
     % now we fit a polynomial over the massrange for each write
-    fitmolshifts;
+    fitmolshifts(use_buffers);
     
     % hit slidetimeaxis, so we plot everything
     slidetimeaxes('', '');
@@ -243,6 +262,22 @@ function handles = driftcorrection(handles, listindices)
             
             % sum up along the third dimension (bufs)
             sums(:, i) = sum(data, 3);
+        end
+        close(h)
+        return
+    end
+
+    function sums = sum_bufs(bufs, mslength)
+        % create an empty cell
+        sums = zeros(mslength, bufs);
+        h = waitbar(0, 'Reading buffers...');
+        
+        for i=1:bufs
+            h = waitbar(i/bufs, h);
+            % just read all the bufs in that write, because more would be
+            % too memory consuming
+            sums(:, i) = h5read(fn, '/FullSpectra/TofData', [1 1 i 1], [mslength 1 1 1]);
+            
         end
         close(h)
         return
@@ -323,7 +358,71 @@ function handles = driftcorrection(handles, listindices)
         hold(dcaxes{molindex}, 'off')
     end
 
-    function fitmolshifts()
+    function calcmolshiftbuffers(molindex)
+        % how broad is our molecule?
+        molwidth = handles.calibration.dc.maxindex(molindex) - handles.calibration.dc.minindex(molindex);
+        
+        % initialize waitbar
+        h = waitbar(0, ['Computing shift for each buffer for ', sprintf('Div %i',molindex), '...']);
+        
+        % go through every write
+        for w=1:bufs-1
+            % we cross correlate the signal with the signal of the next write
+            s2=sumdata(handles.calibration.dc.minindex(molindex):handles.calibration.dc.maxindex(molindex), w+1);
+            s1=sumdata(handles.calibration.dc.minindex(molindex):handles.calibration.dc.maxindex(molindex), w);
+            values=ifftshift(ifft(fft(s1(end:-1:1)).*fft(s2)));
+            values=values(end:-1:1);
+
+            % the maximum cross correlation is the shift
+            temp=length(values);
+            
+            shiftsearch=10;
+            
+            [handles.calibration.dc.shiftweights(molindex, w), ind] = max(values(round(temp/2-shiftsearch):round(temp/2+shiftsearch)));
+            ind=ind+round(temp/2-shiftsearch)-1;
+            handles.calibration.dc.shifts(molindex, w) = ind - ceil(molwidth/2)-1;
+            
+%             p=polyfit(round(temp/2-shiftsearch):round(temp/2+shiftsearch),values(round(temp/2-shiftsearch):round(temp/2+shiftsearch))',2);
+%             handles.calibration.dc.shifts(molindex, w)=-p(2)/(2*p(1));
+%             
+            %handles.calibration.dc.shiftweights(molindex, w) = sum(s1); %we use the max height of the signal as weighting factor for fitting
+            % update waitbar
+            h = waitbar(w/(bufs-1), h);
+        end
+        
+        % we don't need the waitbar any more
+        close(h)
+        
+        shiftsum=cumsum(handles.calibration.dc.shifts(molindex, :));
+        
+        % we plot the shift over time (=writes) in the corresponding axis
+        plot(dcaxes{molindex}, shiftsum, 'ro');
+
+        % we indicate the current displayed write
+        current_write = str2double(get(writedisplay, 'String'));
+        hold(dcaxes{molindex}, 'on')
+        handles.writeindication{molindex} = stem(dcaxes{molindex}, current_write,shiftsum(current_write),'g');
+        hold(dcaxes{molindex}, 'off')
+        
+        % as eye-candy, we fit the resulting shifts with a polynomial.
+        % first of all we need a linear space with the steps of the writes:
+        writeaxis = linspace(1, bufs - 1, bufs - 1);
+        
+        % fit witha polynomial of 2nd order
+        p = polyfit(writeaxis, shiftsum, 2);
+        
+        % for plotting the polynomial we need more points than just writes
+        % (we use 100, the default of linspace)
+        fitaxis = linspace(1, bufs - 1);
+        out = polyval(p, fitaxis);
+        
+        % now we are ready to plot
+        hold(dcaxes{molindex}, 'on')
+        plot(dcaxes{molindex},fitaxis,out,'k--');
+        hold(dcaxes{molindex}, 'off')
+    end
+
+    function fitmolshifts(use_buffers)
         % this fits polynoms over the massrange for each write, using the
         % calculated shifts. additionally it does the same in the time
         % domain (because that is what is actually corrected
@@ -341,9 +440,16 @@ function handles = driftcorrection(handles, listindices)
         end
 
         % fit a 2nd order polynom to over the massrange for each write
-        for w=1:writes-1
-            handles.calibration.dc.shiftpolynoms{w} = wpolyfit2(handles.calibration.dc.coms, handles.calibration.dc.shifts(:, w)', handles.calibration.dc.shiftweights(:, w)');
-            handles.calibration.dc.shiftpolynomstime{w} = wpolyfit2(handles.ppt, handles.calibration.dc.shifts(:, w)', handles.calibration.dc.shiftweights(:, w)');
+        if use_buffers == 1
+            for w=1:bufs-1
+                handles.calibration.dc.shiftpolynoms{w} = wpolyfit2(handles.calibration.dc.coms, handles.calibration.dc.shifts(:, w)', handles.calibration.dc.shiftweights(:, w)');
+                handles.calibration.dc.shiftpolynomstime{w} = wpolyfit2(handles.ppt, handles.calibration.dc.shifts(:, w)', handles.calibration.dc.shiftweights(:, w)');
+            end
+        else
+            for w=1:writes-1
+                handles.calibration.dc.shiftpolynoms{w} = wpolyfit2(handles.calibration.dc.coms, handles.calibration.dc.shifts(:, w)', handles.calibration.dc.shiftweights(:, w)');
+                handles.calibration.dc.shiftpolynomstime{w} = wpolyfit2(handles.ppt, handles.calibration.dc.shifts(:, w)', handles.calibration.dc.shiftweights(:, w)');
+            end
         end
     end
     
@@ -362,7 +468,7 @@ function handles = driftcorrection(handles, listindices)
         %out = [fun.p1 fun.p2]
     end
     
-    function correctshift(hObject, eventdata)
+    function correctshift(~, ~)
         % start up a waitbar
         h = waitbar(0, 'Correcting shift...');
         
