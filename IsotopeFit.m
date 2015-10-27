@@ -2388,42 +2388,55 @@ function export_difference_scan(hObject,eventdata)
                     
             index=getrealselectedmolecules();
             
-            ES_mat=zeros(n_bufs*n_writes,length(index));
+            ES_mat=zeros(n_bufs*n_writes,length(index)*2);
             
+            nvals=20;
             for w=1:n_writes
                 
                 for b=1:n_bufs
                     single_spec=readh5buffer(fn, w, b);
                     ((w-1)*n_writes+b)/(n_bufs*n_writes)
                     for i=1:length(index)
-                        ind=findmassrange2(handles.peakdata(:,1),handles.molecules(index(i)),resolutionbycalibration(handles.calibration,handles.molecules(index(i)).com),0,20);
-                                                
+                        R=resolutionbycalibration(handles.calibration,handles.molecules(index(i)).com);
+                        ind=findmassrange2(handles.peakdata(:,1),handles.molecules(index(i)),R,0,40);
+                                                  
                         y1=sum_spec(ind);
                         y2=single_spec(ind);
                         
-                        small_ind=findmassrange2(handles.peakdata(ind,1)',handles.molecules(index(i)),resolutionbycalibration(handles.calibration,handles.molecules(index(i)).com),0,2);
+                        small_ind=findmassrange2(handles.peakdata(ind,1)',handles.molecules(index(i)),R,0,1);
                         
                         
                         %drift correction
-                        crosscorr=ifftshift(ifft(fft(y1(end:-1:1)).*fft(y2)));
+                        %crosscorr=ifftshift(ifft(fft(y1(end:-1:1)).*fft(y2)));
+                        %plot(crosscorr)
                         
-                        [~,maxind]=max(crosscorr);
-                        range=maxind-5:0.1:maxind+5;
+                        cc=crosscorr(y1,y2,nvals);
+                        [~,maxind]=max(cc);
+                                                
+                        %range=maxind-10:maxind+10;
                         
-                        p=polyfit(range,interp1(1:length(crosscorr),crosscorr,range,'spline'),2);
+                        %p=polyfit(range,crosscorr(range),2);
+                        %shift=(-p(2)/(2*p(1)))-round((length(y1))/2);
                         
-                        shift=(-p(2)/(2*p(1)))-round((length(y1))/2);
+                        p=polyfit(1:(2*nvals+1),cc,2);
+                        shift=(-p(2)/(2*p(1)))-1-nvals;
+                        
+                        %shift=maxind-round((length(y1))/2);
+                        %shift=maxind-21;
                         
                         %correct drift
                         y2=interp1(1:length(y2),y2,(1:length(y2))+shift,'spline','extrap');
                         
                         
                         %difference spectrum                        
-                        a=y1(setdiff(1:length(y1),small_ind))'\y2(setdiff(1:length(y1),small_ind))';
-                        y_diff=y2-a*y1;
+                        %a=y1(setdiff(1:length(y1),small_ind))'\y2(setdiff(1:length(y1),small_ind))';
+                        a=y2'\y1';
+                        y_diff=a*y2-y1;
  
                         
                        ES_mat((w-1)*n_bufs+b,i)=sum(y_diff(small_ind));
+                       %ES_mat((w-1)*n_bufs+b,i)=sum(y2(small_ind));
+                       ES_mat((w-1)*n_bufs+b,length(index)+i)=shift;
                     end
                 end
             end
@@ -2436,6 +2449,10 @@ function export_difference_scan(hObject,eventdata)
 
             for i=index
                 fprintf(fid,'%s\t',handles.molecules(i).name);
+            end
+            
+            for i=1:length(index)
+                fprintf(fid,'shift_%i\t',i);
             end
             
             fprintf(fid,'\n');
