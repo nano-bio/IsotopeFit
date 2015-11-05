@@ -265,7 +265,7 @@ mdata = uimenu('Label','Data');
                mdataes = uimenu(mexport,'Label','Energy scan','Enable','on','Separator', 'on');
                     mdataes_all = uimenu(mdataes,'Label','All molecules','Callback',@export_energy_scan,'Enable','on');
                     mdataes_sel = uimenu(mdataes,'Label','Selected molecules','Callback',@export_energy_scan,'Enable','on');
-                    mdataes_diff = uimenu(mdataes,'Label','Difference scan (selected molecules)','Callback',@export_difference_scan,'Enable','on');
+                    mdataes_diff = uimenu(mdataes,'Label','Traces (selected molecules)','Callback',@export_difference_scan,'Enable','on');
                     
                     
        mconvcore = uimenu(mdata,'Label','Show convolution core (experimental!)','Enable','on');
@@ -2237,34 +2237,7 @@ function menusavecal(hObject,~)
                     n_bufs=str2double(answer{1});
                     n_writes=str2double(answer{2});
             end
-            
-            choices = questdlg('Do you want to use the sum spectrum as reference measurement?', 'Difference spectrum', 'Yes', 'No', 'No');
-            switch choices
-                case 'Yes'
-                    diff_evaluation=true;
-                    %window size: we use a smoothed signal to do a
-                    %"pointwise normalization" for every data point during
-                    %the fitting process
-                    prompt = {'Window size (use inf for all datapoints)'};
-                    dlg_title = 'Pointwise normalization';
-                    num_lines = 1;
-                    def = {'1000'};
-                    answer = inputdlg(prompt,dlg_title,num_lines,def);
-                    
-                    window_size=str2double(answer{1});
-                    
-                    tic
-                    sumspec=peakdatatemp(:,2);
-                    if window_size==inf
-                        normalization_ref=mean(peakdatatemp(:,2));
-                    else
-                        normalization_ref=smooth(peakdatatemp(:,2),window_size);
-                    end
-                    toc
-                case 'No'
-                    diff_evaluation=false;
-            end
-            
+                                    
             energy_axis=linspace(x_start,x_end,n_bufs*n_writes);
                         
             ES_mat=zeros(n_bufs*n_writes,length(index));
@@ -2281,30 +2254,21 @@ function menusavecal(hObject,~)
                 for b=1:n_bufs
                     peakdatatemp(:,2)=readh5buffer(fn, w, b)';
                     
-                    if diff_evaluation
-                        if window_size==inf
-                            peakdatatemp(:,2)=peakdatatemp(:,2)-mean(peakdatatemp(:,2))/normalization_ref*sumspec;
-                        else
-                            peakdatatemp(:,2)=peakdatatemp(:,2)-smooth(peakdatatemp(:,2),window_size)./normalization_ref.*sumspec;
-                        end
-                        if (w==1)&(b==1)                        
-                            dlmwrite('buf1write1.txt',peakdatatemp,'delimiter','\t','precision','%e');
-                        end
-                    end
-                    
                     % background correction
 %                     bgc_temp.bgy=handles.bgcorrectiondata.bgy*sum(peakdatatemp(:,2))/tot_counts; %adapt bg counts to the total counts for this write
 %                     peakdatatemp=subtractbg(peakdatatemp,bgc_temp);
                     
                     % fit the isotope corrected value for each buffer:
+                    
                     moltemp(allinvolved)=fitwithcalibration(handles.molecules(allinvolved),peakdatatemp,calibrationtemp,1,handles.settings.searchrange,deltam,deltar,'linear_system_baseline');
                     ES_mat((w-1)*n_bufs+b,:)=[moltemp(index).area]';
                     
-%                   You can also simply count the events within the
-%                   massrange of the molecules. (not isotope corrected!):
-%                       for i=1:length(index)
-%                          ES_mat((w-1)*n_bufs+b,i)=sum(peakdatatemp(handles.molecules(index(i)).minind:handles.molecules(index(i)).maxind,2));
-%                       end
+%                       You can also simply count the events within the
+%                       massrange of the molecules. (not isotope corrected!):
+%                         for i=1:length(index)
+%                            ES_mat((w-1)*n_bufs+b,i)=sum(peakdatatemp(handles.molecules(index(i)).minind:handles.molecules(index(i)).maxind,2));
+%                         end
+                    
                 end
             end
             
@@ -2382,6 +2346,14 @@ function export_difference_scan(hObject,eventdata)
                     n_writes=str2double(answer{2});
             end
                         
+            choices = questdlg('Do you want to use the sum spectrum as reference (export differences)?', 'Export method', 'Yes', 'No', 'No');
+            switch choices
+                case 'Yes'
+                    subtract=true;
+                case 'No'
+                    subtract=false;
+            end
+            
             sum_spec=handles.peakdata(:,2)';
                         
             energy_axis=linspace(x_start,x_end,n_bufs*n_writes);
@@ -2390,7 +2362,7 @@ function export_difference_scan(hObject,eventdata)
             
             ES_mat=zeros(n_bufs*n_writes,length(index)*2);
             
-            nvals=20;
+            nvals=10;
             for w=1:n_writes
                 
                 for b=1:n_bufs
@@ -2403,36 +2375,40 @@ function export_difference_scan(hObject,eventdata)
                         y1=sum_spec(ind);
                         y2=single_spec(ind);
                         
-                        small_ind=findmassrange2(handles.peakdata(ind,1)',handles.molecules(index(i)),R,0,1);
+                        small_ind=findmassrange2(handles.peakdata(ind,1)',handles.molecules(index(i)),R,0,2);
                         
                         
                         %drift correction
                         %crosscorr=ifftshift(ifft(fft(y1(end:-1:1)).*fft(y2)));
                         %plot(crosscorr)
                         
-                        cc=crosscorr(y1,y2,nvals);
-                        [~,maxind]=max(cc);
+                        %cc=crosscorr(y1,y2,nvals);
+                        %[~,maxind]=max(cc);
                                                 
                         %range=maxind-10:maxind+10;
                         
                         %p=polyfit(range,crosscorr(range),2);
                         %shift=(-p(2)/(2*p(1)))-round((length(y1))/2);
+                        shift=0;
                         
-                        p=polyfit(1:(2*nvals+1),cc,2);
-                        shift=(-p(2)/(2*p(1)))-1-nvals;
+                        %p=polyfit(1:(2*nvals+1),cc,2);
+                        %shift=(-p(2)/(2*p(1)))-1-nvals;
                         
                         %shift=maxind-round((length(y1))/2);
                         %shift=maxind-21;
                         
                         %correct drift
-                        y2=interp1(1:length(y2),y2,(1:length(y2))+shift,'spline','extrap');
+                        %y2=interp1(1:length(y2),y2,(1:length(y2))-shift,'spline','extrap');
                         
                         
                         %difference spectrum                        
                         %a=y1(setdiff(1:length(y1),small_ind))'\y2(setdiff(1:length(y1),small_ind))';
                         a=y2'\y1';
-                        y_diff=a*y2-y1;
- 
+                        if subtract
+                            y_diff=a*y2-y1;
+                        else
+                            y_diff=a*y2;
+                        end
                         
                        ES_mat((w-1)*n_bufs+b,i)=sum(y_diff(small_ind));
                        %ES_mat((w-1)*n_bufs+b,i)=sum(y2(small_ind));
