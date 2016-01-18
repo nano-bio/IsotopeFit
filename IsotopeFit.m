@@ -1525,10 +1525,23 @@ function menusavecal(hObject,~)
             signal = h5read(fullfile(pathname,filename),'/FullSpectra/SumSpectrum');
         else
             signal = h5read(fullfile(pathname,filename),'/SPECdata/AverageSpec');
-            % this is a bit ugly, but ionitof files do not seem to contain
-            % any information on calibration. therefore a manual guess...
+            % Gernot Hanel:
+            % Die Caldata beziehen sich auf die massenkalibrierung. Wenn 
+            % das geraet waehrend der aufnahme die massen richtig calibriert 
+            % haben dann berechnet sich daraus die masse wie folgt.
+            % 
+            % Mass=((Tbin-b)/a)^2
+            % 
+            % Diese zahlen kann man waehrend der Messung aenderen wenn mann 
+            % die einer bestimmten masse zugeordneten timebins veraendert. 
+            % Ist in der Software nbei kalibrierung zu sehen. Dirt stehen 
+            % auch die a und b werte welche sich im hfd5 file wiederfinden.
+
+            cal = h5read(fullfile(pathname,filename), '/CALdata/Spectrum');
             mass = (1:size(signal,1))';
-            mass = 0.18773 + mass.*1.1033E-4 + mass.^2.*8.1584E-8;
+            a = cal(1,1);
+            b = cal(2,1);
+            mass = ((mass-b)/a).^2;
         end
         
 
