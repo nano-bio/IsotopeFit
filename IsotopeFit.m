@@ -1536,12 +1536,47 @@ function menusavecal(hObject,~)
             % die einer bestimmten masse zugeordneten timebins veraendert. 
             % Ist in der Software nbei kalibrierung zu sehen. Dirt stehen 
             % auch die a und b werte welche sich im hfd5 file wiederfinden.
-
+            timebins = (1:size(signal,1))';
+            
+            % lets check, whether the same amount of spectra and calibraton
+            % values are given. if so, calibrate each individually and
+            % calculate a new average spectrum
             cal = h5read(fullfile(pathname,filename), '/CALdata/Spectrum');
-            mass = (1:size(signal,1))';
-            a = cal(1,1);
-            b = cal(2,1);
-            mass = ((mass-b)/a).^2;
+            spectra = h5read(fullfile(pathname,filename), '/SPECdata/Intensities');
+            
+            noc = size(cal,2);
+            nos = size(spectra,2);
+            
+            if noc==nos
+                newsignal = zeros(size(spectra,1),1);
+                for i=1:nos
+                    a = cal(1,i);
+                    b = cal(2,i);
+                    currentdata = spectra(:,i);
+                    currentmass = ((timebins-b)/a).^2;
+                    if i==1
+                        % first one - we use this mass axis
+                        mass = currentmass;
+                        newsignal = currentdata;
+                        firsta = a;
+                        firstb = b;
+                    else
+                        % we interpolate the new given data set on the mass
+                        % axis of the first spectrum - but only if they
+                        % differ to save some time
+                        if (firsta==a && firstb==b)
+                            newsignal = newsignal + currentdata;
+                        else
+                            newsignal = newsignal + interp1(currentmass, currentdata, mass);
+                        end
+                    end
+                end
+                signal = newsignal;
+            else
+                a = cal(1,1);
+                b = cal(2,1);
+                mass = ((timebins-b)/a).^2;
+            end
         end
         
 
