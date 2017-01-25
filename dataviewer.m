@@ -25,7 +25,7 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         'NextPlot','add',...
         'Units','normalized',...
         'Tag', tag,...
-        'Position',alignelements(posext, 3, subgridx, 3, subgridy, 0.01, 0.02));
+        'Position',alignelements(posext, 3, subgridx, 3, subgridy));
 
     dataaxes.updateslider = @updateslider;
     dataaxes.getclickcoordinates = @getclickcoordinates;
@@ -141,12 +141,19 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
     % quite frankly stupid
     
     function cplot(varargin)
+        % An extensive comment is due here: We read out the OuterPosition
+        % property of the dataaxes object. Later in this function we write
+        % it back. Additionally, all other properties are read out and
+        % written back. However, OuterPosition seems to change due to a
+        % weird bug in Matlab. Hence we write it back individually which
+        % seems to work around that bug. This is dirty and I hope no other
+        % properties are affected.
+        outposproperty = dataaxes.axes.OuterPosition;
         % read all properties
         allproperties = get(dataaxes.axes);
         
         % plot the data
         arguments={dataaxes.axes,varargin{:}};
-        
         plot(arguments{:});
         
         % remove properties that are read-only and cannot be written back
@@ -158,6 +165,8 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         
         % set all properties again
         set(dataaxes.axes, allproperties);
+        % write back the outer position as explained above.
+        dataaxes.axes.OuterPosition = outposproperty;
     end
 
     function cstem(varargin)

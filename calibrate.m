@@ -864,7 +864,7 @@ uiwait(Parent)
             
             previewaxes.cplot(calcmassaxis,rangesignal,'Color','green','Linewidth',2,'HitTest','off');
         end
-        
+
         % calculate and plot sum spectrum of involved molecules
         sumspectrum=multispec(handles.molecules(involvedmolecules),...
             currentresolution,...
@@ -872,7 +872,7 @@ uiwait(Parent)
             calcmassaxis,...
             handles.calibration.shape);
         previewaxes.cplot(calcmassaxis,sumspectrum,'k--','Linewidth',2,'HitTest','off');
-        
+
         % single molecule
         calcsignal=multispec(handles.molecules(index),...
                 currentresolution,...
