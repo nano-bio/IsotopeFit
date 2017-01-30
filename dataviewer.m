@@ -25,7 +25,7 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         'NextPlot','add',...
         'Units','normalized',...
         'Tag', tag,...
-        'Position',alignelements(posext, 3, subgridx, 3, subgridy));
+        'Position',alignelements(posext, 3, subgridx, 3, subgridy, 0.01, 0.02));
 
     dataaxes.updateslider = @updateslider;
     dataaxes.getclickcoordinates = @getclickcoordinates;
@@ -162,6 +162,12 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         allproperties = rmfield(allproperties, 'CurrentPoint');
         allproperties = rmfield(allproperties, 'TightInset');
         allproperties = rmfield(allproperties, 'Type');
+        
+        % and also adapt to R2016b
+        if strcmp(version('-release'), '2016b')
+            allproperties = rmfield(allproperties, 'YAxis');
+            allproperties = rmfield(allproperties, 'Legend');
+        end
         
         % set all properties again
         set(dataaxes.axes, allproperties);
