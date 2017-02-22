@@ -148,9 +148,20 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         % weird bug in Matlab. Hence we write it back individually which
         % seems to work around that bug. This is dirty and I hope no other
         % properties are affected.
-        outposproperty = dataaxes.axes.OuterPosition;
-        % read all properties
-        allproperties = get(dataaxes.axes);
+        
+        %so, some how this dose not work in matlab 2013 b any more.
+        %Therefor it will check for this version and will not use the
+        %workaround for 2013b.
+        if strcmp(version('-release'), '2013b')
+            %get all porperties
+            allproperties = get(dataaxes.axes);
+        else
+            %get all properties and an extra variable for the OuterPosition
+            %as explainned above
+            outposproperty = dataaxes.axes.OuterPosition;
+            allproperties = get(dataaxes.axes);
+        end
+        
         
         % plot the data
         arguments={dataaxes.axes,varargin{:}};
@@ -169,10 +180,17 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
             allproperties = rmfield(allproperties, 'Legend');
         end
         
-        % set all properties again
-        set(dataaxes.axes, allproperties);
-        % write back the outer position as explained above.
-        dataaxes.axes.OuterPosition = outposproperty;
+        %the same thing as above for rewriting the data 
+        if strcmp(version('-release'), '2013b')
+            % set all properties again for 2013b
+            set(dataaxes.axes, allproperties);
+            
+        else
+            %rewrite all properties to the array
+            set(dataaxes.axes, allproperties);
+            % write back the outer position as explained above.
+            dataaxes.axes.OuterPosition = outposproperty;
+        end
     end
 
     function cstem(varargin)
