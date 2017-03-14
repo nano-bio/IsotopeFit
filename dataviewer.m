@@ -176,8 +176,9 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         
         % and also adapt to R2016b
         if strcmp(version('-release'), '2016b')
-            allproperties = rmfield(allproperties, 'YAxis');
             allproperties = rmfield(allproperties, 'Legend');
+        elseif strcmp(version('-release'), '2016b') || strcmp(version('-release'), '2016a')
+            allproperties = rmfield(allproperties, 'YAxis');
         end
         
         %the same thing as above for rewriting the data 
