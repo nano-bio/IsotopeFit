@@ -208,7 +208,9 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         allproperties = rmfield(allproperties, 'CurrentPoint');
         allproperties = rmfield(allproperties, 'TightInset');
         allproperties = rmfield(allproperties, 'Type');
-        
+        if strcmp(version('-release'), '2016a')
+            allproperties = rmfield(allproperties, 'YAxis');
+        end
         % set all properties again
         set(dataaxes.axes, allproperties);
     end
