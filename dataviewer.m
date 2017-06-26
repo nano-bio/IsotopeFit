@@ -174,6 +174,13 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         allproperties = rmfield(allproperties, 'TightInset');
         allproperties = rmfield(allproperties, 'Type');
         
+        % and alos adapt to R2017a
+        if strcmp(version('-release'), '2017a')
+            allproperties = rmfield(allproperties, 'Legend');
+        elseif strcmp(version('-release'), '2017a') || strcmp(version('-release'), '2017a')
+            allproperties = rmfield(allproperties, 'YAxis');
+        end
+        
         % and also adapt to R2016b
         if strcmp(version('-release'), '2016b')
             allproperties = rmfield(allproperties, 'Legend');
