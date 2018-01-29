@@ -216,6 +216,10 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         allproperties = rmfield(allproperties, 'Type');
         if strcmp(version('-release'), '2016a')
             allproperties = rmfield(allproperties, 'YAxis');
+            allproperties = rmfield(allproperties, 'Legend');
+        elseif strcmp(version('-release'), '2017a')
+            allproperties = rmfield(allproperties, 'YAxis');
+            allproperties = rmfield(allproperties, 'Legend');
         end
         % set all properties again
         set(dataaxes.axes, allproperties);
