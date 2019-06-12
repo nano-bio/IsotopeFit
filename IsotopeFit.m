@@ -1191,7 +1191,7 @@ function menusavecal(hObject,~)
             fclose(fid);
 
             %append data
-            dlmwrite(fullfile(pathname,filename),[massaxis',rawspec',seriesspec',seriestosubtract'],'-append','delimiter','\t','precision','%e');
+            dlmwrite(fullfile(pathname,filename),full([massaxis',rawspec',seriesspec',seriestosubtract']),'-append','delimiter','\t','precision','%e');
            
         end 
     end
