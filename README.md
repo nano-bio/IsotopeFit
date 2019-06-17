@@ -1,8 +1,8 @@
 IsotopeFit is a software written by Stefan Ralser, Johannes Postler and Martina Harnisch at the University of Innsbruck in the group of Prof. Paul Scheier. It is aimed at evaluating mass spectra in the hdf5-format with particular focus on extracting cluster series from large spectra.
 
 Tested with:
- * Matlab 2017a
- * Windows 10, macOS 10.14
+ * Matlab 2017a on Windows 10
+ * Matlab 2019a on macOS 10.14
 
 Dependencies:
  * [DERIVEST](http://www.mathworks.com/matlabcentral/fileexchange/13490-adaptive-robust-numerical-differentiation/content/DERIVESTsuite/derivest.m)
