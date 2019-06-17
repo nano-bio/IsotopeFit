@@ -1,5 +1,11 @@
 function IsotopeFit()
 
+
+if ~verLessThan('matlab', '9.5') % for matlab 2018b and newer, puts the toolbar back
+    set(groot,'defaultFigureCreateFcn',@(fig,~)addToolbarExplorationButtons(fig))
+    set(groot,'defaultAxesCreateFcn',@(ax,~)set(ax.Toolbar,'Visible','off'))
+end
+
 Parent = figure( ...
     'MenuBar', 'none', ...
     'ToolBar','figure',...
@@ -2085,7 +2091,11 @@ function menusavecal(hObject,~)
             end
             %find rowindex
             name=strrep(name,[searchstring num],'');
-            ix=getnameidx(attached,name);
+            %ix=getnameidx(attached,name); % getnameidx deprecated
+			ix=find(contains(attached,name)); 
+			if isempty(ix)
+                ix = 0;
+			end
             if ix==0 %not found
                 rowix=length(attached)+1;
                 attached{rowix}=name;

@@ -174,14 +174,8 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         allproperties = rmfield(allproperties, 'TightInset');
         allproperties = rmfield(allproperties, 'Type');
 		
-		% and also adapt to R2017b
-        if strcmp(version('-release'), '2017b')
-            allproperties = rmfield(allproperties, 'Legend');
-            allproperties = rmfield(allproperties, 'YAxis');
-        end
-        
-        % and also adapt to R2017a
-        if strcmp(version('-release'), '2017a')
+		% and also adapt to R2017a and newer
+        if ~verLessThan('matlab', '9.2')
             allproperties = rmfield(allproperties, 'Legend');
             allproperties = rmfield(allproperties, 'YAxis');
         end
@@ -223,9 +217,9 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         if strcmp(version('-release'), '2016a')
             allproperties = rmfield(allproperties, 'YAxis');
             allproperties = rmfield(allproperties, 'Legend');
-        elseif strcmp(version('-release'), '2017a')
-            allproperties = rmfield(allproperties, 'YAxis');
+        elseif ~verLessThan('matlab', '9.2') %  R2017a and newer
             allproperties = rmfield(allproperties, 'Legend');
+            allproperties = rmfield(allproperties, 'YAxis');
         end
         % set all properties again
         set(dataaxes.axes, allproperties);
