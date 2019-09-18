@@ -2092,7 +2092,7 @@ function menusavecal(hObject,~)
             %find rowindex
             name=strrep(name,[searchstring num],'');
             %ix=getnameidx(attached,name); % getnameidx deprecated
-			ix=find(contains(attached,name)); 
+			ix=find(strcmp(attached,name)); 
 			if isempty(ix)
                 ix = 0;
 			end
