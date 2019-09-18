@@ -386,10 +386,10 @@ if ~isempty(handles.calibration.namelist)
 end
 
 %set(massmethode,'Value',getnameidx(get(massmethode,'String'),handles.calibration.massoffsetmethode)); %getnameidx deprecated
-set(massmethode,'Value',find(contains(get(massmethode,'String'),handles.calibration.massoffsetmethode)));
+set(massmethode,'Value',find(strcmp(get(massmethode,'String'),handles.calibration.massoffsetmethode)));
 set(e_massoffsetorder,'String',num2str(handles.calibration.massoffsetparam));
 %set(resolutionmethode,'Value',getnameidx(get(resolutionmethode,'String'),handles.calibration.resolutionmethode)); %getnameidx deprecated
-set(resolutionmethode,'Value',find(contains(get(resolutionmethode,'String'),handles.calibration.resolutionmethode)));
+set(resolutionmethode,'Value',find(strcmp(get(resolutionmethode,'String'),handles.calibration.resolutionmethode)));
 set(e_resolutionorder,'String',num2str(handles.calibration.resolutionparam));
 
 % enable e_resolutionorder and e_massoffsetorder in case polynomial was chosen
