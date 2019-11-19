@@ -43,7 +43,7 @@ end
 R=qr(M,0);
 S=inv(R); %then inv(M'*M)=S*S'
 
-errout=1.96*diag(sqrt(S*S'*sum(((M*A)'-spec_measured).^2)/(length(spec_measured-length(A)))));
+errout=1.96*diag(sqrt(full(S*S')*sum((full(M*A)'-spec_measured).^2)/(length(spec_measured-length(A)))));
 errout(end+1)=0; %resolution
 errout(end+2)=0; %mass offset
 % 
