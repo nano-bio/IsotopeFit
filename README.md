@@ -2,7 +2,7 @@ IsotopeFit is a software written by Stefan Ralser, Johannes Postler and Martina 
 
 Tested with:
  * Matlab 2017a on Windows 10
- * Matlab 2019b on macOS 10.14
+ * Matlab 2020a on macOS 10.15
 
 Dependencies:
  * [DERIVEST](http://www.mathworks.com/matlabcentral/fileexchange/13490-adaptive-robust-numerical-differentiation/content/DERIVESTsuite/derivest.m)
