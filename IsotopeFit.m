@@ -1681,7 +1681,6 @@ function menusavecal(hObject,~)
             [filename, pathname, filterindex] = uigetfile({'*.h5;*.ifd;*.txt','All files suitable';'*.ifd','IsotopeFit data file (*.ifd)';'*.h5','HDF5 data file (*.h5)';'*.*','ASCII data file (*.*)'},'Open IsotopeFit data file', startpathname);
         % if we indeed got a filename to load, we just set the filterindex
         % to 3 (= any file) and determine later what it is
-        filterindex
         else
             [pathname, filename, suffix] = fileparts(fullpath);
             filename = [filename, suffix];
