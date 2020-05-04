@@ -174,6 +174,11 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         allproperties = rmfield(allproperties, 'TightInset');
         allproperties = rmfield(allproperties, 'Type');
 		
+        % R2020a and newer
+        if ~verLessThan('matlab', '9.8')
+            allproperties = rmfield(allproperties, 'NextSeriesIndex');
+        end
+            
 		% and also adapt to R2017a and newer
         if ~verLessThan('matlab', '9.2')
             allproperties = rmfield(allproperties, 'Legend');
@@ -214,6 +219,9 @@ function dataaxes = dataviewer(parobj, tag, posext, xfatness, yfatness, dataslid
         allproperties = rmfield(allproperties, 'CurrentPoint');
         allproperties = rmfield(allproperties, 'TightInset');
         allproperties = rmfield(allproperties, 'Type');
+        if ~verLessThan('matlab', '9.8') % R2020a and newer
+            allproperties = rmfield(allproperties, 'NextSeriesIndex');
+        end
         if strcmp(version('-release'), '2016a')
             allproperties = rmfield(allproperties, 'YAxis');
             allproperties = rmfield(allproperties, 'Legend');

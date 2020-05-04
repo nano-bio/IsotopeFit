@@ -1678,18 +1678,14 @@ function menusavecal(hObject,~)
         % most likely this function will not retrieve filename or pathname
         % in this case we show a selection dialog.
         if ~exist('fullpath', 'var')
-            [filename, pathname, filterindex] = uigetfile( ...
-                {'*.h5;*.ifd;*.txt','All files suitable';...
-		'*.ifd','IsotopeFit data file (*.ifd)';...
-                '*.h5','HDF5 data file (*.h5)';...
-                '*.*','ASCII data file (*.*)'},...
-                'Open IsotopeFit data file', startpathname);
+            [filename, pathname, filterindex] = uigetfile({'*.h5;*.ifd;*.txt','All files suitable';'*.ifd','IsotopeFit data file (*.ifd)';'*.h5','HDF5 data file (*.h5)';'*.*','ASCII data file (*.*)'},'Open IsotopeFit data file', startpathname);
         % if we indeed got a filename to load, we just set the filterindex
         % to 3 (= any file) and determine later what it is
+        filterindex
         else
             [pathname, filename, suffix] = fileparts(fullpath);
             filename = [filename, suffix];
-            filterindex = 3;
+            filterindex = 1;
         end
         
         % check if the user clicked on Cancel
@@ -1697,14 +1693,14 @@ function menusavecal(hObject,~)
             return
         end
         
-        % if the filterindex is 3, we do not know for sure which file was
+        % if the filterindex is 1, we do not know for sure which file was
         % chosen. hence we have to retrieve the actual filename suffix
-        if filterindex == 3
+        if filterindex == 1
             [~, ~, suffix] = fileparts(filename);
             if strcmp(suffix, '.ifd')
-                filterindex = 1;
-            elseif strcmp(suffix, '.h5')
                 filterindex = 2;
+            elseif strcmp(suffix, '.h5')
+                filterindex = 3;
             else % assume it's ASCII
                 filterindex = 4;
             end
@@ -1716,11 +1712,11 @@ function menusavecal(hObject,~)
         handles=guidata(Parent);
         if ~(isequal(filename,0) || isequal(pathname,0))
             switch filterindex
-                case 1 %ifd
+                case 2 %ifd
                     handles=load_ifd(filename,pathname,handles);
                     guidata(Parent,handles);
                     molecules2listbox(ListMolecules,handles.molecules);
-                case 2 %h5
+                case 3 %h5
                     load_h5(pathname,filename);
                 case 4 %ASCII
                     load_ascii(pathname,filename);
@@ -2092,10 +2088,12 @@ function menusavecal(hObject,~)
             %find rowindex
             name=strrep(name,[searchstring num],'');
             %ix=getnameidx(attached,name); % getnameidx deprecated
-			ix=find(strcmp(attached,name)); 
+            ix=find(strcmp(attached,name));
+			%ix2=find(contains(attached,name)); 
+            
 			if isempty(ix)
                 ix = 0;
-			end
+            end
             if ix==0 %not found
                 rowix=length(attached)+1;
                 attached{rowix}=name;

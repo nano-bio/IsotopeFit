@@ -32,9 +32,11 @@ function ma = h5cal(datafile)
 
     % solve for m; we only want real solutions
     if ~verLessThan('matlab', '9.3') % for matlab 2017b and newer
-    reverse_mcf = solve(str2sym(mcf), m, 'real', true);
+        warning('off','symbolic:solve:SolutionsDependOnConditions')
+        reverse_mcf = solve(str2sym(mcf), m, 'real', true,'ReturnConditions',false);
+        warning('on','symbolic:solve:SolutionsDependOnConditions')
     else
-    reverse_mcf = solve(mcf, m, 'real', true);
+        reverse_mcf = solve(mcf, m, 'real', true);
     end
     %a=0.0;
 
