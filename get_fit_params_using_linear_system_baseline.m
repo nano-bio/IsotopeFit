@@ -10,7 +10,7 @@ M=zeros(length(massaxis),length(molecules)+1);
 
 %fill matrix with isotopic pattern for every molecule
 for j=1:length(molecules)
-    M(:,j)=double(pattern(molecules(j),1,parameters(end-1),parameters(end),massaxis,shape)');
+    M(:,j)=double(pattern_func(molecules(j),1,parameters(end-1),parameters(end),massaxis,shape)');
 end
 
 M(:,end)=ones(size(massaxis'))/(massaxis(end)-massaxis(1)); %the baseline

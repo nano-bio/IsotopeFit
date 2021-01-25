@@ -1,4 +1,4 @@
-function out = pattern(molecule,area,resolutionaxis,massshiftaxis,massaxis)
+function out = pattern_func(molecule,area,resolutionaxis,massshiftaxis,massaxis)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 

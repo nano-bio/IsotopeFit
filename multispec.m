@@ -12,7 +12,7 @@ tstart=tic;
 
 for i=1:length(molecules)
     
-    spec_calc=spec_calc+pattern(molecules(i),molecules(i).area,resolutionaxis,massoffsetaxis,massaxis,shape);
+    spec_calc=spec_calc+pattern_func(molecules(i),molecules(i).area,resolutionaxis,massoffsetaxis,massaxis,shape);
     if show_waitbar==1
         waitbar(i/length(molecules));
     end
